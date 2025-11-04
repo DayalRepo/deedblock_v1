@@ -64,26 +64,22 @@ export default function NavigationLinks() {
           {/* Navigation Links */}
           <div className="flex flex-col space-y-3">
             <Link 
-              href="https://magiceden.io/" 
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/registration"
               className={`${lexendDeca.className} nav-link ${
-                pathname === '/buy' ? 'nav-link-active' : ''
+                pathname === '/registration' ? 'nav-link-active' : ''
               }`}
               onClick={() => setIsMenuOpen(false)}
             >
-              Buy
+              Registration
             </Link>
             <Link 
-              href="https://www.gitbook.com/" 
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/search"
               className={`${lexendDeca.className} nav-link ${
-                pathname === '/docs' ? 'nav-link-active' : ''
+                pathname === '/search' ? 'nav-link-active' : ''
               }`}
               onClick={() => setIsMenuOpen(false)}
             >
-              Docs
+              Search
             </Link>
           </div>
 
@@ -127,38 +123,57 @@ export default function NavigationLinks() {
                       <X size={14} className="text-white" />
                     </button>
                   </div>
-                  <div className="dropdown-item">
-                    <div className="dropdown-title">Twitter/X</div>
-                    <div className="dropdown-description">Follow us on Twitter/X</div>
-                  </div>
-                  <div className="dropdown-item">
-                    <div className="dropdown-title">Discord</div>
-                    <div className="dropdown-description">Join our Discord</div>
-                  </div>
-                  <div className="dropdown-divider"></div>
-                  <div className="dropdown-item">
+                  <Link
+                    href="/terms"
+                    onClick={() => {
+                      setIsMobileMoreOpen(false);
+                      setIsMenuOpen(false);
+                    }}
+                    className="dropdown-item block no-underline"
+                  >
                     <div className="dropdown-title">T&C</div>
                     <div className="dropdown-description">Read our T&C</div>
-                  </div>
-                  <div className="dropdown-item">
+                  </Link>
+                  <Link
+                    href="/privacy"
+                    onClick={() => {
+                      setIsMobileMoreOpen(false);
+                      setIsMenuOpen(false);
+                    }}
+                    className="dropdown-item block no-underline"
+                  >
                     <div className="dropdown-title">Privacy Policy</div>
                     <div className="dropdown-description">Read our Privacy Policy</div>
-                  </div>
+                  </Link>
                   <div className="dropdown-divider"></div>
-                  <div className="dropdown-item">
+                  <Link
+                    href="/help"
+                    onClick={() => {
+                      setIsMobileMoreOpen(false);
+                      setIsMenuOpen(false);
+                    }}
+                    className="dropdown-item block no-underline"
+                  >
                     <div className="flex items-center gap-2">
                       <HelpCircle size={14} className="text-gray-400" />
                       <div className="dropdown-title">Help Center</div>
                     </div>
                     <div className="dropdown-description ml-4">Get support and answers</div>
-                  </div>
-                  <div className="dropdown-item rounded-b-lg">
+                  </Link>
+                  <Link
+                    href="/feedback"
+                    onClick={() => {
+                      setIsMobileMoreOpen(false);
+                      setIsMenuOpen(false);
+                    }}
+                    className="dropdown-item rounded-b-lg block no-underline"
+                  >
                     <div className="flex items-center gap-2">
                       <MessageSquare size={14} className="text-gray-400" />
                       <div className="dropdown-title">Feedback</div>
                     </div>
                     <div className="dropdown-description ml-4">Share your thoughts with us</div>
-                  </div>
+                  </Link>
                 </div>
               </div>
             )}
@@ -169,28 +184,24 @@ export default function NavigationLinks() {
       {/* Desktop Navigation */}
       <div className="hidden lg:flex items-center justify-center space-x-8 w-full">
         <Link 
-          href="https://magiceden.io/" 
-          target="_blank"
-          rel="noopener noreferrer"
+          href="/registration"
           className={`${lexendDeca.className} text-white/90 text-[17px] ${
-            pathname === '/buy' ? 'font-normal' : 'font-light'
+            pathname === '/registration' ? 'font-normal' : 'font-light'
           } hover:text-white relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1px] after:bg-white/90 after:origin-center after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 pb-1 ${
-            pathname === '/buy' ? 'after:scale-x-100' : ''
+            pathname === '/registration' ? 'after:scale-x-100' : ''
           }`}
         >
-          Buy
+          Registration
         </Link>
         <Link 
-          href="https://www.gitbook.com/" 
-          target="_blank"
-          rel="noopener noreferrer"
+          href="/search"
           className={`${lexendDeca.className} text-white/90 text-[17px] ${
-            pathname === '/docs' ? 'font-normal' : 'font-light'
+            pathname === '/search' ? 'font-normal' : 'font-light'
           } hover:text-white relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1px] after:bg-white/90 after:origin-center after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 pb-1 ${
-            pathname === '/docs' ? 'after:scale-x-100' : ''
+            pathname === '/search' ? 'after:scale-x-100' : ''
           }`}
         >
-          Docs
+          Search
         </Link>
         <div className="relative flex items-center h-full">
           <button
@@ -224,38 +235,45 @@ export default function NavigationLinks() {
                   <X size={14} className="text-white" />
                 </button>
               </div>
-              <div className="dropdown-item">
-                <div className="dropdown-title">Twitter/X</div>
-                <div className="dropdown-description">Follow us on Twitter/X</div>
-              </div>
-              <div className="dropdown-item">
-                <div className="dropdown-title">Discord</div>
-                <div className="dropdown-description">Join our Discord</div>
-              </div>
-              <div className="dropdown-divider"></div>
-              <div className="dropdown-item">
+              <Link
+                href="/terms"
+                onClick={() => setIsMoreOpen(false)}
+                className="dropdown-item block no-underline"
+              >
                 <div className="dropdown-title">T&C</div>
                 <div className="dropdown-description">Read our T&C</div>
-              </div>
-              <div className="dropdown-item">
+              </Link>
+              <Link
+                href="/privacy"
+                onClick={() => setIsMoreOpen(false)}
+                className="dropdown-item block no-underline"
+              >
                 <div className="dropdown-title">Privacy Policy</div>
                 <div className="dropdown-description">Read our Privacy Policy</div>
-              </div>
+              </Link>
               <div className="dropdown-divider"></div>
-              <div className="dropdown-item">
+              <Link
+                href="/help"
+                onClick={() => setIsMoreOpen(false)}
+                className="dropdown-item block no-underline"
+              >
                 <div className="flex items-center gap-2">
                   <HelpCircle size={14} className="text-gray-400" />
                   <div className="dropdown-title">Help Center</div>
                 </div>
                 <div className="dropdown-description ml-4">Get support and answers</div>
-              </div>
-              <div className="dropdown-item">
+              </Link>
+              <Link
+                href="/feedback"
+                onClick={() => setIsMoreOpen(false)}
+                className="dropdown-item block no-underline"
+              >
                 <div className="flex items-center gap-2">
                   <MessageSquare size={14} className="text-gray-400" />
                   <div className="dropdown-title">Feedback</div>
                 </div>
                 <div className="dropdown-description ml-4">Share your thoughts with us</div>
-              </div>
+              </Link>
             </div>
           )}
         </div>
