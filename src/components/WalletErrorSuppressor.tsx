@@ -10,6 +10,7 @@ export default function WalletErrorSuppressor() {
   useEffect(() => {
     const originalError = console.error;
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     console.error = (...args: any[]) => {
       const errorMessage = args.join(' ');
       // Suppress the specific duplicate key error for MetaMask

@@ -20,7 +20,7 @@ export default function RootLayout({
         {/* Material Symbols - using next/font/google for Lexend Deca, external for Material Symbols only */}
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=eye_tracking"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=eye_tracking&display=optional"
           crossOrigin="anonymous"
         />
       </head>

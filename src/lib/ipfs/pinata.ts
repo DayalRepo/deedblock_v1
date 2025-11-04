@@ -2,6 +2,7 @@
 // Client-side functions use the API route for uploads
 
 // Upload a single file to IPFS via API route (server-side)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function uploadFileToIPFS(file: File, fileName: string): Promise<{ hash: string; url: string }> {
   try {
     const formData = new FormData();
@@ -49,6 +50,7 @@ export async function uploadFilesToIPFS(files: File[]): Promise<Array<{ name: st
 }
 
 // Upload JSON data to IPFS via API route
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function uploadJSONToIPFS(data: any, fileName: string = 'data.json'): Promise<{ hash: string; url: string }> {
   try {
     // Create a JSON file blob

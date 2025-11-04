@@ -38,12 +38,12 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl sm:text-2xl font-light text-white mb-4">1. Acceptance of Terms</h2>
               <p className="mb-4">
-                By accessing, browsing, or using TITLEREG ("the Platform", "our Platform", "we", "us", or "our"), you acknowledge 
+                By accessing, browsing, or using TITLEREG (&quot;the Platform&quot;, &quot;our Platform&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), you acknowledge 
                 that you have read, understood, and agree to be bound by these Terms & Conditions and our Privacy Policy. 
                 If you do not agree with any part of these terms, you must not use our Platform.
               </p>
               <p className="mb-4">
-                These terms constitute a legally binding agreement between you ("User", "you", or "your") and TITLEREG. 
+                These terms constitute a legally binding agreement between you (&quot;User&quot;, &quot;you&quot;, or &quot;your&quot;) and TITLEREG. 
                 Your use of the Platform indicates your acceptance of these terms and your commitment to comply with all applicable 
                 laws and regulations.
               </p>
@@ -102,9 +102,9 @@ export default function TermsPage() {
                   <ul className="list-disc list-inside space-y-1 ml-6 mt-2">
                     <li>Submitting false or misleading property information</li>
                     <li>Attempting to register fraudulent property claims</li>
-                    <li>Interfering with or disrupting the Platform's operations</li>
+                    <li>Interfering with or disrupting the Platform&apos;s operations</li>
                     <li>Attempting to reverse or alter blockchain transactions</li>
-                    <li>Unauthorized access to other users' accounts or data</li>
+                    <li>Unauthorized access to other users&apos; accounts or data</li>
                   </ul>
                 </li>
                 <li><strong className="text-white">Property Verification:</strong> Independently verify the authenticity and legality of property documents and transactions</li>
@@ -203,7 +203,7 @@ export default function TermsPage() {
               <h3 className="text-lg sm:text-xl font-light text-white mb-3 mt-6">7.3 Payment Methods</h3>
               <p className="mb-4">
                 Payments for blockchain transactions are processed using your connected Solana wallet. Fees are typically paid 
-                in SOL (Solana's native cryptocurrency) or other supported tokens.
+                in SOL (Solana&apos;s native cryptocurrency) or other supported tokens.
               </p>
 
               <h3 className="text-lg sm:text-xl font-light text-white mb-3 mt-6">7.4 Refunds</h3>
@@ -251,7 +251,7 @@ export default function TermsPage() {
               
               <h3 className="text-lg sm:text-xl font-light text-white mb-3 mt-6">10.1 No Warranty</h3>
               <p className="mb-4">
-                THE PLATFORM IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED. 
+                THE PLATFORM IS PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE&quot; WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED. 
                 We disclaim all warranties, including but not limited to:
               </p>
               <ul className="list-disc list-inside space-y-2 ml-4 mb-4">
@@ -287,7 +287,7 @@ export default function TermsPage() {
               <p className="mb-4">
                 You agree to indemnify, defend, and hold harmless TITLEREG, its officers, directors, employees, agents, and 
                 affiliates from and against any and all claims, damages, losses, liabilities, costs, and expenses (including 
-                reasonable attorney's fees) arising from:
+                reasonable attorney&apos;s fees) arising from:
               </p>
               <ul className="list-disc list-inside space-y-2 ml-4 mb-4">
                 <li>Your use or misuse of the Platform</li>
@@ -355,7 +355,7 @@ export default function TermsPage() {
               </p>
               <ul className="list-disc list-inside space-y-2 ml-4 mb-4">
                 <li>Posting the updated terms on this page</li>
-                <li>Updating the "Last updated" date</li>
+                <li>Updating the &quot;Last updated&quot; date</li>
                 <li>Sending notifications to registered users for significant changes</li>
               </ul>
               <p className="mb-4">

@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { ChevronRight, ChevronLeft, FileText, MapPin, Users, FileCheck, CreditCard, CheckCircle, X, ChevronDown, AlertCircle, Loader2, Search, Save, Eye, Plus, Trash2, Copy, Check, Printer, QrCode, Clock } from 'lucide-react';
+import { ChevronRight, ChevronLeft, FileText, CheckCircle, X, ChevronDown, AlertCircle, Loader2, Search, Plus, Trash2, Copy, Check, QrCode, Clock } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Lexend_Deca, DM_Sans } from 'next/font/google';
 import { saveDraft, getDraft, deleteDraft, saveRegistration, type RegistrationData } from '@/lib/supabase/database';
@@ -15,6 +15,7 @@ const lexendDeca = Lexend_Deca({
   weight: ["300", "400", "500"],
 });
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const dmSans = DM_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
@@ -142,6 +143,7 @@ const ReviewIcon = ({ className = '' }: { className?: string }) => (
 );
 
 // Custom Minimalistic Icons for Upload Section
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const PreviewIcon = ({ className = '' }: { className?: string }) => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
     <ellipse cx="8" cy="7.5" rx="5" ry="3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -347,7 +349,9 @@ export default function RegistrationPage() {
   const previousWalletAddress = useRef<string | null>(null);
   const [showQRCode, setShowQRCode] = useState(false);
   const [showDocumentValidation, setShowDocumentValidation] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [emailSent, setEmailSent] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [sendingEmail, setSendingEmail] = useState(false);
   const [countdown, setCountdown] = useState<number>(0);
   const [formData, setFormData] = useState<FormData>({
@@ -608,7 +612,7 @@ export default function RegistrationPage() {
     return { stampDuty: '', registrationFee: '' };
   };
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | File | File[] | Array<{ name: string; address: string; phone: string; aadhar: string }>) => {
     // Clear error for this field when user starts typing
     if (errors[field]) {
       setErrors(prev => {
@@ -805,6 +809,7 @@ export default function RegistrationPage() {
   };
 
   // Print registration summary
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const printSummary = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
@@ -1683,6 +1688,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
   };
 
   // Share registration
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const shareRegistration = async () => {
     const shareData = {
       title: 'Land Registration Complete',
@@ -2023,7 +2029,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Father's/Husband's Name *</label>
+                <label className="block text-sm text-white mb-2">Father&apos;s/Husband&apos;s Name *</label>
                 <input
                   type="text"
                   value={formData.sellerFatherName}
@@ -2186,7 +2192,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Father's/Husband's Name *</label>
+                <label className="block text-sm text-white mb-2">Father&apos;s/Husband&apos;s Name *</label>
                 <input
                   type="text"
                   value={formData.buyerFatherName}
@@ -2786,7 +2792,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
             <AlertCircle size={20} className="text-yellow-400 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-sm text-yellow-200">
-                Please connect your wallet using the "Connect" button in the header to start registration.
+                Please connect your wallet using the &quot;Connect&quot; button in the header to start registration.
               </p>
             </div>
           </motion.div>
@@ -2797,6 +2803,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
           <div className="flex items-center justify-between relative">
             {steps.map((step, index) => {
               const isActive = currentStep === step.id;
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const isCompleted = currentStep > step.id;
               
               return (

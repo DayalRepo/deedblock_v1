@@ -1,4 +1,4 @@
-import { PublicKey, Connection, SystemProgram, Transaction, TransactionInstruction, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { PublicKey, Connection, SystemProgram, Transaction, TransactionInstruction, Keypair } from '@solana/web3.js';
 import { uploadJSONToIPFS } from '../ipfs/pinata';
 
 // Solana Program Configuration
@@ -8,6 +8,7 @@ export const SOLANA_RPC_URL = 'https://api.devnet.solana.com';
 export const connection = new Connection(SOLANA_RPC_URL);
 
 // Calculate minimum account size for registration data
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function calculateAccountSize(registrationData: any, documentsIpfsHash: string, photosIpfsHash: string): number {
   const baseSize = 1 + 32; // initialized flag + authority pubkey
   let stringSize = 0;
@@ -113,6 +114,7 @@ function createInitializeRegistrationInstruction(
 }
 
 // Initialize registration on Solana blockchain
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function initializeRegistrationOnSolana(
   wallet: any, // Wallet from useWallet hook
   sendTransactionFn: (transaction: Transaction, connection: Connection) => Promise<string>, // sendTransaction from useWallet hook
@@ -223,7 +225,8 @@ export async function initializeRegistrationOnSolana(
     }
     
     const signature = await sendTransactionFn(transaction, connection);
-    const confirmation = await connection.confirmTransaction({ signature, blockhash }, 'confirmed');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    await connection.confirmTransaction({ signature, blockhash }, 'confirmed');
     
     const registrationAccountAddress = registrationAccount.publicKey.toBase58();
     

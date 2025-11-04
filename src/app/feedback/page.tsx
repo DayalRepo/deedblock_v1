@@ -137,7 +137,7 @@ export default function FeedbackPage() {
                 Your feedback has been received successfully. We appreciate you taking the time to share your thoughts with us.
               </p>
               <p className="text-gray-400 text-sm">
-                We'll review your {feedbackType === 'bug' ? 'bug report' : feedbackType === 'feature' ? 'feature request' : feedbackType === 'support' ? 'support request' : 'feedback'} and get back to you if needed.
+                We&apos;ll review your {feedbackType === 'bug' ? 'bug report' : feedbackType === 'feature' ? 'feature request' : feedbackType === 'support' ? 'support request' : 'feedback'} and get back to you if needed.
               </p>
             </motion.div>
           ) : (

@@ -78,6 +78,7 @@ export interface DraftData {
   id?: string;
   wallet_address: string;
   current_step: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   form_data: any; // JSON object with form fields
   form_time_elapsed?: number;
   form_start_time?: number;

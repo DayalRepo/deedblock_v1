@@ -7,14 +7,17 @@ import Link from 'next/link';
 import { Lexend_Deca, DM_Sans } from 'next/font/google';
 
 // Lazy load the GIF component for faster initial load
-const VideoGif = dynamic(() => Promise.resolve(({ className }: { className?: string }) => (
-  <img
-    src="/video.gif"
-    alt="Video demonstration"
-    className={className}
-    loading="lazy"
-  />
-)), { ssr: false });
+const VideoGif = dynamic(() => Promise.resolve(({ className }: { className?: string }) => {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/video.gif"
+      alt="Video demonstration"
+      className={className}
+      loading="lazy"
+    />
+  );
+}), { ssr: false });
 
 const lexendDeca = Lexend_Deca({
   subsets: ["latin"],
@@ -28,13 +31,13 @@ const dmSans = DM_Sans({
 
 // Title suffix typing animation component
 function TitleSuffixAnimation() {
-  const suffixes = ["REGISTER", "VERIFY", "SEARCH"];
   const [currentSuffixIndex, setCurrentSuffixIndex] = useState(0);
   const [displayedText, setDisplayedText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
+    const suffixes = ["REGISTER", "VERIFY", "SEARCH"];
     const currentSuffix = suffixes[currentSuffixIndex];
     
     if (!isDeleting && currentIndex < currentSuffix.length) {
@@ -73,6 +76,7 @@ function TitleSuffixAnimation() {
 }
 
 // Typing animation component with looping every 5 seconds and 2 lines
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function TypingAnimation({ lines, speed = 50 }: { lines: string[]; speed?: number }) {
   const [currentLine, setCurrentLine] = useState(0);
   const [displayedText, setDisplayedText] = useState('');
@@ -122,10 +126,6 @@ function TypingAnimation({ lines, speed = 50 }: { lines: string[]; speed?: numbe
 }
 
 export default function Home() {
-  const descriptionLines = [
-    "Secure land title registration and verification system",
-    "powered by blockchain technology for transparent and legally compliant property transactions."
-  ];
 
   return (
     <main className={`${lexendDeca.className} flex flex-col min-h-screen bg-black text-white pt-32 sm:pt-28 lg:pt-48`}>

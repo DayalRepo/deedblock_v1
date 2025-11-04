@@ -51,7 +51,7 @@ export default function PrivacyPage() {
 
               <h3 className="text-lg sm:text-xl font-light text-white mb-3 mt-6">1.2 Personal Information</h3>
               <ul className="list-disc list-inside space-y-2 ml-4 mb-4">
-                <li>Full name, father's name, and age</li>
+                <li>Full name, father&apos;s name, and age</li>
                 <li>Permanent and correspondence addresses</li>
                 <li>Aadhar number and related identification documents</li>
                 <li>PAN (Permanent Account Number) and tax identification</li>
@@ -227,7 +227,7 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-xl sm:text-2xl font-light text-white mb-4">9. Children's Privacy</h2>
+              <h2 className="text-xl sm:text-2xl font-light text-white mb-4">9. Children&apos;s Privacy</h2>
               <p className="mb-4">
                 Our platform is not intended for individuals under the age of 18. We do not knowingly collect personal information 
                 from children. If you believe we have inadvertently collected information from a child, please contact us immediately.
@@ -251,7 +251,7 @@ export default function PrivacyPage() {
               </p>
               <ul className="list-disc list-inside space-y-2 ml-4 mb-4">
                 <li>Posting the updated Privacy Policy on this page</li>
-                <li>Updating the "Last updated" date at the top of this policy</li>
+                <li>Updating the &quot;Last updated&quot; date at the top of this policy</li>
                 <li>Sending notifications to registered users for significant changes</li>
               </ul>
               <p className="mb-4">

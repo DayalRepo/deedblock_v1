@@ -338,7 +338,7 @@ export default function HelpPage() {
                   <li>Check if your wallet supports Solana network</li>
                   <li>Try a different browser if issues persist</li>
                   <li>Clear browser cache and reload the page</li>
-                  <li>Ensure browser extensions aren't blocking wallet connections</li>
+                  <li>Ensure browser extensions aren&apos;t blocking wallet connections</li>
                 </ul>
               </div>
               <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 sm:p-6">
@@ -361,7 +361,7 @@ export default function HelpPage() {
                   <li>Verify the property is registered on the platform</li>
                   <li>Use partial matches for owner names or locations</li>
                   <li>Clear search filters and try again</li>
-                  <li>Check if you're searching in the correct format</li>
+                  <li>Check if you&apos;re searching in the correct format</li>
                   <li>Contact support if you believe the property should exist</li>
                 </ul>
               </div>
