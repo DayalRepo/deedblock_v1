@@ -8,23 +8,76 @@ export async function uploadFileToIPFS(file: File, fileName: string): Promise<{ 
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch('/api/ipfs/upload', {
-      method: 'POST',
-      body: formData,
-    });
+    // Use absolute URL for mobile devices to avoid fetch issues
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const apiUrl = `${baseUrl}/api/ipfs/upload`;
+
+    // Create abort controller for timeout (fallback for browsers without AbortSignal.timeout)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+
+    let response: Response;
+    try {
+      response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      throw fetchError;
+    }
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to upload file');
+      let errorMessage = 'Failed to upload file';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch (parseError) {
+        // If response is not JSON, use status text
+        errorMessage = response.statusText || `HTTP ${response.status}`;
+      }
+      
+      // Provide more specific error messages
+      if (response.status === 0 || response.status === 503) {
+        errorMessage = 'Network error: Unable to reach the server. Please check your internet connection.';
+      } else if (response.status === 413) {
+        errorMessage = 'File too large. Please reduce the file size.';
+      } else if (response.status >= 500) {
+        errorMessage = 'Server error: Please try again later.';
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const result = await response.json();
+    
+    if (!result.hash) {
+      throw new Error('Upload succeeded but no hash was returned from server');
+    }
+    
     return {
       hash: result.hash,
       url: result.url,
     };
   } catch (error) {
     console.error('Error uploading file to IPFS:', error);
+    
+    // Provide user-friendly error messages
+    if (error instanceof Error) {
+      if (error.name === 'AbortError' || error.message.includes('timeout') || error.message.includes('aborted')) {
+        throw new Error('Upload timeout: The file upload took too long. Please check your internet connection and try again.');
+      }
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('Network error: Unable to connect to the server. Please check your internet connection and try again.');
+      }
+      if (error.message.includes('CORS')) {
+        throw new Error('Connection error: Please ensure you are using the correct domain and try again.');
+      }
+      throw error;
+    }
+    
     throw new Error(`Failed to upload file to IPFS: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
