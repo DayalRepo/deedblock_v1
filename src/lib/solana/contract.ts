@@ -227,30 +227,46 @@ export async function initializeRegistrationOnSolana(
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = walletPublicKey;
     
-    // For mobile wallets, we need to ensure proper transaction signing
-    // The transaction needs TWO signatures:
-    // 1. Registration account (we sign this with partialSign)
-    // 2. Wallet (the wallet adapter will add this via sendTransaction)
+    // CRITICAL FOR MOBILE WALLETS: Initialize signature array with both signers BEFORE partial signing
+    // This ensures mobile wallets can detect that they need to add their signature
+    // The signature array must include both:
+    // 1. Registration account (we'll sign this)
+    // 2. Wallet (wallet adapter will sign this)
+    
+    // Initialize signatures array with both signers (in order: fee payer first, then registration account)
+    // Mobile wallets check the signature array to determine which signatures are needed
+    transaction.signatures = [
+      {
+        publicKey: walletPublicKey,        // Fee payer - wallet will sign this
+        signature: null,                   // Will be signed by wallet adapter
+      },
+      {
+        publicKey: registrationAccount.publicKey,  // Registration account - we'll sign this
+        signature: null,                   // Will be signed by us
+      },
+    ];
+    
+    // Now partially sign with the registration account
     try {
-      // Sign the transaction with registration account (partial sign)
-      // This signs with the registration account keypair we generated
       transaction.partialSign(registrationAccount);
       
-      // Verify the transaction has the registration account signature
+      // Verify signatures are set correctly
+      const walletSig = transaction.signatures.find(sig => sig.publicKey.equals(walletPublicKey));
       const registrationSig = transaction.signatures.find(sig => sig.publicKey.equals(registrationAccount.publicKey));
       
       if (!registrationSig || !registrationSig.signature) {
         throw new Error('Failed to sign transaction with registration account');
       }
       
-      // The wallet signature will be added automatically by the wallet adapter's sendTransaction
-      // The wallet adapter detects the feePayer and adds the signature
-      // For mobile wallets, we need to ensure the transaction is in the correct state
+      if (!walletSig) {
+        throw new Error('Wallet signature slot not found in transaction');
+      }
       
       console.log('Transaction signatures after partial sign:', {
+        wallet: walletSig.signature ? 'signed ✓' : 'missing (will be signed by wallet adapter)',
         registrationAccount: registrationSig.signature ? 'signed ✓' : 'missing ✗',
-        wallet: 'will be signed by wallet adapter',
         feePayer: transaction.feePayer?.toBase58(),
+        signatureCount: transaction.signatures.length,
       });
     } catch (signError) {
       console.error('Error signing transaction with registration account:', signError);
