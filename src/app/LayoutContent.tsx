@@ -20,7 +20,7 @@ export default function LayoutContent({
   return (
     <div className="min-h-screen bg-black relative">
       {/* Beta-116 Badge - Top Left */}
-      <div className={`${dmSansClassName} fixed top-0 left-0 z-50 px-2 sm:px-3 py-1 text-gray-400 text-[10px] sm:text-sm font-medium`}>
+      <div className={`${dmSansClassName} fixed top-0 left-0 z-50 px-2 sm:px-3 py-1 text-gray-400 text-[11px] sm:text-sm font-medium`}>
         Beta-116
       </div>
       <Header />
