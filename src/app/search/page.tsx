@@ -1519,7 +1519,7 @@ Generated on: ${new Date().toLocaleString()}
 
                 {/* Property Photos */}
                 {selectedResult.propertyPhotos && selectedResult.propertyPhotos.length > 0 && (
-                  <div className="bg-black/40 border border-gray-800 rounded-lg p-3 sm:p-4">
+                  <div className="hidden sm:block bg-black/40 border border-gray-800 rounded-lg p-3 sm:p-4">
                     <div className="flex items-center justify-between mb-3 sm:mb-4">
                       <h3 className={`${lexendDeca.className} text-sm sm:text-base font-medium flex items-center gap-2`}>
                         <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960" width="18" fill="#e3e3e3" className="sm:w-5 sm:h-5">
