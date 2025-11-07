@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Lexend_Deca, DM_Sans } from 'next/font/google';
+import { ArrowRight } from 'lucide-react';
 
 // Lazy load the GIF component for faster initial load
 const VideoGif = dynamic(() => Promise.resolve(({ className }: { className?: string }) => (
@@ -146,46 +147,26 @@ export default function Home() {
               <TitleSuffixAnimation />
             </h1>
             
-            {/* Feature Badges - Minimal Design */}
+            {/* Feature Badges - Minimal, equal width, rounded like connect button */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mt-6"
+              className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 sm:gap-3 mt-6"
             >
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="relative group"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-green-600/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
-                <div className="relative px-4 py-1.5 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg">
-                  <span className={`${dmSans.className} text-xs font-medium text-gray-300 group-hover:text-green-400 transition-colors`}>
-                    Immutable Records
-                  </span>
+              <motion.div whileHover={{ scale: 1.03 }}>
+                <div className="w-full sm:w-[150px] lg:w-[130px] px-4 py-2 rounded-lg border border-white/15 bg-white/[0.03] text-sm font-normal text-gray-200 hover:border-white/30 hover:bg-white/[0.06] transition-colors text-center">
+                  Sovereign
                 </div>
               </motion.div>
-              
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="relative group"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-blue-600/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
-                <div className="relative px-4 py-1.5 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg">
-                  <span className={`${dmSans.className} text-xs font-medium text-gray-300 group-hover:text-blue-400 transition-colors`}>
-                    IPFS Decentralized
-                  </span>
+              <motion.div whileHover={{ scale: 1.03 }}>
+                <div className="w-full sm:w-[150px] lg:w-[130px] px-4 py-2 rounded-lg border border-white/15 bg-white/[0.03] text-sm font-normal text-gray-200 hover:border-white/30 hover:bg-white/[0.06] transition-colors text-center">
+                  Immutable
                 </div>
               </motion.div>
-              
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="relative group"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-purple-600/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
-                <div className="relative px-4 py-1.5 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg">
-                  <span className={`${dmSans.className} text-xs font-medium text-gray-300 group-hover:text-purple-400 transition-colors`}>
-                    Verified & Legal
-                  </span>
+              <motion.div whileHover={{ scale: 1.03 }}>
+                <div className="w-full sm:w-[150px] lg:w-[130px] px-4 py-2 rounded-lg border border-white/15 bg-white/[0.03] text-sm font-normal text-gray-200 hover:border-white/30 hover:bg-white/[0.06] transition-colors text-center">
+                  TitleVault
                 </div>
               </motion.div>
             </motion.div>
@@ -202,7 +183,7 @@ export default function Home() {
             </p>
           </motion.div>
           
-          {/* Action Buttons - Centered, Same Size, Both White */}
+          {/* Action Button - Single Get Started, White with Black Text */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -211,15 +192,10 @@ export default function Home() {
           >
             <Link
               href="/registration"
-              className="w-[160px] px-8 py-3 bg-white text-black rounded-lg text-sm font-medium hover:bg-gray-100 transition-all hover:scale-105 text-center shadow-lg"
+              className="w-[150px] px-6 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-gray-100 transition-all hover:scale-105 text-center shadow-lg flex items-center justify-center gap-1.5"
             >
-              Registration
-            </Link>
-            <Link
-              href="/search"
-              className="w-[160px] px-8 py-3 bg-white text-black rounded-lg text-sm font-medium hover:bg-gray-100 transition-all hover:scale-105 text-center shadow-lg"
-            >
-              Search
+              Get started
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </motion.div>
         </motion.div>
