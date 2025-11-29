@@ -5,21 +5,21 @@ import ClientProviders from "./ClientProviders";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "TITLEREG",
+  title: "TitleReg",
   description: "Powered By Project BlockChain",
   icons: {
     icon: "/favicon.ico",
     apple: "/favicon.ico",
   },
   openGraph: {
-    title: "TITLEREG",
+    title: "TitleReg",
     description: "Powered By Project BlockChain",
     type: "website",
-    siteName: "TITLEREG",
+    siteName: "TitleReg",
   },
   twitter: {
     card: "summary",
-    title: "TITLEREG",
+    title: "TitleReg",
     description: "Powered By Project BlockChain",
   },
 };
