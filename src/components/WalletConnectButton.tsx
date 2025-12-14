@@ -2,12 +2,7 @@
 
 import { useWallet } from '@solana/wallet-adapter-react';
 import dynamic from 'next/dynamic';
-import { Lexend_Deca } from 'next/font/google';
 
-const lexendDeca = Lexend_Deca({
-  subsets: ["latin"],
-  weight: ["400"],
-});
 
 // Dynamically import the WalletMultiButton with no SSR
 const WalletMultiButton = dynamic(
@@ -24,15 +19,14 @@ export default function WalletConnectButton() {
   };
 
   return (
-    <div className={lexendDeca.className}>
+    <div>
       <WalletMultiButton
-        style={{ 
-          backgroundColor: 'white', 
-          fontFamily: 'Lexend Deca',
+        style={{
+          backgroundColor: 'black',
           fontWeight: 400,
-          color: 'black'
+          color: 'white'
         }}
-        className={`text-black px-4 py-1.5 rounded-full transition-colors tracking-tighter w-32 font-normal hover:bg-gray-100`}
+        className={`text-white w-24 px-3 py-0.5 text-xs sm:w-32 sm:px-4 sm:py-1.5 sm:text-sm rounded-full transition-colors tracking-tighter font-normal hover:bg-gray-800`}
       >
         {connected && publicKey ? formatAddress(publicKey.toString()) : 'Connect'}
       </WalletMultiButton>

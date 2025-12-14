@@ -3,14 +3,17 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Enable compression for faster loads
   compress: true,
-  
+
+  // Fix for "inferred workspace root" warning
+  outputFileTracingRoot: process.cwd(),
+
   // Note: swcMinify is enabled by default in Next.js 13+ and not needed
-  
+
   // Optimize package imports for faster bundle sizes
   experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion', 'qrcode.react'],
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
-  
+
   webpack: (config, { isServer, webpack }) => {
     // Ignore pino-pretty optional dependency (used only for development logging)
     config.plugins.push(
@@ -18,14 +21,14 @@ const nextConfig: NextConfig = {
         resourceRegExp: /^pino-pretty$/,
       })
     );
-    
+
     // Set fallback for client-side builds
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         'pino-pretty': false,
       };
-      
+
       // Optimize chunk splitting for better code splitting
       config.optimization = {
         ...config.optimization,
@@ -60,7 +63,7 @@ const nextConfig: NextConfig = {
         },
       };
     }
-    
+
     return config;
   },
 };

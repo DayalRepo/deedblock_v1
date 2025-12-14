@@ -61,10 +61,10 @@ export default function AboutPage() {
           </Link>
 
           <div className="mb-16">
-            <h1 className="text-4xl sm:text-5xl font-light mb-6">About TITLEREG</h1>
+            <h1 className="text-4xl sm:text-5xl font-light mb-6">About DeedBlock</h1>
             <p className="text-gray-300 text-lg leading-relaxed max-w-3xl">
-              TITLEREG is a revolutionary blockchain-powered platform designed to transform Indian land and real estate 
-              transactions. We leverage cutting-edge blockchain technology to provide secure, transparent, and immutable 
+              DeedBlock is a revolutionary blockchain-powered platform designed to transform Indian land and real estate
+              transactions. We leverage cutting-edge blockchain technology to provide secure, transparent, and immutable
               property registration, verification, and search capabilities.
             </p>
           </div>
@@ -79,8 +79,8 @@ export default function AboutPage() {
             <h2 className="text-3xl font-light text-white mb-6">Our Mission</h2>
             <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-8">
               <p className="text-gray-300 leading-relaxed text-lg">
-                To revolutionize land title registration and verification in India by leveraging blockchain technology 
-                for transparent, secure, and legally compliant property transactions. We aim to eliminate fraud, reduce 
+                To revolutionize land title registration and verification in India by leveraging blockchain technology
+                for transparent, secure, and legally compliant property transactions. We aim to eliminate fraud, reduce
                 disputes, and build trust in the real estate ecosystem.
               </p>
             </div>
@@ -127,7 +127,7 @@ export default function AboutPage() {
                 <div>
                   <h3 className="text-xl font-light text-white mb-2">Property Registration</h3>
                   <p className="text-gray-400 leading-relaxed">
-                    Users register property details including survey number, plot number, location, transaction details, 
+                    Users register property details including survey number, plot number, location, transaction details,
                     and upload required documents. All information is verified before blockchain recording.
                   </p>
                 </div>
@@ -139,7 +139,7 @@ export default function AboutPage() {
                 <div>
                   <h3 className="text-xl font-light text-white mb-2">Blockchain Recording</h3>
                   <p className="text-gray-400 leading-relaxed">
-                    Verified property information is recorded on the blockchain, creating an immutable and permanent 
+                    Verified property information is recorded on the blockchain, creating an immutable and permanent
                     record that cannot be altered or deleted.
                   </p>
                 </div>
@@ -151,7 +151,7 @@ export default function AboutPage() {
                 <div>
                   <h3 className="text-xl font-light text-white mb-2">Verification & Search</h3>
                   <p className="text-gray-400 leading-relaxed">
-                    Anyone can search and verify property records using various parameters, ensuring transparency and 
+                    Anyone can search and verify property records using various parameters, ensuring transparency and
                     building trust in property transactions.
                   </p>
                 </div>
@@ -169,8 +169,8 @@ export default function AboutPage() {
             <h2 className="text-3xl font-light text-white mb-6">Technology</h2>
             <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-8">
               <p className="text-gray-300 leading-relaxed mb-4">
-                TITLEREG is built on Solana blockchain, chosen for its high throughput, low transaction costs, and 
-                environmental efficiency. The platform uses smart contracts to ensure secure and automated property 
+                DeedBlock is built on Solana blockchain, chosen for its high throughput, low transaction costs, and
+                environmental efficiency. The platform uses smart contracts to ensure secure and automated property
                 registration processes.
               </p>
               <ul className="list-disc list-inside space-y-2 text-gray-300 ml-4">

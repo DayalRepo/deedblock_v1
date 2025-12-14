@@ -2,8 +2,8 @@
 @import '@solana/wallet-adapter-react-ui/styles.css';
 
 :root {
-  --background: #000000;
-  --foreground: #ffffff;
+  --background: #FAF9F6;
+  --foreground: #000000;
 }
 
 @theme inline {
@@ -14,13 +14,13 @@
 }
 
 html {
-  background: #000000;
+  background: #FAF9F6;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: lexend deca, Helvetica, sans-serif;
+  font-family: var(--font-dm-sans), sans-serif;
   margin: 0;
   padding: 0;
 }
@@ -31,7 +31,7 @@ body {
 
 /* Header Styles */
 .header {
-  @apply fixed top-0 w-full px-3 sm:px-36 py-2 sm:py-6 z-40 bg-black/90 backdrop-blur-sm;
+  @apply fixed top-0 w-full px-3 sm:px-36 pt-6 pb-2 sm:py-6 z-40 bg-[#FAF9F6]/90 backdrop-blur-sm;
 }
 
 .header-container {
@@ -39,11 +39,11 @@ body {
 }
 
 .logo-container {
-  @apply relative min-w-[52px] w-[52px] h-[52px] sm:w-[60px] sm:h-[60px] lg:w-[72px] lg:h-[72px] bg-white/10 rounded-lg;
+  @apply relative min-w-[50px] w-[50px] h-[50px] sm:w-[65px] sm:h-[65px] lg:w-[65px] lg:h-[65px] bg-black/5 rounded-lg;
 }
 
 .logo-image {
-  @apply w-full h-full object-cover rounded-lg;
+  @apply w-full h-full object-contain rounded-lg;
 }
 
 .desktop-nav {
@@ -60,11 +60,11 @@ body {
 
 /* Navigation Links Styles */
 .nav-link {
-  @apply text-white text-[15px] px-2 py-0.5;
+  @apply text-black text-[15px] font-medium px-2 py-0.5;
 }
 
 .nav-link-active {
-  @apply font-medium;
+  @apply font-semibold;
 }
 
 .more-button {
@@ -72,19 +72,19 @@ body {
 }
 
 .more-button-content {
-  @apply text-white text-[15px] px-2 mb-1.5 flex items-center justify-between;
+  @apply text-black text-[15px] font-medium px-2 mb-1.5 flex items-center justify-between;
 }
 
 .more-dropdown {
-  @apply bg-black rounded-lg mx-2 border border-gray-800 shadow-sm mb-4;
+  @apply bg-[#FAF9F6] rounded-lg ml-2 w-60 border border-gray-200 shadow-lg mb-4;
 }
 
 .dropdown-header {
-  @apply px-3 py-1.5 border-b-2 border-dashed border-gray-800 flex justify-between items-center;
+  @apply px-3 py-1.5 border-b-2 border-dashed border-gray-300 flex justify-end items-center;
 }
 
 .dropdown-item {
-  @apply px-3 py-1 hover:bg-gray-900 cursor-pointer;
+  @apply px-3 py-1.5 lg:py-1 hover:bg-gray-100 cursor-pointer;
 }
 
 .dropdown-item a,
@@ -93,51 +93,55 @@ a.dropdown-item {
 }
 
 .dropdown-title {
-  @apply font-medium text-[13px] text-white;
+  @apply font-medium text-[14px] text-black;
 }
 
 .dropdown-description {
-  @apply text-[11px] font-normal text-gray-400;
+  @apply text-[11px] font-normal text-gray-500;
 }
 
 .dropdown-divider {
-  @apply mx-3 my-0.5 border-t border-dashed border-gray-800;
+  @apply mx-3 my-0.5 border-t border-dashed border-gray-300;
 }
 
 /* Wallet Connect Button Styles */
 .wallet-button {
-  @apply text-black px-2.5 py-0.5 rounded-full transition-colors tracking-tighter w-24 text-sm font-normal hover:bg-gray-100;
+  @apply text-white bg-black px-2.5 py-0.5 rounded-full transition-colors tracking-tighter w-24 text-sm font-normal hover:bg-gray-800;
 }
 
 /* Registration Form Select Dropdown Styles */
 select {
-  background-color: #000000 !important;
-  color: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #e5e7eb !important;
+  /* gray-200 */
 }
 
 select option {
-  background-color: #000000 !important;
-  color: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
   padding: 12px;
 }
 
 select option:not(:last-child) {
-  border-bottom: 1px dashed #374151;
+  border-bottom: 1px dashed #e5e7eb;
 }
 
 select option:hover {
-  background-color: #1f2937 !important;
+  background-color: #f3f4f6 !important;
+  /* gray-100 */
 }
 
 select option:checked,
 select option:focus {
-  background-color: #1f2937 !important;
+  background-color: #f3f4f6 !important;
 }
 
 /* Custom Scrollbar for Dropdowns */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #374151 #000000;
+  scrollbar-color: #d1d5db #ffffff;
+  /* gray-300 white */
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -145,17 +149,19 @@ select option:focus {
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #000000;
+  background: #ffffff;
   border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #374151;
+  background: #d1d5db;
+  /* gray-300 */
   border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #4b5563;
+  background: #9ca3af;
+  /* gray-400 */
 }
 
 /* Material Symbols Outlined Styles */

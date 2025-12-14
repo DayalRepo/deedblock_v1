@@ -1,10 +1,10 @@
 {
-  "name": "titlereg",
+  "name": "deedblock",
   "version": "0.1.0",
   "description": "Blockchain-based land title registration and verification system powered by Solana and IPFS",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev",
+    "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev --webpack",
     "build": "cross-env NODE_OPTIONS=--no-deprecation next build --webpack",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "lint": "next lint"

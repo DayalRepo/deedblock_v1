@@ -1,14 +1,19 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Lexend_Deca } from 'next/font/google';
-import { ArrowLeft, HelpCircle, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { DM_Sans, DM_Mono } from 'next/font/google';
+import { ArrowLeft, HelpCircle, Search, ChevronDown, ChevronUp, ArrowUp } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-const lexendDeca = Lexend_Deca({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
+  weight: ["400", "500", "700"],
+});
+
+const dmMono = DM_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 interface FAQItem {
@@ -20,30 +25,35 @@ interface FAQItem {
 const faqs: FAQItem[] = [
   // Getting Started
   {
-    question: "What is TITLEREG?",
-    answer: "TITLEREG is a blockchain-powered platform designed for secure land title registration, verification, and search for Indian land and real estate transactions. We leverage Solana blockchain technology to provide transparency, immutability, and security in property transactions.",
+    question: "What is DeedBlock?",
+    answer: "DeedBlock is a decentralized land title registration platform currently in **Beta**. We leverage blockchain technology to provide transparency, immutability, and security for Indian real estate transactions. Ideally, it serves as a proof-of-concept for avoiding land disputes through decentralized verification.",
     category: 'getting-started'
   },
   {
-    question: "How do I get started with TITLEREG?",
+    question: "Is this the final version?",
+    answer: "No, this is a **Beta Version**. We are currently testing the core concepts using the Solana Blockchain. In our upcoming production release, we will migrate to a **Hyperledger Fabric** network. This transition will introduce a permissioned environment suitable for official government integration and enhanced data privacy.",
+    category: 'getting-started'
+  },
+  {
+    question: "How do I get started with DeedBlock?",
     answer: "To get started, you need to: 1) Install a Solana-compatible wallet (like Phantom or Solflare), 2) Connect your wallet to the platform, 3) Navigate to the Registration page if you want to register a property, or use the Search page to find existing property records. Make sure you have all required documents ready before starting the registration process.",
     category: 'getting-started'
   },
   {
-    question: "Is TITLEREG legal and compliant with Indian laws?",
-    answer: "Yes, TITLEREG is designed to comply with Indian land registration laws, including the Registration Act, 1908, and Transfer of Property Act, 1882. However, blockchain recording serves as an additional layer of verification and transparency. Traditional registration processes with government authorities should still be followed as required by law.",
+    question: "Is DeedBlock legal and compliant with Indian laws?",
+    answer: "DeedBlock is designed to align with the Registration Act, 1908, and Transfer of Property Act, 1882. However, as a Beta platform, the blockchain records currently serve as an **additional layer of verification** and do not purely replace the physical government registration process yet. Always ensure you complete standard government procedures.",
     category: 'getting-started'
   },
   {
     question: "What are the benefits of using blockchain for land registration?",
-    answer: "Blockchain provides several key benefits: Immutability (records cannot be altered), Transparency (all transactions are verifiable), Security (cryptographically secured), Fraud Prevention (eliminates duplicate registrations), Permanent Record (no risk of document loss), and Quick Verification (instant access to property history).",
+    answer: "Blockchain provides several key benefits: Immutability (records cannot be altered), Transparency (all transactions are verifiable), Security (cryptographically secured), and Permanent Record (no risk of document loss/fire). Our future Hyperledger Fabric upgrade will further enable 'GovTech SaaS' features for seamless state integration.",
     category: 'getting-started'
   },
 
   // Wallet
   {
     question: "Do I need a cryptocurrency wallet?",
-    answer: "Yes, you need a Solana-compatible cryptocurrency wallet to interact with TITLEREG. Popular options include Phantom, Solflare, Backpack, and other Solana wallet browser extensions. The wallet is required to sign blockchain transactions and pay network fees.",
+    answer: "Yes, you need a Solana-compatible cryptocurrency wallet to interact with DeedBlock. Popular options include Phantom, Solflare, Backpack, and other Solana wallet browser extensions. The wallet is required to sign blockchain transactions and pay network fees.",
     category: 'wallet'
   },
   {
@@ -53,12 +63,12 @@ const faqs: FAQItem[] = [
   },
   {
     question: "What if I lose access to my wallet?",
-    answer: "If you lose access to your wallet (lost private keys or recovery phrase), you cannot recover it through TITLEREG. This is a security feature of blockchain technology. Always keep your wallet recovery phrase secure and in multiple safe locations. We recommend using hardware wallets for important accounts and never sharing your private keys with anyone.",
+    answer: "If you lose access to your wallet (lost private keys or recovery phrase), you cannot recover it through DeedBlock. This is a security feature of blockchain technology. Always keep your wallet recovery phrase secure and in multiple safe locations. We recommend using hardware wallets for important accounts and never sharing your private keys with anyone.",
     category: 'wallet'
   },
   {
     question: "Do I need SOL tokens in my wallet?",
-    answer: "Yes, you need SOL (Solana's native cryptocurrency) in your wallet to pay for blockchain transaction fees. These fees are minimal (typically less than $0.01 per transaction) and are paid directly to the Solana network, not to TITLEREG. Make sure you have a small amount of SOL (recommended: at least 0.1 SOL) in your wallet before starting any transaction.",
+    answer: "Yes, you need SOL (Solana's native cryptocurrency) in your wallet to pay for blockchain transaction fees. These fees are minimal (typically less than $0.01 per transaction) and are paid directly to the Solana network, not to DeedBlock. Make sure you have a small amount of SOL (recommended: at least 0.1 SOL) in your wallet before starting any transaction.",
     category: 'wallet'
   },
   {
@@ -69,7 +79,7 @@ const faqs: FAQItem[] = [
 
   // Registration
   {
-    question: "How do I register a property on TITLEREG?",
+    question: "How do I register a property on DeedBlock?",
     answer: "To register a property: 1) Go to the Registration page and connect your wallet, 2) Fill in property details (survey number, plot number, location, area, etc.), 3) Provide transaction details (type, consideration amount, stamp duty, dates), 4) Enter seller and buyer information with all required details, 5) Upload required documents (all in PDF format), 6) Add witness information if applicable, 7) Review all information carefully, 8) Submit and confirm the blockchain transaction. Once confirmed, your property will be permanently recorded on the blockchain.",
     category: 'registration'
   },
@@ -95,7 +105,7 @@ const faqs: FAQItem[] = [
   },
   {
     question: "What are the fees for registration?",
-    answer: "TITLEREG charges minimal blockchain transaction fees (paid in SOL, typically $0.01 or less). These fees go directly to the Solana network. Additionally, you are responsible for all government-mandated fees including stamp duty (varies by state), registration fees (as per state regulations), and other charges as per Indian land registration laws.",
+    answer: "DeedBlock charges minimal blockchain transaction fees (paid in SOL, typically $0.01 or less). These fees go directly to the Solana network. Additionally, you are responsible for all government-mandated fees including stamp duty (varies by state), registration fees (as per state regulations), and other charges as per Indian land registration laws.",
     category: 'registration'
   },
   {
@@ -137,7 +147,7 @@ const faqs: FAQItem[] = [
   },
   {
     question: "What if a property doesn't appear in search results?",
-    answer: "If a property doesn't appear, it may not be registered on TITLEREG yet. Verify your search criteria, check spelling, and try different search parameters. If you believe the property should exist, it may need to be registered first through the Registration page.",
+    answer: "If a property doesn't appear, it may not be registered on DeedBlock yet. Verify your search criteria, check spelling, and try different search parameters. If you believe the property should exist, it may need to be registered first through the Registration page.",
     category: 'search'
   },
 
@@ -177,6 +187,20 @@ const faqs: FAQItem[] = [
 export default function HelpPage() {
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const filteredFAQs = faqs.filter(faq => {
     const matchesSearch = searchQuery === '' ||
@@ -186,7 +210,7 @@ export default function HelpPage() {
   });
 
   return (
-    <main className={lexendDeca.className + " min-h-screen bg-black text-white pt-24 sm:pt-32 pb-20"}>
+    <main className={dmSans.className + " min-h-screen bg-[#FAF9F6] text-black pt-24 sm:pt-32 pb-20"}>
       <div className="px-3 sm:px-6 lg:px-36 max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -195,30 +219,32 @@ export default function HelpPage() {
         >
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8"
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-black transition-colors mb-8"
           >
             <ArrowLeft size={20} />
             <span>Back to Home</span>
           </Link>
 
           <div className="flex items-center gap-3 mb-4">
-            <HelpCircle className="text-white" size={40} />
+            <svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="currentColor" className="text-black">
+              <path d="M424-320q0-81 14.5-116.5T500-514q41-36 62.5-62.5T584-637q0-41-27.5-68T480-732q-51 0-77.5 31T365-638l-103-44q21-64 77-111t141-47q105 0 161.5 58.5T698-641q0 50-21.5 85.5T609-475q-49 47-59.5 71.5T539-320H424Zm56 240q-33 0-56.5-23.5T400-160q0-33 23.5-56.5T480-240q33 0 56.5 23.5T560-160q0 33-23.5 56.5T480-80Z" />
+            </svg>
             <h1 className="text-4xl sm:text-5xl font-light">Help Center</h1>
           </div>
-          <p className="text-gray-400 mb-12 text-lg">
-            Get answers, guides, and support for using TITLEREG.
+          <p className="text-gray-600 mb-12 text-lg">
+            Get answers, guides, and support for using DeedBlock.
           </p>
 
           {/* Search Bar */}
           <div className="mb-12">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-600" size={20} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search for help topics, questions, or keywords..."
-                className="w-full pl-12 pr-4 py-4 bg-gray-900/50 border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 transition-colors"
+                className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:border-black transition-colors"
               />
             </div>
           </div>
@@ -226,18 +252,18 @@ export default function HelpPage() {
           {/* FAQs */}
           <div className="mb-16">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-light text-white">
+              <h2 className="text-2xl font-light text-black">
                 Frequently Asked Questions
               </h2>
               {searchQuery && (
-                <p className="text-gray-400 text-sm">
+                <p className="text-gray-600 text-sm">
                   {filteredFAQs.length} result{filteredFAQs.length !== 1 ? 's' : ''} found
                 </p>
               )}
             </div>
             {filteredFAQs.length === 0 ? (
-              <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 sm:p-12 text-center">
-                <p className="text-gray-400 text-lg mb-2">No results found</p>
+              <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-12 text-center">
+                <p className="text-gray-600 text-lg mb-2">No results found</p>
                 <p className="text-gray-500 text-sm">Try adjusting your search query.</p>
               </div>
             ) : (
@@ -250,17 +276,17 @@ export default function HelpPage() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.02 }}
-                      className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden"
+                      className="bg-white border border-gray-200 rounded-lg overflow-hidden"
                     >
                       <button
                         onClick={() => setOpenFAQ(openFAQ === actualIndex ? null : actualIndex)}
-                        className="w-full text-left p-4 sm:p-6 flex items-center justify-between hover:bg-gray-900/70 transition-colors"
+                        className="w-full text-left p-4 sm:p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
                       >
-                        <span className="text-white font-light pr-2 sm:pr-4 flex-1 text-sm sm:text-base">{faq.question}</span>
+                        <span className="text-black font-light pr-2 sm:pr-4 flex-1 text-sm sm:text-base">{faq.question}</span>
                         {openFAQ === actualIndex ? (
-                          <ChevronUp className="text-gray-400 flex-shrink-0" size={18} />
+                          <ChevronUp className="text-gray-600 flex-shrink-0" size={18} />
                         ) : (
-                          <ChevronDown className="text-gray-400 flex-shrink-0" size={18} />
+                          <ChevronDown className="text-gray-600 flex-shrink-0" size={18} />
                         )}
                       </button>
                       {openFAQ === actualIndex && (
@@ -271,7 +297,7 @@ export default function HelpPage() {
                           transition={{ duration: 0.3 }}
                           className="overflow-hidden"
                         >
-                          <div className="px-4 sm:px-6 pb-4 sm:pb-6 text-gray-300 leading-relaxed whitespace-pre-line text-sm sm:text-base">
+                          <div className="px-4 sm:px-6 pb-4 sm:pb-6 text-gray-700 leading-relaxed whitespace-pre-line text-sm sm:text-base">
                             {faq.answer}
                           </div>
                         </motion.div>
@@ -285,15 +311,15 @@ export default function HelpPage() {
 
           {/* Step-by-Step Guides */}
           <div className="mb-16">
-            <h2 className="text-2xl font-light text-white mb-6">Step-by-Step Guides</h2>
+            <h2 className="text-2xl font-light text-black mb-6">Step-by-Step Guides</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 sm:p-8">
-                <h3 className="text-xl font-light text-white mb-6 pb-4 border-b border-gray-800">
+              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-8">
+                <h3 className="text-xl font-light text-black mb-6 pb-4 border-b border-gray-200">
                   Property Registration Guide
                 </h3>
-                <ol className="list-decimal list-inside space-y-3 text-gray-300">
+                <ol className="list-decimal list-inside space-y-3 text-gray-700">
                   <li>Install and set up a Solana-compatible wallet (Phantom, Solflare, etc.)</li>
-                  <li>Connect your wallet to TITLEREG using the Connect button</li>
+                  <li>Connect your wallet to DeedBlock using the Connect button</li>
                   <li>Navigate to the Registration page</li>
                   <li>Fill in property details (survey number, plot number, location, area)</li>
                   <li>Enter transaction details (type, amount, stamp duty, dates)</li>
@@ -305,11 +331,11 @@ export default function HelpPage() {
                   <li>Wait for confirmation and save your registration ID</li>
                 </ol>
               </div>
-              <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 sm:p-8">
-                <h3 className="text-xl font-light text-white mb-6 pb-4 border-b border-gray-800">
+              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-8">
+                <h3 className="text-xl font-light text-black mb-6 pb-4 border-b border-gray-200">
                   Property Search & Verification Guide
                 </h3>
-                <ol className="list-decimal list-inside space-y-3 text-gray-300">
+                <ol className="list-decimal list-inside space-y-3 text-gray-700">
                   <li>Navigate to the Search page (wallet connection optional)</li>
                   <li>Select your search parameter (Registration ID, Survey No., Plot No., Owner Name, or Location)</li>
                   <li>Enter your search criteria accurately</li>
@@ -327,11 +353,11 @@ export default function HelpPage() {
 
           {/* Troubleshooting */}
           <div className="mb-16">
-            <h2 className="text-2xl font-light text-white mb-6">Troubleshooting Common Issues</h2>
+            <h2 className="text-2xl font-light text-black mb-6">Troubleshooting Common Issues</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 sm:p-6">
-                <h3 className="text-lg font-light text-white mb-4 pb-2 border-b border-gray-800">Wallet Connection Issues</h3>
-                <ul className="list-disc list-inside space-y-2 text-gray-300">
+              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+                <h3 className="text-lg font-light text-black mb-4 pb-2 border-b border-gray-200">Wallet Connection Issues</h3>
+                <ul className="list-disc list-inside space-y-2 text-gray-700">
                   <li>Ensure your wallet extension is installed and updated to the latest version</li>
                   <li>Make sure your wallet is unlocked before attempting to connect</li>
                   <li>Try disconnecting and reconnecting your wallet</li>
@@ -341,9 +367,9 @@ export default function HelpPage() {
                   <li>Ensure browser extensions aren&apos;t blocking wallet connections</li>
                 </ul>
               </div>
-              <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 sm:p-6">
-                <h3 className="text-lg font-light text-white mb-4 pb-2 border-b border-gray-800">Transaction Failed</h3>
-                <ul className="list-disc list-inside space-y-2 text-gray-300">
+              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+                <h3 className="text-lg font-light text-black mb-4 pb-2 border-b border-gray-200">Transaction Failed</h3>
+                <ul className="list-disc list-inside space-y-2 text-gray-700">
                   <li>Check if you have sufficient SOL in your wallet for transaction fees</li>
                   <li>Verify your internet connection is stable and strong</li>
                   <li>Wait for network congestion to clear (check Solana network status)</li>
@@ -353,9 +379,9 @@ export default function HelpPage() {
                   <li>Check wallet logs for specific error messages</li>
                 </ul>
               </div>
-              <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 sm:p-6">
-                <h3 className="text-lg font-light text-white mb-4 pb-2 border-b border-gray-800">Search Not Finding Results</h3>
-                <ul className="list-disc list-inside space-y-2 text-gray-300">
+              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+                <h3 className="text-lg font-light text-black mb-4 pb-2 border-b border-gray-200">Search Not Finding Results</h3>
+                <ul className="list-disc list-inside space-y-2 text-gray-700">
                   <li>Double-check spelling and formatting of search terms</li>
                   <li>Try different search parameters (e.g., use Survey No. instead of Plot No.)</li>
                   <li>Verify the property is registered on the platform</li>
@@ -365,9 +391,9 @@ export default function HelpPage() {
                   <li>Contact support if you believe the property should exist</li>
                 </ul>
               </div>
-              <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 sm:p-6">
-                <h3 className="text-lg font-light text-white mb-4 pb-2 border-b border-gray-800">Document Upload Issues</h3>
-                <ul className="list-disc list-inside space-y-2 text-gray-300">
+              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+                <h3 className="text-lg font-light text-black mb-4 pb-2 border-b border-gray-200">Document Upload Issues</h3>
+                <ul className="list-disc list-inside space-y-2 text-gray-700">
                   <li>Ensure all documents are in PDF format</li>
                   <li>Check file size (recommended under 4MB per file)</li>
                   <li>Verify documents are not password-protected</li>
@@ -382,32 +408,32 @@ export default function HelpPage() {
 
           {/* Additional Resources */}
           <div className="mb-16">
-            <h2 className="text-2xl font-light text-white mb-6">Additional Resources</h2>
+            <h2 className="text-2xl font-light text-black mb-6">Additional Resources</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 sm:p-6">
-                <h3 className="text-lg font-light text-white mb-3">Document Requirements</h3>
-                <p className="text-gray-300 text-sm mb-4 leading-relaxed">
+              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+                <h3 className="text-lg font-light text-black mb-3">Document Requirements</h3>
+                <p className="text-gray-700 text-sm mb-4 leading-relaxed">
                   Learn about all required documents for property registration, their formats, and verification standards.
                 </p>
-                <Link href="/registration" className="text-white underline text-sm hover:text-gray-300">
+                <Link href="/registration" className="text-black underline text-sm hover:text-gray-700">
                   View Registration Page →
                 </Link>
               </div>
-              <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 sm:p-6">
-                <h3 className="text-lg font-light text-white mb-3">Legal Information</h3>
-                <p className="text-gray-300 text-sm mb-4 leading-relaxed">
-                  Understand the legal framework, compliance requirements, and how TITLEREG aligns with Indian property laws.
+              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+                <h3 className="text-lg font-light text-black mb-3">Legal Information</h3>
+                <p className="text-gray-700 text-sm mb-4 leading-relaxed">
+                  Understand the legal framework, compliance requirements, and how DeedBlock aligns with Indian property laws.
                 </p>
-                <Link href="/terms" className="text-white underline text-sm hover:text-gray-300">
+                <Link href="/terms" className="text-black underline text-sm hover:text-gray-700">
                   Read Terms & Conditions →
                 </Link>
               </div>
-              <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 sm:p-6">
-                <h3 className="text-lg font-light text-white mb-3">Privacy & Security</h3>
-                <p className="text-gray-300 text-sm mb-4 leading-relaxed">
+              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+                <h3 className="text-lg font-light text-black mb-3">Privacy & Security</h3>
+                <p className="text-gray-700 text-sm mb-4 leading-relaxed">
                   Learn how we protect your data and maintain privacy while ensuring blockchain transparency.
                 </p>
-                <Link href="/privacy" className="text-white underline text-sm hover:text-gray-300">
+                <Link href="/privacy" className="text-black underline text-sm hover:text-gray-700">
                   View Privacy Policy →
                 </Link>
               </div>
@@ -416,6 +442,20 @@ export default function HelpPage() {
 
         </motion.div>
       </div>
+
+      {/* Back to Top Button */}
+      {showScrollTop && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 bg-black text-white p-3 rounded-full shadow-lg hover:bg-gray-800 transition-colors z-50"
+          aria-label="Back to top"
+        >
+          <ArrowUp size={24} />
+        </motion.button>
+      )}
     </main>
   );
 }

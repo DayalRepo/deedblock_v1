@@ -11,13 +11,10 @@ export default function Header() {
       <div className="header-container">
         <div className="logo-container">
           <Link href="/" className="logo-link">
-            <Image
-              src="/logo.jpg"
+            <img
+              src="/logo2.png"
               alt="Logo"
-              width={120}
-              height={120}
               className="logo-image"
-              priority
             />
           </Link>
         </div>

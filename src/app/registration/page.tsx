@@ -3,17 +3,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { ChevronRight, ChevronLeft, FileText, CheckCircle, X, ChevronDown, AlertCircle, Loader2, Search, Plus, Trash2, Copy, Check, QrCode, Clock } from 'lucide-react';
+import { ChevronRight, ChevronLeft, FileText, CheckCircle, X, ChevronDown, AlertCircle, Loader2, Search, Plus, Trash2, Copy, Check, QrCode, Clock, Eye } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Lexend_Deca } from 'next/font/google';
 import { saveDraft, getDraft, deleteDraft, saveRegistration, type RegistrationData } from '@/lib/supabase/database';
 import { uploadFileToIPFS, uploadFilesToIPFS } from '@/lib/ipfs/pinata';
 import { initializeRegistrationOnSolana } from '@/lib/solana/contract';
-
-const lexendDeca = Lexend_Deca({
-  subsets: ["latin"],
-  weight: ["300", "400", "500"],
-});
 
 
 interface FormData {
@@ -248,12 +242,12 @@ function AnimatedSelect({ value, onChange, options, placeholder = 'Select...', c
           setIsOpen(!isOpen);
           setSearchQuery('');
         }}
-        className="w-full bg-black border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 flex items-center justify-between transition-colors"
+        className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black flex items-center justify-between transition-colors"
       >
-        <span className={value ? 'text-white' : 'text-gray-400'}>{selectedLabel}</span>
+        <span className={value ? 'text-black' : 'text-gray-500'}>{selectedLabel}</span>
         <ChevronDown
           size={18}
-          className={`text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+          className={`text-gray-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -264,19 +258,19 @@ function AnimatedSelect({ value, onChange, options, placeholder = 'Select...', c
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.25, ease: 'easeInOut' }}
-            className="absolute z-50 w-full mt-2 bg-black border border-gray-800 rounded-lg shadow-lg overflow-hidden"
+            className="absolute z-50 w-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden"
           >
             {searchable && (
-              <div className="p-2 border-b border-dashed border-gray-800">
+              <div className="p-2 border-b border-dashed border-gray-300">
                 <div className="relative">
-                  <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                   <input
                     ref={searchInputRef}
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onClick={(e) => e.stopPropagation()}
-                    className="w-full bg-black/40 border border-gray-700 rounded-lg pl-10 pr-3 py-2 text-white text-sm focus:outline-none focus:border-gray-600"
+                    className="w-full bg-gray-50 border border-gray-300 rounded-lg pl-10 pr-3 py-2 text-black text-sm focus:outline-none focus:border-black"
                     placeholder="Search..."
                   />
                 </div>
@@ -294,18 +288,18 @@ function AnimatedSelect({ value, onChange, options, placeholder = 'Select...', c
                         setIsOpen(false);
                         setSearchQuery('');
                       }}
-                      className={`w-full text-left px-4 py-3 text-white hover:bg-gray-900 transition-colors ${value === option.value ? 'bg-gray-900' : ''
+                      className={`w-full text-left px-4 py-3 text-black hover:bg-gray-100 transition-colors ${value === option.value ? 'bg-gray-100' : ''
                         }`}
                     >
                       {option.label}
                     </button>
                     {index < filteredOptions.length - 1 && (
-                      <div className="mx-4 border-t border-dashed border-gray-800" />
+                      <div className="mx-4 border-t border-dashed border-gray-300" />
                     )}
                   </div>
                 ))
               ) : (
-                <div className="px-4 py-6 text-center text-gray-400 text-sm">
+                <div className="px-4 py-6 text-center text-gray-500 text-sm">
                   No results found
                 </div>
               )}
@@ -564,10 +558,23 @@ export default function RegistrationPage() {
     return () => clearTimeout(saveTimeout);
   }, [formData, currentStep, formTimeElapsed, formStartTime, connected, publicKey]);
 
+  // Sync timer when wallet connection changes
+  useEffect(() => {
+    // When wallet connects (and we have elapsed time), resume from where we left off
+    if (connected && formTimeElapsed > 0) {
+      // Adjust start time so that (Now - Start) equals the saved elapsed time
+      setFormStartTime(Date.now() - formTimeElapsed);
+    } else if (connected && formTimeElapsed === 0) {
+      // New session or reset
+      setFormStartTime(Date.now());
+    }
+    // When wallet disconnects, we just stop the interval (handled by the next effect),
+    // and formTimeElapsed holds the last value.
+  }, [connected]);
+
   // Timer effect to track form completion time - only when wallet is connected
   useEffect(() => {
     if (!connected) {
-      // Pause timer when wallet is disconnected
       return;
     }
 
@@ -1099,9 +1106,14 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
         if (!formData.transactionType) newErrors.transactionType = 'Transaction type is required';
         if (!formData.saleAgreementDate) newErrors.saleAgreementDate = 'Sale agreement date is required';
         if (formData.saleAgreementDate) {
-          const selectedDate = new Date(formData.saleAgreementDate);
+          // Parse the date string (YYYY-MM-DD) manually to create a local date object at midnight
+          const [year, month, day] = formData.saleAgreementDate.split('-').map(Number);
+          const selectedDate = new Date(year, month - 1, day);
+          selectedDate.setHours(0, 0, 0, 0);
+
           const today = new Date();
           today.setHours(0, 0, 0, 0);
+
           if (selectedDate > today) {
             newErrors.saleAgreementDate = 'Date cannot be in the future';
           }
@@ -1332,7 +1344,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
   useEffect(() => {
     if (submitSuccess) {
       // Start countdown when submission succeeds
-      setCountdown(15);
+      setCountdown(60);
     } else {
       // Reset countdown when modal closes
       setCountdown(0);
@@ -1769,24 +1781,26 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
       case 1:
         return (
           <div className="space-y-4 sm:space-y-6">
-            <h2 className={`${lexendDeca.className} text-xl sm:text-2xl font-medium mb-4 sm:mb-6`}>Property Details</h2>
+            <h2 className={` text-xl sm:text-2xl font-medium mb-4 sm:mb-6`}>Property Details</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div>
-                <label className="block text-sm text-white mb-2">Property Type *</label>
-                <AnimatedSelect
-                  value={formData.propertyType}
-                  onChange={(value) => handleInputChange('propertyType', value)}
-                  placeholder="Select Property Type"
-                  options={[
-                    { value: 'residential', label: 'Residential Land' },
-                    { value: 'commercial', label: 'Commercial Land' },
-                    { value: 'agricultural', label: 'Agricultural Land' },
-                    { value: 'industrial', label: 'Industrial Land' },
-                    { value: 'plot', label: 'Plot' },
-                    { value: 'house', label: 'House/Flat' },
-                  ]}
-                />
+                <label className="block text-sm text-black mb-2">Property Type *</label>
+                <div className="relative">
+                  <AnimatedSelect
+                    value={formData.propertyType}
+                    onChange={(value) => handleInputChange('propertyType', value)}
+                    placeholder="Select Property Type"
+                    options={[
+                      { value: 'residential', label: 'Residential Land' },
+                      { value: 'commercial', label: 'Commercial Land' },
+                      { value: 'agricultural', label: 'Agricultural Land' },
+                      { value: 'industrial', label: 'Industrial Land' },
+                      { value: 'plot', label: 'Plot' },
+                      { value: 'house', label: 'House/Flat' },
+                    ]}
+                  />
+                </div>
                 {errors.propertyType && (
                   <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
                     <AlertCircle size={14} />
@@ -1796,12 +1810,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Survey Number *</label>
+                <label className="block text-sm text-black mb-2">Survey Number *</label>
                 <input
                   type="text"
                   value={formData.surveyNumber}
                   onChange={(e) => handleInputChange('surveyNumber', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.surveyNumber ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.surveyNumber ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter Survey Number"
                 />
@@ -1814,39 +1828,41 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Plot Number</label>
+                <label className="block text-sm text-black mb-2">Plot Number</label>
                 <input
                   type="text"
                   value={formData.plotNumber}
                   onChange={(e) => handleInputChange('plotNumber', e.target.value)}
-                  className="w-full bg-black/40 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600"
+                  className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black"
                   placeholder="Enter Plot Number"
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Area *</label>
-                <div className="flex gap-2 flex-nowrap">
+                <label className="block text-sm text-black mb-2">Area *</label>
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="number"
                     value={formData.area}
                     onChange={(e) => handleInputChange('area', e.target.value)}
-                    className={`flex-1 min-w-0 bg-black/40 border rounded-lg px-3 sm:px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.area ? 'border-red-500' : 'border-gray-700'
+                    className={`flex-1 min-w-0 bg-white border rounded-lg px-3 sm:px-4 py-3 text-black focus:outline-none focus:border-black ${errors.area ? 'border-red-500' : 'border-gray-300'
                       }`}
                     placeholder="Enter Area"
                   />
-                  <AnimatedSelect
-                    value={formData.areaUnit}
-                    onChange={(value) => handleInputChange('areaUnit', value)}
-                    placeholder="Unit"
-                    className="w-20 sm:w-24 flex-shrink-0"
-                    options={[
-                      { value: 'sqft', label: 'Sqft' },
-                      { value: 'sqmt', label: 'Sqmt' },
-                      { value: 'acre', label: 'Acre' },
-                      { value: 'hectare', label: 'Hectare' },
-                    ]}
-                  />
+                  <div className="w-full sm:w-28">
+                    <AnimatedSelect
+                      value={formData.areaUnit}
+                      onChange={(value) => handleInputChange('areaUnit', value)}
+                      placeholder="Unit"
+                      className="w-full"
+                      options={[
+                        { value: 'sqft', label: 'Sqft' },
+                        { value: 'sqmt', label: 'Sqmt' },
+                        { value: 'acre', label: 'Acre' },
+                        { value: 'hectare', label: 'Hectare' },
+                      ]}
+                    />
+                  </div>
                 </div>
                 {errors.area && (
                   <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
@@ -1857,12 +1873,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Village/Town *</label>
+                <label className="block text-sm text-black mb-2">Village/Town *</label>
                 <input
                   type="text"
                   value={formData.village}
                   onChange={(e) => handleInputChange('village', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.village ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.village ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter Village/Town"
                 />
@@ -1875,12 +1891,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Taluka *</label>
+                <label className="block text-sm text-black mb-2">Taluka *</label>
                 <input
                   type="text"
                   value={formData.taluka}
                   onChange={(e) => handleInputChange('taluka', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.taluka ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.taluka ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter Taluka"
                 />
@@ -1893,12 +1909,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">District *</label>
+                <label className="block text-sm text-black mb-2">District *</label>
                 <input
                   type="text"
                   value={formData.district}
                   onChange={(e) => handleInputChange('district', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.district ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.district ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter District"
                 />
@@ -1911,7 +1927,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">State *</label>
+                <label className="block text-sm text-black mb-2">State *</label>
                 <AnimatedSelect
                   value={formData.state}
                   onChange={(value) => handleInputChange('state', value)}
@@ -1928,12 +1944,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">PIN Code *</label>
+                <label className="block text-sm text-black mb-2">PIN Code *</label>
                 <input
                   type="text"
                   value={formData.pincode}
                   onChange={(e) => handleInputChange('pincode', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.pincode ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.pincode ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter PIN Code"
                   maxLength={6}
@@ -1948,11 +1964,11 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
             </div>
 
             <div>
-              <label className="block text-sm text-white mb-2">Property Description</label>
+              <label className="block text-sm text-black mb-2">Property Description</label>
               <textarea
                 value={formData.propertyDescription}
                 onChange={(e) => handleInputChange('propertyDescription', e.target.value)}
-                className="w-full bg-black/40 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 h-32 resize-none"
+                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black h-32 resize-none"
                 placeholder="Enter property description and boundaries..."
               />
             </div>
@@ -1962,11 +1978,11 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
       case 2:
         return (
           <div className="space-y-4 sm:space-y-6">
-            <h2 className={`${lexendDeca.className} text-xl sm:text-2xl font-medium mb-4 sm:mb-6`}>Transaction Details</h2>
+            <h2 className={` text-xl sm:text-2xl font-medium mb-4 sm:mb-6`}>Transaction Details</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div>
-                <label className="block text-sm text-white mb-2">Transaction Type *</label>
+                <label className="block text-sm text-black mb-2">Transaction Type *</label>
                 <AnimatedSelect
                   value={formData.transactionType}
                   onChange={(value) => handleInputChange('transactionType', value)}
@@ -1989,12 +2005,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Sale Agreement Date *</label>
+                <label className="block text-sm text-black mb-2">Sale Agreement Date *</label>
                 <input
                   type="date"
                   value={formData.saleAgreementDate}
                   onChange={(e) => handleInputChange('saleAgreementDate', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.saleAgreementDate ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.saleAgreementDate ? 'border-red-500' : 'border-gray-300'
                     }`}
                 />
                 {errors.saleAgreementDate && (
@@ -2006,12 +2022,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Consideration Amount (₹) *</label>
+                <label className="block text-sm text-black mb-2">Consideration Amount (₹) *</label>
                 <input
                   type="number"
                   value={formData.considerationAmount}
                   onChange={(e) => handleInputChange('considerationAmount', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.considerationAmount ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.considerationAmount ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter consideration amount"
                 />
@@ -2024,23 +2040,23 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Stamp Duty (₹) *</label>
+                <label className="block text-sm text-black mb-2">Stamp Duty (₹) *</label>
                 <input
                   type="number"
                   value={formData.stampDuty}
                   onChange={(e) => handleInputChange('stampDuty', e.target.value)}
-                  className="w-full bg-black/40 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600"
+                  className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black"
                   placeholder="Enter stamp duty amount"
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Registration Fee (₹) *</label>
+                <label className="block text-sm text-black mb-2">Registration Fee (₹) *</label>
                 <input
                   type="number"
                   value={formData.registrationFee}
                   onChange={(e) => handleInputChange('registrationFee', e.target.value)}
-                  className="w-full bg-black/40 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600"
+                  className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black"
                   placeholder="Enter registration fee"
                 />
               </div>
@@ -2051,16 +2067,16 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
       case 3:
         return (
           <div className="space-y-4 sm:space-y-6">
-            <h2 className={`${lexendDeca.className} text-xl sm:text-2xl font-medium mb-4 sm:mb-6`}>Seller Information</h2>
+            <h2 className={` text-xl sm:text-2xl font-medium mb-4 sm:mb-6`}>Seller Information</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div>
-                <label className="block text-sm text-white mb-2">Seller Name *</label>
+                <label className="block text-sm text-black mb-2">Seller Name *</label>
                 <input
                   type="text"
                   value={formData.sellerName}
                   onChange={(e) => handleInputChange('sellerName', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.sellerName ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.sellerName ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter seller full name"
                 />
@@ -2073,12 +2089,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Father&apos;s/Husband&apos;s Name *</label>
+                <label className="block text-sm text-black mb-2">Father&apos;s/Husband&apos;s Name *</label>
                 <input
                   type="text"
                   value={formData.sellerFatherName}
                   onChange={(e) => handleInputChange('sellerFatherName', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.sellerFatherName ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.sellerFatherName ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter father&apos;s/husband&apos;s name"
                 />
@@ -2091,12 +2107,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Age *</label>
+                <label className="block text-sm text-black mb-2">Age *</label>
                 <input
                   type="number"
                   value={formData.sellerAge}
                   onChange={(e) => handleInputChange('sellerAge', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.sellerAge ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.sellerAge ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter age"
                 />
@@ -2109,12 +2125,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Aadhar Number *</label>
+                <label className="block text-sm text-black mb-2">Aadhar Number *</label>
                 <input
                   type="text"
                   value={formData.sellerAadhar}
                   onChange={(e) => handleInputChange('sellerAadhar', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.sellerAadhar ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.sellerAadhar ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter 12-digit Aadhar number"
                   maxLength={12}
@@ -2128,12 +2144,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">PAN Number *</label>
+                <label className="block text-sm text-black mb-2">PAN Number *</label>
                 <input
                   type="text"
                   value={formData.sellerPan}
                   onChange={(e) => handleInputChange('sellerPan', e.target.value.toUpperCase())}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.sellerPan ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.sellerPan ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter PAN number"
                   maxLength={10}
@@ -2147,12 +2163,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Phone Number *</label>
+                <label className="block text-sm text-black mb-2">Phone Number *</label>
                 <input
                   type="tel"
                   value={formData.sellerPhone}
                   onChange={(e) => handleInputChange('sellerPhone', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.sellerPhone ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.sellerPhone ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter 10-digit phone number"
                   maxLength={10}
@@ -2166,12 +2182,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Email Address</label>
+                <label className="block text-sm text-black mb-2">Email Address</label>
                 <input
                   type="email"
                   value={formData.sellerEmail}
                   onChange={(e) => handleInputChange('sellerEmail', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.sellerEmail ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.sellerEmail ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter email address"
                 />
@@ -2184,11 +2200,11 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm text-white mb-2">Address *</label>
+                <label className="block text-sm text-black mb-2">Address *</label>
                 <textarea
                   value={formData.sellerAddress}
                   onChange={(e) => handleInputChange('sellerAddress', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 h-24 resize-none ${errors.sellerAddress ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black h-24 resize-none ${errors.sellerAddress ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter complete address"
                 />
@@ -2206,16 +2222,16 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
       case 4:
         return (
           <div className="space-y-4 sm:space-y-6">
-            <h2 className={`${lexendDeca.className} text-xl sm:text-2xl font-medium mb-4 sm:mb-6`}>Buyer Information</h2>
+            <h2 className={` text-xl sm:text-2xl font-medium mb-4 sm:mb-6`}>Buyer Information</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div>
-                <label className="block text-sm text-white mb-2">Buyer Name *</label>
+                <label className="block text-sm text-black mb-2">Buyer Name *</label>
                 <input
                   type="text"
                   value={formData.buyerName}
                   onChange={(e) => handleInputChange('buyerName', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.buyerName ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.buyerName ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter buyer full name"
                 />
@@ -2228,12 +2244,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Father&apos;s/Husband&apos;s Name *</label>
+                <label className="block text-sm text-black mb-2">Father&apos;s/Husband&apos;s Name *</label>
                 <input
                   type="text"
                   value={formData.buyerFatherName}
                   onChange={(e) => handleInputChange('buyerFatherName', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.buyerFatherName ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.buyerFatherName ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter father&apos;s/husband&apos;s name"
                 />
@@ -2246,12 +2262,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Age *</label>
+                <label className="block text-sm text-black mb-2">Age *</label>
                 <input
                   type="number"
                   value={formData.buyerAge}
                   onChange={(e) => handleInputChange('buyerAge', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.buyerAge ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.buyerAge ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter age"
                 />
@@ -2264,12 +2280,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Aadhar Number *</label>
+                <label className="block text-sm text-black mb-2">Aadhar Number *</label>
                 <input
                   type="text"
                   value={formData.buyerAadhar}
                   onChange={(e) => handleInputChange('buyerAadhar', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.buyerAadhar ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.buyerAadhar ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter 12-digit Aadhar number"
                   maxLength={12}
@@ -2283,12 +2299,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">PAN Number *</label>
+                <label className="block text-sm text-black mb-2">PAN Number *</label>
                 <input
                   type="text"
                   value={formData.buyerPan}
                   onChange={(e) => handleInputChange('buyerPan', e.target.value.toUpperCase())}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.buyerPan ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.buyerPan ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter PAN number"
                   maxLength={10}
@@ -2302,12 +2318,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Phone Number *</label>
+                <label className="block text-sm text-black mb-2">Phone Number *</label>
                 <input
                   type="tel"
                   value={formData.buyerPhone}
                   onChange={(e) => handleInputChange('buyerPhone', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.buyerPhone ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.buyerPhone ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter 10-digit phone number"
                   maxLength={10}
@@ -2321,12 +2337,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div>
-                <label className="block text-sm text-white mb-2">Email Address</label>
+                <label className="block text-sm text-black mb-2">Email Address</label>
                 <input
                   type="email"
                   value={formData.buyerEmail}
                   onChange={(e) => handleInputChange('buyerEmail', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors.buyerEmail ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors.buyerEmail ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter email address"
                 />
@@ -2339,11 +2355,11 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm text-white mb-2">Address *</label>
+                <label className="block text-sm text-black mb-2">Address *</label>
                 <textarea
                   value={formData.buyerAddress}
                   onChange={(e) => handleInputChange('buyerAddress', e.target.value)}
-                  className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 h-24 resize-none ${errors.buyerAddress ? 'border-red-500' : 'border-gray-700'
+                  className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black h-24 resize-none ${errors.buyerAddress ? 'border-red-500' : 'border-gray-300'
                     }`}
                   placeholder="Enter complete address"
                 />
@@ -2361,11 +2377,11 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
       case 5:
         return (
           <div className="space-y-4 sm:space-y-6">
-            <h2 className={`${lexendDeca.className} text-xl sm:text-2xl font-medium mb-4 sm:mb-6`}>Upload Documents & Photos</h2>
+            <h2 className={` text-xl sm:text-2xl font-medium mb-4 sm:mb-6`}>Upload Documents & Photos</h2>
 
             <div className="space-y-4 sm:space-y-6">
               <div>
-                <h3 className={`${lexendDeca.className} text-lg font-medium mb-4`}>Required Documents</h3>
+                <h3 className={` text-lg font-medium mb-4`}>Required Documents</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   {[
                     { key: 'saleDeed', label: 'Sale Deed *', accept: '.pdf,.jpg,.jpeg,.png' },
@@ -2377,7 +2393,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                     { key: 'pan', label: 'PAN Card (Buyer & Seller) *', accept: '.pdf,.jpg,.jpeg,.png' },
                   ].map(({ key, label, accept }) => (
                     <div key={key} className="space-y-2">
-                      <label className="block text-sm text-white">{label}</label>
+                      <label className="block text-sm text-black">{label}</label>
                       <div className="relative">
                         <input
                           type="file"
@@ -2398,11 +2414,11 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                         />
                         <label
                           htmlFor={`file-${key}`}
-                          className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-black/40 border rounded-lg cursor-pointer hover:border-gray-600 transition-colors ${errors[key] ? 'border-red-500' : 'border-gray-700'
+                          className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-white border rounded-lg cursor-pointer hover:border-black transition-colors ${errors[key] ? 'border-red-500' : 'border-gray-300'
                             }`}
                         >
-                          <UploadIcon className="text-gray-400" />
-                          <span className="text-sm text-gray-300 flex-1">
+                          <UploadIcon className="text-gray-500" />
+                          <span className="text-sm text-gray-600 flex-1">
                             {formData.documents[key as keyof FormData['documents']]
                               ? formData.documents[key as keyof FormData['documents']]?.name
                               : 'Click to upload'}
@@ -2415,14 +2431,14 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                                 e.stopPropagation();
                                 previewDocument(key, formData.documents[key as keyof FormData['documents']]!);
                               }}
-                              className="p-1.5 text-gray-400 hover:text-white transition-colors rounded flex items-center justify-center"
+                              className="p-1.5 text-gray-500 hover:text-black transition-colors rounded flex items-center justify-center"
                               title="Preview"
                             >
                               <span className="material-symbols-outlined text-[16px]">eye_tracking</span>
                             </button>
                             <button
                               onClick={() => handleFileUpload(key as keyof FormData['documents'], null)}
-                              className="p-1.5 text-gray-400 hover:text-white transition-colors rounded flex items-center justify-center"
+                              className="p-1.5 text-gray-500 hover:text-black transition-colors rounded flex items-center justify-center"
                               title="Remove"
                             >
                               <CloseIcon className="text-current" />
@@ -2441,9 +2457,9 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                 </div>
               </div>
 
-              <div className="border-t border-gray-700 pt-6 hidden sm:block">
-                <h3 className={`${lexendDeca.className} text-lg font-medium mb-4`}>Property Photos</h3>
-                <p className="text-sm text-white/80 mb-4">Upload up to 10 photos of the property (Optional)</p>
+              <div className="border-t border-gray-300 pt-6">
+                <h3 className={` text-lg font-medium mb-4 text-black`}>Property Photos</h3>
+                <p className="text-sm text-gray-600 mb-4">Upload up to 10 photos of the property (Optional)</p>
 
                 <div className="mb-4">
                   <input
@@ -2456,10 +2472,10 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                   />
                   <label
                     htmlFor="property-photos"
-                    className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-black/40 border border-gray-700 rounded-lg cursor-pointer hover:border-gray-600 transition-colors"
+                    className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-white border border-gray-300 rounded-lg cursor-pointer hover:border-black transition-colors"
                   >
-                    <PropertyPhotosIcon className="text-gray-400" />
-                    <span className="text-sm text-gray-300">Click to upload photos</span>
+                    <PropertyPhotosIcon className="text-gray-500" />
+                    <span className="text-sm text-gray-600">Click to upload photos</span>
                   </label>
                 </div>
 
@@ -2477,7 +2493,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                           <img
                             src={photoUrl}
                             alt={`Property photo ${index + 1}`}
-                            className="w-full h-32 object-cover rounded-lg border border-gray-700"
+                            className="w-full h-32 object-cover rounded-lg border border-gray-300"
                             onError={(e) => {
                               // Try to recreate URL if it failed
                               const newUrl = URL.createObjectURL(photo);
@@ -2487,10 +2503,10 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                           />
                           <button
                             onClick={() => removePhoto(index)}
-                            className="absolute top-2 right-2 p-1.5 bg-black/60 border border-gray-600 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
+                            className="absolute top-2 right-2 p-1.5 bg-white/80 border border-gray-300 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
                             title="Remove"
                           >
-                            <CloseIcon className="text-white" />
+                            <CloseIcon className="text-black" />
                           </button>
                         </div>
                       );
@@ -2505,11 +2521,11 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
       case 6:
         return (
           <div className="space-y-4 sm:space-y-6">
-            <div className="flex items-center justify-between mb-4 sm:mb-6 flex-wrap gap-3">
-              <h2 className={`${lexendDeca.className} text-xl sm:text-2xl font-medium`}>Witness Information</h2>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3">
+              <h2 className={`text-xl sm:text-2xl font-medium text-black`}>Witness Information</h2>
               <button
                 onClick={addWitness}
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors text-sm"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-gray-100 text-black border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors text-sm"
               >
                 <Plus size={16} />
                 <span className="hidden sm:inline">Add Witness</span>
@@ -2519,9 +2535,9 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
 
             <div className="space-y-4 sm:space-y-6">
               {formData.witnesses.map((witness, index) => (
-                <div key={index} className="bg-black/40 border border-gray-700 rounded-lg p-4 sm:p-6">
+                <div key={index} className="bg-white border border-gray-300 rounded-lg p-4 sm:p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className={`${lexendDeca.className} text-lg font-medium`}>Witness {index + 1}</h3>
+                    <h3 className={` text-lg font-medium text-black`}>Witness {index + 1}</h3>
                     {formData.witnesses.length > 1 && (
                       <button
                         onClick={() => removeWitness(index)}
@@ -2534,7 +2550,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                     <div>
-                      <label className="block text-sm text-white mb-2">Name *</label>
+                      <label className="block text-sm text-black mb-2">Name *</label>
                       <input
                         type="text"
                         value={witness.name}
@@ -2548,7 +2564,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                             });
                           }
                         }}
-                        className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors[`witness${index}name`] ? 'border-red-500' : 'border-gray-700'
+                        className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors[`witness${index}name`] ? 'border-red-500' : 'border-gray-300'
                           }`}
                         placeholder="Enter witness name"
                       />
@@ -2561,7 +2577,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                     </div>
 
                     <div>
-                      <label className="block text-sm text-white mb-2">Aadhar Number *</label>
+                      <label className="block text-sm text-black mb-2">Aadhar Number *</label>
                       <input
                         type="text"
                         value={witness.aadhar}
@@ -2577,7 +2593,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                             });
                           }
                         }}
-                        className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors[`witness${index}aadhar`] ? 'border-red-500' : 'border-gray-700'
+                        className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors[`witness${index}aadhar`] ? 'border-red-500' : 'border-gray-300'
                           }`}
                         placeholder="Enter 12-digit Aadhar"
                         maxLength={12}
@@ -2591,7 +2607,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                     </div>
 
                     <div>
-                      <label className="block text-sm text-white mb-2">Phone Number *</label>
+                      <label className="block text-sm text-black mb-2">Phone Number *</label>
                       <input
                         type="tel"
                         value={witness.phone}
@@ -2607,7 +2623,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                             });
                           }
                         }}
-                        className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 ${errors[`witness${index}phone`] ? 'border-red-500' : 'border-gray-700'
+                        className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black ${errors[`witness${index}phone`] ? 'border-red-500' : 'border-gray-300'
                           }`}
                         placeholder="Enter 10-digit phone"
                         maxLength={10}
@@ -2621,7 +2637,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                     </div>
 
                     <div className="md:col-span-2">
-                      <label className="block text-sm text-white mb-2">Address *</label>
+                      <label className="block text-sm text-black mb-2">Address *</label>
                       <textarea
                         value={witness.address}
                         onChange={(e) => {
@@ -2634,7 +2650,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                             });
                           }
                         }}
-                        className={`w-full bg-black/40 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gray-600 h-24 resize-none ${errors[`witness${index}address`] ? 'border-red-500' : 'border-gray-700'
+                        className={`w-full bg-white border rounded-lg px-4 py-3 text-black focus:outline-none focus:border-black h-24 resize-none ${errors[`witness${index}address`] ? 'border-red-500' : 'border-gray-300'
                           }`}
                         placeholder="Enter complete address"
                       />
@@ -2656,11 +2672,11 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
         return (
           <div className="space-y-4 sm:space-y-6">
             <div className="flex items-center justify-between mb-4 sm:mb-6 flex-wrap gap-3">
-              <h2 className={`${lexendDeca.className} text-xl sm:text-2xl font-medium`}>Review & Submit</h2>
+              <h2 className={` text-xl sm:text-2xl font-medium text-black`}>Review & Submit</h2>
               <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                 <button
                   onClick={() => setShowDocumentValidation(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors text-sm"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-black border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors text-sm"
                   title="Validate Documents"
                 >
                   <ValidateIcon className="w-4 h-4" />
@@ -2668,7 +2684,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                 </button>
                 <button
                   onClick={downloadSummary}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors text-sm"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-100 text-black border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors text-sm"
                 >
                   <DownloadSummaryIcon className="text-current w-4 h-4" />
                   <span className="hidden sm:inline">Download Summary</span>
@@ -2676,53 +2692,53 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
             </div>
 
-            <div className="space-y-6 bg-black/40 border border-gray-700 rounded-lg p-6">
+            <div className="space-y-6 bg-white border border-gray-300 rounded-lg p-6">
               <div>
-                <h3 className={`${lexendDeca.className} text-lg font-medium mb-4`}>Property Details</h3>
+                <h3 className={` text-lg font-medium mb-4 text-black`}>Property Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div><span className="text-white/80">Type:</span> <span className="ml-2 text-white">{formData.propertyType || 'N/A'}</span></div>
-                  <div><span className="text-white/80">Survey No:</span> <span className="ml-2 text-white">{formData.surveyNumber || 'N/A'}</span></div>
-                  <div><span className="text-white/80">Area:</span> <span className="ml-2 text-white">{formData.area} {formData.areaUnit}</span></div>
-                  <div><span className="text-white/80">Location:</span> <span className="ml-2 text-white">{formData.village}, {formData.district}</span></div>
+                  <div><span className="text-gray-600">Type:</span> <span className="ml-2 text-black">{formData.propertyType || 'N/A'}</span></div>
+                  <div><span className="text-gray-600">Survey No:</span> <span className="ml-2 text-black">{formData.surveyNumber || 'N/A'}</span></div>
+                  <div><span className="text-gray-600">Area:</span> <span className="ml-2 text-black">{formData.area} {formData.areaUnit}</span></div>
+                  <div><span className="text-gray-600">Location:</span> <span className="ml-2 text-black">{formData.village}, {formData.district}</span></div>
                 </div>
               </div>
 
-              <div className="border-t border-gray-700 pt-6">
-                <h3 className={`${lexendDeca.className} text-lg font-medium mb-4`}>Transaction Details</h3>
+              <div className="border-t border-gray-300 pt-6">
+                <h3 className={` text-lg font-medium mb-4 text-black`}>Transaction Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div><span className="text-white/80">Type:</span> <span className="ml-2 text-white">{formData.transactionType || 'N/A'}</span></div>
-                  <div><span className="text-white/80">Amount:</span> <span className="ml-2 text-white">₹{formData.considerationAmount || 'N/A'}</span></div>
-                  <div><span className="text-white/80">Stamp Duty:</span> <span className="ml-2 text-white">₹{formData.stampDuty || 'N/A'}</span></div>
-                  <div><span className="text-white/80">Reg. Fee:</span> <span className="ml-2 text-white">₹{formData.registrationFee || 'N/A'}</span></div>
+                  <div><span className="text-gray-600">Type:</span> <span className="ml-2 text-black">{formData.transactionType || 'N/A'}</span></div>
+                  <div><span className="text-gray-600">Amount:</span> <span className="ml-2 text-black">₹{formData.considerationAmount || 'N/A'}</span></div>
+                  <div><span className="text-gray-600">Stamp Duty:</span> <span className="ml-2 text-black">₹{formData.stampDuty || 'N/A'}</span></div>
+                  <div><span className="text-gray-600">Reg. Fee:</span> <span className="ml-2 text-black">₹{formData.registrationFee || 'N/A'}</span></div>
                 </div>
               </div>
 
-              <div className="border-t border-gray-700 pt-6">
-                <h3 className={`${lexendDeca.className} text-lg font-medium mb-4`}>Seller</h3>
+              <div className="border-t border-gray-300 pt-6">
+                <h3 className={` text-lg font-medium mb-4 text-black`}>Seller</h3>
                 <div className="text-sm space-y-2">
-                  <div><span className="text-white/80">Name:</span> <span className="ml-2 text-white">{formData.sellerName || 'N/A'}</span></div>
-                  <div><span className="text-white/80">Aadhar:</span> <span className="ml-2 text-white">{formData.sellerAadhar || 'N/A'}</span></div>
-                  <div><span className="text-white/80">PAN:</span> <span className="ml-2 text-white">{formData.sellerPan || 'N/A'}</span></div>
+                  <div><span className="text-gray-600">Name:</span> <span className="ml-2 text-black">{formData.sellerName || 'N/A'}</span></div>
+                  <div><span className="text-gray-600">Aadhar:</span> <span className="ml-2 text-black">{formData.sellerAadhar || 'N/A'}</span></div>
+                  <div><span className="text-gray-600">PAN:</span> <span className="ml-2 text-black">{formData.sellerPan || 'N/A'}</span></div>
                 </div>
               </div>
 
-              <div className="border-t border-gray-700 pt-6">
-                <h3 className={`${lexendDeca.className} text-lg font-medium mb-4`}>Buyer</h3>
+              <div className="border-t border-gray-300 pt-6">
+                <h3 className={` text-lg font-medium mb-4 text-black`}>Buyer</h3>
                 <div className="text-sm space-y-2">
-                  <div><span className="text-white/80">Name:</span> <span className="ml-2 text-white">{formData.buyerName || 'N/A'}</span></div>
-                  <div><span className="text-white/80">Aadhar:</span> <span className="ml-2 text-white">{formData.buyerAadhar || 'N/A'}</span></div>
-                  <div><span className="text-white/80">PAN:</span> <span className="ml-2 text-white">{formData.buyerPan || 'N/A'}</span></div>
+                  <div><span className="text-gray-600">Name:</span> <span className="ml-2 text-black">{formData.buyerName || 'N/A'}</span></div>
+                  <div><span className="text-gray-600">Aadhar:</span> <span className="ml-2 text-black">{formData.buyerAadhar || 'N/A'}</span></div>
+                  <div><span className="text-gray-600">PAN:</span> <span className="ml-2 text-black">{formData.buyerPan || 'N/A'}</span></div>
                 </div>
               </div>
 
               {formData.witnesses.length > 0 && (
-                <div className="border-t border-gray-700 pt-6">
-                  <h3 className={`${lexendDeca.className} text-lg font-medium mb-4`}>Witnesses</h3>
+                <div className="border-t border-gray-300 pt-6">
+                  <h3 className={` text-lg font-medium mb-4 text-black`}>Witnesses</h3>
                   <div className="text-sm space-y-4">
                     {formData.witnesses.map((witness, index) => (
                       <div key={index}>
-                        <div className="font-medium mb-1">Witness {index + 1}</div>
-                        <div className="text-white/80 space-y-1 ml-4">
+                        <div className="font-medium mb-1 text-black">Witness {index + 1}</div>
+                        <div className="text-gray-600 space-y-1 ml-4">
                           <div>Name: {witness.name || 'N/A'}</div>
                           <div>Phone: {witness.phone || 'N/A'}</div>
                           <div>Aadhar: {witness.aadhar || 'N/A'}</div>
@@ -2733,16 +2749,16 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                 </div>
               )}
 
-              <div className="border-t border-gray-700 pt-6">
-                <h3 className={`${lexendDeca.className} text-lg font-medium mb-4`}>Documents & Photos</h3>
+              <div className="border-t border-gray-300 pt-6">
+                <h3 className={` text-lg font-medium mb-4 text-black`}>Documents & Photos</h3>
                 <div className="text-sm space-y-4">
                   <div>
-                    <div className="flex items-center gap-2 text-white/80 mb-2">
-                      <span>Documents Uploaded: <span className="text-white">{Object.values(formData.documents).filter(f => f).length} / 7</span></span>
+                    <div className="flex items-center gap-2 text-gray-600 mb-2">
+                      <span>Documents Uploaded: <span className="text-black">{Object.values(formData.documents).filter(f => f).length} / 7</span></span>
                       {Object.values(formData.documents).filter(f => f).length > 0 && (
                         <button
                           onClick={() => setShowDocuments(true)}
-                          className="p-1.5 text-gray-400 hover:text-white transition-colors rounded flex items-center justify-center"
+                          className="p-1.5 text-gray-500 hover:text-black transition-colors rounded flex items-center justify-center"
                           title="View uploaded documents"
                         >
                           <ViewImagesIcon className="text-current" />
@@ -2751,12 +2767,12 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                     </div>
                   </div>
                   <div>
-                    <div className="hidden sm:flex items-center gap-2 text-white/80 mb-3">
-                      <span>Property Photos: <span className="text-white">{formData.propertyPhotos.length} photo(s)</span></span>
+                    <div className="flex items-center gap-2 text-gray-600 mb-3">
+                      <span>Property Photos: <span className="text-black">{formData.propertyPhotos.length} photo(s)</span></span>
                       {formData.propertyPhotos.length > 0 && (
                         <button
                           onClick={() => setShowPropertyPhotos(true)}
-                          className="p-1.5 text-gray-400 hover:text-white transition-colors rounded flex items-center justify-center"
+                          className="p-1.5 text-gray-500 hover:text-black transition-colors rounded flex items-center justify-center"
                           title="View all images"
                         >
                           <ViewImagesIcon className="text-current" />
@@ -2775,19 +2791,31 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                           return (
                             <div key={index} className="relative group">
                               <img
-                                src={photoUrl}
+                                src={propertyPhotoUrls.get(index) || URL.createObjectURL(photo)}
                                 alt={`Property photo ${index + 1}`}
-                                className="w-full h-24 sm:h-32 md:h-40 object-cover rounded-lg border border-gray-700 cursor-pointer hover:border-gray-500 transition-colors"
+                                className="w-full h-24 sm:h-32 md:h-40 object-cover rounded-lg border border-gray-300 cursor-pointer hover:border-gray-500 transition-colors"
                                 onClick={() => setShowPropertyPhotos(true)}
+                                onLoad={(e) => {
+                                  // Revoke old URL if we have a new one that works
+                                  const currentUrl = e.currentTarget.src;
+                                  if (currentUrl.startsWith('blob:') && !propertyPhotoUrls.has(index)) {
+                                    setPropertyPhotoUrls(prev => new Map(prev).set(index, currentUrl));
+                                  }
+                                }}
                                 onError={(e) => {
-                                  console.error('Failed to load property photo preview:', photo.name);
+                                  console.warn('Failed to load property photo preview, retrying with new URL for:', photo.name);
                                   const target = e.currentTarget;
-                                  target.style.display = 'none';
-                                  // Try to recreate URL if it failed
+                                  // Prevent infinite loop if the file itself is bad
+                                  if (target.getAttribute('data-retried') === 'true') return;
+
+                                  target.setAttribute('data-retried', 'true');
                                   const newUrl = URL.createObjectURL(photo);
-                                  setPropertyPhotoUrls(prev => new Map(prev).set(index, newUrl));
                                   target.src = newUrl;
-                                  target.style.display = 'block';
+
+                                  // Update state only if mounting/mounted
+                                  requestAnimationFrame(() => {
+                                    setPropertyPhotoUrls(prev => new Map(prev).set(index, newUrl));
+                                  });
                                 }}
                               />
                               <div className="absolute inset-0 bg-black/0 hover:bg-black/20 rounded-lg transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
@@ -2798,10 +2826,10 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                         })}
                         {formData.propertyPhotos.length > 8 && (
                           <div
-                            className="w-full h-24 sm:h-32 md:h-40 bg-black/40 border border-gray-700 rounded-lg flex items-center justify-center cursor-pointer hover:border-gray-500 transition-colors"
+                            className="w-full h-24 sm:h-32 md:h-40 bg-gray-100 border border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-gray-400 transition-colors"
                             onClick={() => setShowPropertyPhotos(true)}
                           >
-                            <span className="text-white text-sm">+{formData.propertyPhotos.length - 8} more</span>
+                            <span className="text-black text-sm">+{formData.propertyPhotos.length - 8} more</span>
                           </div>
                         )}
                       </div>
@@ -2811,8 +2839,8 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               </div>
             </div>
 
-            <div className="bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-4">
-              <p className="text-sm text-yellow-200">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p className="text-sm text-yellow-800">
                 By submitting this form, you agree that all information provided is accurate and true.
                 False information may lead to legal consequences.
               </p>
@@ -2826,7 +2854,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
   };
 
   return (
-    <div className="min-h-screen bg-black pt-24 sm:pt-32 pb-8 px-4 sm:px-6">
+    <div className="min-h-screen bg-[#FAF9F6] pt-24 sm:pt-32 pb-8 px-4 sm:px-6">
       {/* Draft Saved Indicator */}
       <AnimatePresence>
         {draftSaved && (
@@ -2834,10 +2862,10 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-16 sm:top-20 left-1/2 transform -translate-x-1/2 z-50 bg-green-500/20 border border-green-500/50 rounded-lg px-3 sm:px-4 py-2 flex items-center gap-2 max-w-[90%] mx-auto"
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-[#ECFDF5] border border-[#34D399] shadow-sm rounded-md px-6 py-2.5 flex items-center gap-2.5"
           >
-            <CheckCircle size={14} className="sm:w-4 sm:h-4 text-green-400 flex-shrink-0" />
-            <span className="text-xs sm:text-sm text-green-400">Draft saved successfully</span>
+            <CheckCircle size={18} className="text-[#10B981]" />
+            <span className="text-sm font-medium text-[#059669]">Draft saved successfully</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -2845,22 +2873,22 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
       <div className="w-full max-w-5xl mx-auto">
         {/* Progress Indicator & Timer */}
         <div className="mb-4 sm:mb-6 px-4 sm:px-8">
-          <div className="bg-black/40 border border-gray-700 rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="bg-white border border-gray-300 rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
             <div className="flex-1 w-full">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-white/80">Form Progress</span>
-                <span className="text-sm font-medium text-white">{calculateProgress()}%</span>
+                <span className="text-sm text-gray-600">Form Progress</span>
+                <span className="text-sm font-medium text-black">{calculateProgress()}%</span>
               </div>
-              <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${calculateProgress()}%` }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
-                  className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
+                  className="h-full bg-gradient-to-r from-green-500 to-emerald-600 rounded-full"
                 />
               </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-white/80">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
               <Clock size={16} />
               <span>Time: {formatTime(formTimeElapsed)}</span>
             </div>
@@ -2872,11 +2900,11 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-4 sm:mb-6 mx-4 sm:mx-8 bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-3 sm:p-4 flex items-center gap-2 sm:gap-3"
+            className="mb-4 sm:mb-6 mx-4 sm:mx-8 bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 flex items-center gap-2 sm:gap-3"
           >
-            <AlertCircle size={20} className="text-yellow-400 flex-shrink-0" />
+            <AlertCircle size={20} className="text-red-600 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-sm text-yellow-200">
+              <p className="text-sm text-red-800 font-medium">
                 Please connect your wallet using the &quot;Connect&quot; button in the header to start registration.
               </p>
             </div>
@@ -2896,7 +2924,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                   <div className="flex items-center flex-1">
                     <div className="flex flex-col items-center flex-1 relative">
                       <span
-                        className={`text-xs text-center ${isActive ? 'text-white' : 'text-white/60'
+                        className={`text-xs text-center ${isActive ? 'text-black font-semibold' : 'text-gray-400'
                           }`}
                       >
                         {step.title}
@@ -2905,7 +2933,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                   </div>
                   {index < steps.length - 1 && (
                     <div className="flex-1 mx-2">
-                      <div className="border-t border-dashed border-gray-700"></div>
+                      <div className="border-t border-dashed border-gray-300"></div>
                     </div>
                   )}
                 </React.Fragment>
@@ -2921,13 +2949,13 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3 }}
-          className={`relative bg-black/40 border border-gray-700 rounded-lg p-4 sm:p-8 mb-6 mx-4 sm:mx-8 ${!connected ? 'opacity-50 pointer-events-none' : ''}`}
+          className={`relative bg-white border border-gray-300 rounded-lg p-4 sm:p-8 mb-6 mx-4 sm:mx-8 ${!connected ? 'opacity-50 pointer-events-none' : ''}`}
         >
           {!connected && (
-            <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/60 rounded-lg">
+            <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/60 rounded-lg">
               <div className="text-center">
-                <AlertCircle size={32} className="text-yellow-400 mx-auto mb-2" />
-                <p className="text-white">Connect your wallet to continue</p>
+                <AlertCircle size={32} className="text-red-500 mx-auto mb-2" />
+                <p className="text-black font-medium">Connect your wallet to continue</p>
               </div>
             </div>
           )}
@@ -2940,8 +2968,8 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
             onClick={prevStep}
             disabled={currentStep === 1 || !connected}
             className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-colors ${currentStep === 1 || !connected
-                ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                : 'bg-white/10 text-white hover:bg-white/20 border border-gray-700'
+              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              : 'bg-gray-100 text-black hover:bg-gray-200 border border-gray-300'
               }`}
           >
             <ChevronLeft size={18} className="sm:w-5 sm:h-5" />
@@ -2953,8 +2981,8 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               onClick={nextStep}
               disabled={!connected}
               className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-colors ${!connected
-                  ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                  : 'bg-white text-black hover:bg-gray-100'
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-black text-white hover:bg-gray-800'
                 }`}
             >
               Next
@@ -2965,8 +2993,8 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               onClick={handleSubmit}
               disabled={isSubmitting || !connected}
               className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-colors ${!connected || isSubmitting
-                  ? 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'
-                  : 'bg-white text-black hover:bg-gray-100'
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+                : 'bg-black text-white hover:bg-gray-800'
                 }`}
             >
               {isSubmitting ? (
@@ -3002,31 +3030,28 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-black border border-gray-600 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-auto"
+              className="bg-white rounded-lg p-2 sm:p-4 w-auto max-w-full h-auto max-h-full flex flex-col items-center justify-center relative shadow-2xl"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`${lexendDeca.className} text-xl font-medium`}>
-                  {documentPreview.type.charAt(0).toUpperCase() + documentPreview.type.slice(1)} - Preview
-                </h3>
+              <div className="absolute top-2 right-2 z-50">
                 <button
                   onClick={() => setDocumentPreview(null)}
-                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                  className="bg-black/10 text-black rounded-full p-2 hover:bg-black/20 transition-colors"
                 >
-                  <X size={20} className="text-white" />
+                  <X size={24} />
                 </button>
               </div>
 
-              <div className="mt-4">
+              <div className="flex items-center justify-center p-1 sm:p-2 overflow-auto w-full h-full">
                 {documentPreview.file.type.startsWith('image/') ? (
                   <img
                     src={URL.createObjectURL(documentPreview.file)}
                     alt={documentPreview.type}
-                    className="max-w-full h-auto rounded-lg border border-gray-700"
+                    className="w-auto h-auto max-w-[90vw] max-h-[80vh] object-contain rounded-lg border border-gray-200 shadow-sm"
                   />
                 ) : (
-                  <div className="bg-black/40 border border-gray-700 rounded-lg p-8 text-center">
+                  <div className="bg-white border border-gray-300 rounded-lg p-8 text-center">
                     <FileText size={48} className="mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-400 mb-2">{documentPreview.file.name}</p>
+                    <p className="text-gray-600 mb-2">{documentPreview.file.name}</p>
                     <p className="text-sm text-gray-500">
                       PDF preview not available. File size: {(documentPreview.file.size / 1024).toFixed(2)} KB
                     </p>
@@ -3053,13 +3078,13 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-black border border-gray-600 rounded-lg p-8 max-w-md w-full"
+              className="bg-white border border-gray-300 rounded-lg p-8 max-w-md w-full"
             >
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
                   <CheckCircle size={32} className="text-green-500" />
                 </div>
-                <h3 className={`${lexendDeca.className} text-2xl font-medium mb-2`}>
+                <h3 className={` text-2xl font-medium mb-2`}>
                   Registration Submitted Successfully!
                 </h3>
 
@@ -3083,19 +3108,19 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                   Your land registration has been submitted. You will receive a confirmation email shortly.
                 </p>
                 <div className="mb-6 w-full">
-                  <label className="block text-sm text-gray-400 mb-2">Registration ID</label>
-                  <div className="flex items-center gap-2 bg-black/40 border border-gray-700 rounded-lg px-4 py-3">
-                    <span className="flex-1 text-white font-mono">{registrationId || 'REG-00000000'}</span>
+                  <label className="block text-sm text-gray-600 mb-2">Registration ID</label>
+                  <div className="flex items-center gap-2 bg-gray-50 border border-gray-300 rounded-lg px-4 py-3">
+                    <span className="flex-1 text-black font-mono">{registrationId || 'REG-00000000'}</span>
                     <button
                       onClick={() => setShowQRCode(true)}
-                      className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                       title="Show QR Code"
                     >
                       <QrCode size={18} className="text-gray-400" />
                     </button>
                     <button
                       onClick={copyRegistrationId}
-                      className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                       title="Copy Registration ID"
                     >
                       {copiedId ? (
@@ -3112,14 +3137,14 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
 
                 {/* Countdown and redirect message */}
                 {countdown > 0 && (
-                  <p className="text-sm text-white/60 mb-4">
+                  <p className="text-sm text-gray-500 mb-4">
                     Redirecting to home in {countdown} seconds...
                   </p>
                 )}
 
                 <button
                   onClick={handleSuccessClose}
-                  className="px-6 py-3 bg-white text-black rounded-lg font-medium hover:bg-gray-100 transition-colors w-full"
+                  className="px-6 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors w-full"
                 >
                   Back to Home
                 </button>
@@ -3144,19 +3169,19 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-black border-2 border-red-700 rounded-lg p-4 sm:p-6 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
+              className="bg-white border-2 border-red-500 rounded-lg p-4 sm:p-6 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
             >
               <div className="flex flex-col items-center text-center">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-3 sm:mb-4">
                   <AlertCircle size={24} className="sm:w-8 sm:h-8 text-red-500" />
                 </div>
-                <h3 className={`${lexendDeca.className} text-xl sm:text-2xl font-medium mb-2 sm:mb-3 text-red-400`}>
+                <h3 className={` text-xl sm:text-2xl font-medium mb-2 sm:mb-3 text-red-600`}>
                   Submission Failed
                 </h3>
-                <p className="text-sm sm:text-base text-gray-300 mb-4 sm:mb-6 px-2 break-words whitespace-pre-wrap">{submitError}</p>
+                <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 px-2 break-words whitespace-pre-wrap">{submitError}</p>
                 <button
                   onClick={() => setSubmitError(null)}
-                  className="px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-black rounded-lg font-medium hover:bg-gray-100 transition-colors w-full sm:w-auto text-sm sm:text-base"
+                  className="px-4 sm:px-6 py-2.5 sm:py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors w-full sm:w-auto text-sm sm:text-base"
                 >
                   Try Again
                 </button>
@@ -3181,17 +3206,17 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-black border border-gray-600 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-auto"
+              className="bg-white border border-gray-200 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-auto shadow-xl"
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className={`${lexendDeca.className} text-xl font-medium`}>
+                <h3 className={` text-xl font-medium text-black`}>
                   Uploaded Documents ({Object.values(formData.documents).filter(f => f).length} / 7)
                 </h3>
                 <button
                   onClick={() => setShowDocuments(false)}
-                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <X size={20} className="text-white" />
+                  <X size={20} className="text-black" />
                 </button>
               </div>
 
@@ -3207,7 +3232,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                 ].map(({ key, label }) => {
                   const file = formData.documents[key as keyof FormData['documents']];
                   return (
-                    <div key={key} className="bg-black/40 border border-gray-700 rounded-lg p-4 relative">
+                    <div key={key} className="bg-gray-50 border border-gray-200 rounded-lg p-4 relative">
                       <div className="flex flex-col gap-3">
                         {file ? (
                           <div className="flex-shrink-0 w-full flex justify-center relative z-10">
@@ -3215,28 +3240,28 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                               <img
                                 src={URL.createObjectURL(file)}
                                 alt={label}
-                                className="w-32 h-32 object-contain rounded border border-gray-700 relative z-10"
+                                className="w-32 h-32 object-contain rounded border border-gray-200 bg-white relative z-10"
                               />
                             ) : (
-                              <div className="w-32 h-32 bg-black/60 border border-gray-700 rounded flex items-center justify-center relative z-10">
+                              <div className="w-32 h-32 bg-white border border-gray-200 rounded flex items-center justify-center relative z-10">
                                 <FileText size={32} className="text-gray-400" />
                               </div>
                             )}
                           </div>
                         ) : (
                           <div className="flex-shrink-0 w-full flex justify-center relative z-10">
-                            <div className="w-32 h-32 bg-black/60 border border-gray-700 rounded flex items-center justify-center">
-                              <FileText size={32} className="text-gray-400 opacity-50" />
+                            <div className="w-32 h-32 bg-white border border-gray-200 rounded flex items-center justify-center">
+                              <FileText size={32} className="text-gray-300" />
                             </div>
                           </div>
                         )}
                         <div className="flex-1 relative z-10">
-                          <h4 className={`${lexendDeca.className} text-sm font-medium text-white mb-2`}>
+                          <h4 className={` text-sm font-medium text-black mb-2`}>
                             {label}
                           </h4>
                           {file ? (
                             <div className="space-y-1">
-                              <p className="text-sm text-gray-300 truncate" title={file.name}>
+                              <p className="text-sm text-gray-600 truncate" title={file.name}>
                                 {file.name}
                               </p>
                               <p className="text-xs text-gray-500">
@@ -3244,7 +3269,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                               </p>
                               <button
                                 onClick={() => previewDocument(key, file)}
-                                className="mt-2 flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors"
+                                className="mt-2 flex items-center gap-1 text-xs text-gray-500 hover:text-black transition-colors"
                               >
                                 <span className="material-symbols-outlined text-[14px]">eye_tracking</span>
                                 <span>Preview</span>
@@ -3279,18 +3304,18 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-black border border-gray-600 rounded-lg p-4 sm:p-6 max-w-4xl w-full max-h-[90vh] overflow-auto"
+              className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 max-w-4xl w-full max-h-[90vh] overflow-auto shadow-xl"
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className={`${lexendDeca.className} text-lg sm:text-xl font-medium`}>
+                <h3 className={` text-lg sm:text-xl font-medium text-black`}>
                   Property Photos ({formData.propertyPhotos.length})
                 </h3>
                 <button
                   onClick={() => setShowPropertyPhotos(false)}
-                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   aria-label="Close"
                 >
-                  <X size={20} className="text-white" />
+                  <X size={20} className="text-black" />
                 </button>
               </div>
 
@@ -3305,24 +3330,31 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                   return (
                     <div key={index} className="relative group">
                       <img
-                        src={photoUrl}
+                        src={propertyPhotoUrls.get(index) || URL.createObjectURL(photo)}
                         alt={`Property photo ${index + 1}`}
-                        className="w-full h-40 sm:h-48 object-cover rounded-lg border border-gray-700"
+                        className="w-full h-40 sm:h-48 object-cover rounded-lg border border-gray-200 shadow-sm"
+                        onLoad={(e) => {
+                          const currentUrl = e.currentTarget.src;
+                          if (currentUrl.startsWith('blob:') && !propertyPhotoUrls.has(index)) {
+                            setPropertyPhotoUrls(prev => new Map(prev).set(index, currentUrl));
+                          }
+                        }}
                         onError={(e) => {
-                          console.error('Failed to load property photo in modal:', photo.name);
+                          console.warn('Failed to load property photo in modal, retrying:', photo.name);
                           const target = e.currentTarget;
-                          // Try to recreate URL if it failed
+                          if (target.getAttribute('data-retried') === 'true') return;
+
+                          target.setAttribute('data-retried', 'true');
                           const newUrl = URL.createObjectURL(photo);
-                          setPropertyPhotoUrls(prev => new Map(prev).set(index, newUrl));
+
+                          requestAnimationFrame(() => {
+                            setPropertyPhotoUrls(prev => new Map(prev).set(index, newUrl));
+                          });
                           target.src = newUrl;
-                          target.style.display = 'block';
                         }}
                       />
-                      <div className="hidden w-full h-40 sm:h-48 bg-black/60 border border-gray-700 rounded-lg items-center justify-center">
-                        <p className="text-gray-400 text-sm">Failed to load image</p>
-                      </div>
                       <div className="mt-2 px-2">
-                        <p className="text-xs sm:text-sm text-gray-400 truncate" title={photo.name}>
+                        <p className="text-xs sm:text-sm text-gray-700 truncate" title={photo.name}>
                           {photo.name}
                         </p>
                         <p className="text-xs text-gray-500">
@@ -3353,22 +3385,22 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-black border border-gray-600 rounded-lg p-8 max-w-md w-full"
+              className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8 max-w-sm w-full shadow-2xl relative"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className={`${lexendDeca.className} text-xl font-medium`}>
+              <button
+                onClick={() => setShowQRCode(false)}
+                className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Close"
+              >
+                <X size={20} className="text-black" />
+              </button>
+
+              <div className="flex flex-col items-center pt-2">
+                <h3 className={` text-xl font-medium text-black mb-6 text-center`}>
                   Registration ID QR Code
                 </h3>
-                <button
-                  onClick={() => setShowQRCode(false)}
-                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-                >
-                  <X size={20} className="text-white" />
-                </button>
-              </div>
 
-              <div className="flex flex-col items-center">
-                <div className="bg-white p-4 rounded-lg mb-4">
+                <div className="bg-white p-2 rounded-lg mb-4 border border-gray-100 shadow-sm">
                   <QRCodeSVG
                     value={registrationId}
                     size={200}
@@ -3376,18 +3408,36 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                     includeMargin={true}
                   />
                 </div>
-                <p className="text-sm text-gray-400 mb-2">Scan to view registration details</p>
-                <p className="text-white font-mono text-sm">{registrationId}</p>
-                <button
-                  onClick={() => {
-                    copyRegistrationId();
-                    setShowQRCode(false);
-                  }}
-                  className="mt-4 px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors text-sm flex items-center gap-2"
-                >
-                  <Copy size={16} />
-                  Copy Registration ID
-                </button>
+                <p className="text-sm text-gray-500 mb-2 text-center">Scan to view registration details</p>
+                <p className="text-black font-mono text-sm font-medium mb-4">{registrationId}</p>
+
+                <div className="flex flex-col w-full gap-2">
+                  <button
+                    onClick={() => copyRegistrationId()}
+                    className={`w-full px-4 py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 font-medium transition-all duration-200 ${copiedId
+                      ? 'bg-green-500 text-white hover:bg-green-600'
+                      : 'bg-black text-white hover:bg-gray-800'
+                      }`}
+                  >
+                    {copiedId ? (
+                      <>
+                        <Check size={16} />
+                        ID Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={16} />
+                        Copy ID
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowQRCode(false)}
+                    className="w-full px-4 py-2.5 bg-white border border-gray-300 text-black rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -3409,21 +3459,21 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-black border border-gray-600 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-auto"
+              className="bg-white border border-gray-200 rounded-lg max-w-2xl w-full max-h-[90vh] shadow-xl flex flex-col"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className={`${lexendDeca.className} text-xl font-medium`}>
+              <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-100 bg-white rounded-t-lg z-10 shrink-0">
+                <h3 className={` text-xl font-medium text-black`}>
                   Document Validation Report
                 </h3>
                 <button
                   onClick={() => setShowDocumentValidation(false)}
-                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <X size={20} className="text-white" />
+                  <X size={20} className="text-black" />
                 </button>
               </div>
 
-              <div className="space-y-3">
+              <div className="p-6 pt-4 overflow-y-auto space-y-3 min-h-0">
                 {validateDocuments().map((doc, index) => {
                   const docLabels: Record<string, string> = {
                     saleDeed: 'Sale Deed',
@@ -3438,27 +3488,27 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                   return (
                     <div
                       key={index}
-                      className={`bg-black/40 border rounded-lg p-4 ${doc.status === 'valid'
-                          ? 'border-green-500/50 bg-green-500/10'
-                          : doc.status === 'warning'
-                            ? 'border-yellow-500/50 bg-yellow-500/10'
-                            : 'border-red-500/50 bg-red-500/10'
+                      className={`border rounded-lg p-4 ${doc.status === 'valid'
+                        ? 'border-green-200 bg-green-50'
+                        : doc.status === 'warning'
+                          ? 'border-yellow-200 bg-yellow-50'
+                          : 'border-red-200 bg-red-50'
                         }`}
                     >
                       <div className="flex items-start gap-3">
                         {doc.status === 'valid' ? (
-                          <CheckCircle size={20} className="text-green-400 flex-shrink-0 mt-0.5" />
+                          <CheckCircle size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
                         ) : doc.status === 'warning' ? (
-                          <AlertCircle size={20} className="text-yellow-400 flex-shrink-0 mt-0.5" />
+                          <AlertCircle size={20} className="text-yellow-600 flex-shrink-0 mt-0.5" />
                         ) : (
-                          <X size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
+                          <X size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
                         )}
                         <div className="flex-1">
-                          <h4 className="text-white font-medium mb-1">
+                          <h4 className="text-black font-medium mb-1">
                             {docLabels[doc.name as keyof typeof docLabels] || doc.name}
                           </h4>
                           {doc.status === 'valid' && doc.size > 0 && (
-                            <div className="text-sm text-gray-400">
+                            <div className="text-sm text-gray-600">
                               <p>Size: {(doc.size / 1024).toFixed(2)} KB</p>
                               <p>Type: {doc.type.split('/')[1]?.toUpperCase() || 'Unknown'}</p>
                             </div>
@@ -3466,7 +3516,7 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                           {doc.issues.length > 0 && (
                             <ul className="mt-2 space-y-1">
                               {doc.issues.map((issue, i) => (
-                                <li key={i} className="text-sm text-gray-300 flex items-center gap-2">
+                                <li key={i} className="text-sm text-gray-600 flex items-center gap-2">
                                   <span className="w-1 h-1 bg-current rounded-full" />
                                   {issue}
                                 </li>
@@ -3480,10 +3530,10 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
                 })}
               </div>
 
-              <div className="mt-6 pt-4 border-t border-gray-700">
+              <div className="p-6 pt-4 border-t border-gray-100 bg-white rounded-b-lg shrink-0">
                 <button
                   onClick={() => setShowDocumentValidation(false)}
-                  className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors text-sm w-full"
+                  className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm w-full"
                 >
                   Close
                 </button>
@@ -3492,6 +3542,6 @@ Registration ID: REG-${Date.now().toString().slice(-8)}
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </div >
   );
 }
