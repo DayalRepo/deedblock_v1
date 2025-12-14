@@ -109,27 +109,53 @@ export default function FeedbackPage() {
 
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      const formData = new FormData();
+      formData.append('feedbackType', feedbackType);
+      if (feedbackType === 'bug' || feedbackType === 'support') {
+        formData.append('priority', priority);
+      }
+      formData.append('name', name);
+      formData.append('email', email);
+      formData.append('phone', phone);
+      formData.append('subject', subject);
+      formData.append('message', message);
 
-    // In a real application, you would send this to a backend API
-    // TODO: Implement backend API integration for feedback submission
+      attachments.forEach((file) => {
+        formData.append('attachments', file);
+      });
 
-    setIsSubmitting(false);
-    setSubmitted(true);
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        body: formData,
+      });
 
-    setTimeout(() => {
-      setSubmitted(false);
-      setName('');
-      setEmail('');
-      setPhone('');
-      setSubject('');
-      setMessage('');
-      setAttachments([]);
-      setFeedbackType('general');
-      setPriority('medium');
-      setErrors({});
-    }, 5000);
+      const data = await response.json();
+
+      if (data.success) {
+        setSubmitted(true);
+        setTimeout(() => {
+          setSubmitted(false);
+          setName('');
+          setEmail('');
+          setPhone('');
+          setSubject('');
+          setMessage('');
+          setAttachments([]);
+          setFeedbackType('general');
+          setPriority('medium');
+          setErrors({});
+        }, 5000);
+      } else {
+        console.error('Submission failed:', data.message);
+        setErrors({ ...errors, form: 'Failed to send feedback. Please try again later.' });
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      setErrors({ ...errors, form: 'An error occurred. Please check your connection.' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const remainingChars = maxMessageLength - message.length;
