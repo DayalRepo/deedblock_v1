@@ -409,7 +409,7 @@ export default function HelpPage() {
           {/* Additional Resources */}
           <div className="mb-16">
             <h2 className="text-2xl font-light text-black mb-6">Additional Resources</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
                 <h3 className="text-lg font-light text-black mb-3">Document Requirements</h3>
                 <p className="text-gray-700 text-sm mb-4 leading-relaxed">
@@ -417,24 +417,6 @@ export default function HelpPage() {
                 </p>
                 <Link href="/registration" className="text-black underline text-sm hover:text-gray-700">
                   View Registration Page →
-                </Link>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-                <h3 className="text-lg font-light text-black mb-3">Legal Information</h3>
-                <p className="text-gray-700 text-sm mb-4 leading-relaxed">
-                  Understand the legal framework, compliance requirements, and how DeedBlock aligns with Indian property laws.
-                </p>
-                <Link href="/terms" className="text-black underline text-sm hover:text-gray-700">
-                  Read Terms & Conditions →
-                </Link>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-                <h3 className="text-lg font-light text-black mb-3">Privacy & Security</h3>
-                <p className="text-gray-700 text-sm mb-4 leading-relaxed">
-                  Learn how we protect your data and maintain privacy while ensuring blockchain transparency.
-                </p>
-                <Link href="/privacy" className="text-black underline text-sm hover:text-gray-700">
-                  View Privacy Policy →
                 </Link>
               </div>
             </div>
