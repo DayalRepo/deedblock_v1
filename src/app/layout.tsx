@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     description: "Powered By Project BlockChain",
     images: ["/logo2.png"],
   },
-  metadataBase: new URL("http://localhost:3000"), // Set base URL for metadata resolving
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"), // Set base URL for metadata resolving
 };
 
 const dmSans = DM_Sans({
