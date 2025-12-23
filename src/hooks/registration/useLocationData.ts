@@ -145,12 +145,14 @@ export function useLocationData({ setValue, watch }: UseLocationDataProps) {
             // 1. Stamp Duty
             const stampDuty = (govtValue * (stampDutyRate / 100));
 
-            // 2. Registration Fee (0.1% of Govt Value, min 1000)
-            const registrationFee = Math.max(1000, govtValue * 0.001);
+            let registrationFee = 0;
+            let deedDocFee = 0;
 
-            // 3. Deed Document Fee
-            let deedDocFee = 200; // Default
             if (transactionType) {
+                // 2. Registration Fee (0.1% of Govt Value, min 1000)
+                registrationFee = Math.max(1000, govtValue * 0.001);
+
+                // 3. Deed Document Fee
                 switch (transactionType.toLowerCase()) {
                     case 'sale': deedDocFee = 200; break;
                     case 'gift': deedDocFee = 1500; break;
@@ -167,7 +169,7 @@ export function useLocationData({ setValue, watch }: UseLocationDataProps) {
 
             // Sync with RHF
             setValue('stampDuty', stampDuty.toFixed(2));
-            setValue('registrationFee', registrationFee.toFixed(2));
+            setValue('registrationFee', registrationFee > 0 ? registrationFee.toFixed(2) : '');
 
         } else {
             setEstimatedFee(0);

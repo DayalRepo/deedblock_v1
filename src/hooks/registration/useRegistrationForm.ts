@@ -32,6 +32,8 @@ export const INITIAL_FORM_DATA = {
     buyerOtpVerified: false,
     sellerFingerprintVerified: false,
     buyerFingerprintVerified: false,
+    sellerAadharOtpVerified: false,
+    buyerAadharOtpVerified: false,
     declarationChecked: false,
     paymentId: ''
 };

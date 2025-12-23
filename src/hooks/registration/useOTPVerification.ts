@@ -133,8 +133,7 @@ export function useOTPVerification({ setValue, watch }: UseOTPVerificationProps)
 
     const handleVerifySellerAadharOtp = () => {
         if (sellerAadharOtp === sellerAadharMockOtp) {
-            // No field in schema? Maybe just local success state?
-            // Assuming we just need to know it passed.
+            setValue('sellerAadharOtpVerified', true, { shouldValidate: true });
             setSellerAadharOtpError('');
         } else {
             setSellerAadharOtpError('Invalid OTP');
@@ -233,6 +232,7 @@ export function useOTPVerification({ setValue, watch }: UseOTPVerificationProps)
 
     const handleVerifyBuyerAadharOtp = () => {
         if (buyerAadharOtp === buyerAadharMockOtp) {
+            setValue('buyerAadharOtpVerified', true, { shouldValidate: true });
             setBuyerAadharOtpError('');
         } else {
             setBuyerAadharOtpError('Invalid OTP');

@@ -52,6 +52,10 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
     const buyerOtpVerified = watch('buyerOtpVerified');
     const sellerFingerprintVerified = watch('sellerFingerprintVerified');
     const buyerFingerprintVerified = watch('buyerFingerprintVerified');
+    const sellerAadharOtpVerified = watch('sellerAadharOtpVerified');
+    const buyerAadharOtpVerified = watch('buyerAadharOtpVerified');
+    const isSellerAadharVerified = sellerFingerprintVerified || sellerAadharOtpVerified;
+    const isBuyerAadharVerified = buyerFingerprintVerified || buyerAadharOtpVerified;
 
     // Watch location fields for disabled states
     const state = watch('state');
@@ -64,15 +68,15 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
         <div className="space-y-4 sm:space-y-6">
 
             {/* Location Heading */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between">
                 <h3 className="text-lg font-sans font-normal text-black">Location</h3>
                 <ResetButton size="sm" onReset={onReset} mobileIconOnly={true} />
             </div>
-            <div className="border-t border-dashed border-gray-300 mb-4 sm:mb-6"></div>
+            <div className="border-t border-dashed border-gray-300 my-3 sm:my-4"></div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 relative">
                 {/* 1. State */}
-                <div>
+                <div className="relative">
                     <label className="block text-sm font-sans font-normal text-gray-700 mb-2">State *</label>
                     <Controller
                         control={control}
@@ -93,10 +97,14 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                             {errors.state.message}
                         </p>
                     )}
+                    {/* Vertical Divider - Desktop */}
+                    <div className="hidden md:block absolute -right-2 md:-right-3 top-8 bottom-0 w-px border-r-2 border-dashed border-gray-200"></div>
+                    {/* Vertical Divider - Mobile only */}
+                    <div className="block md:hidden absolute -right-2 top-8 bottom-0 w-px border-r border-dashed border-gray-300"></div>
                 </div>
 
                 {/* 2. District */}
-                <div>
+                <div className="relative">
                     <label className="block text-sm font-sans font-normal text-gray-700 mb-2">District *</label>
                     <Controller
                         control={control}
@@ -118,10 +126,12 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                             {errors.district.message}
                         </p>
                     )}
+                    {/* Vertical Divider */}
+                    <div className="hidden md:block absolute -right-2 md:-right-3 top-8 bottom-0 w-px border-r-2 border-dashed border-gray-200"></div>
                 </div>
 
                 {/* 3. Mandal */}
-                <div>
+                <div className="relative">
                     <label className="block text-sm font-sans font-normal text-gray-700 mb-2">Mandal *</label>
                     <Controller
                         control={control}
@@ -143,6 +153,10 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                             {errors.taluka.message}
                         </p>
                     )}
+                    {/* Vertical Divider - Desktop */}
+                    <div className="hidden md:block absolute -right-2 md:-right-3 top-8 bottom-0 w-px border-r-2 border-dashed border-gray-200"></div>
+                    {/* Vertical Divider - Mobile only */}
+                    <div className="block md:hidden absolute -right-2 top-8 bottom-0 w-px border-r border-dashed border-gray-300"></div>
                 </div>
 
                 {/* 4. Village */}
@@ -172,92 +186,105 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
             </div>
 
             {/* Survey or Door NO.s Heading */}
-            <div className="border-t border-dashed border-gray-300 my-4 sm:my-6"></div>
-            <h3 className="text-lg font-sans font-normal text-black mb-4">Survey NO. or Door NO.</h3>
-            <div className="border-t border-dashed border-gray-300 mb-4 sm:mb-6"></div>
+            <div className="border-t border-dashed border-gray-300 my-3 sm:my-4"></div>
+            <h3 className="text-lg font-sans font-normal text-black my-2">Survey NO. or Door NO.</h3>
+            <div className="border-t border-dashed border-gray-300 mb-3 sm:mb-4"></div>
 
-            {/* Radio Button Toggle */}
-            <div className="flex items-center gap-6 mb-4">
-                <label className="flex items-center gap-2 cursor-pointer group">
-                    <div className="relative">
-                        <input
-                            type="radio"
-                            name="surveyOrDoor"
-                            value="survey"
-                            checked={surveyOrDoor === 'survey'}
-                            onChange={() => handleSurveyDoorToggle('survey')}
-                            className="sr-only"
-                        />
-                        <div className={`w-5 h-5 border-2 rounded-full flex items-center justify-center transition-colors ${surveyOrDoor === 'survey' ? 'border-black' : 'border-gray-300 group-hover:border-gray-400'}`}>
-                            {surveyOrDoor === 'survey' && <div className="w-2.5 h-2.5 bg-black rounded-full" />}
-                        </div>
+            {/* Two-column layout for Survey/Door selection and Estimated Fees */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:items-stretch relative">
+                {/* Vertical dashed divider - hidden on mobile */}
+                <div className="hidden md:block absolute left-1/2 top-2 bottom-2 border-l border-dashed border-gray-300 -translate-x-1/2"></div>
+                {/* Left Column: Radio Buttons at top + Input at bottom */}
+                <div className="flex flex-col justify-between">
+                    {/* Radio Button Toggle - at top */}
+                    <div className="flex items-center gap-6">
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                            <div className="relative">
+                                <input
+                                    type="radio"
+                                    name="surveyOrDoor"
+                                    value="survey"
+                                    checked={surveyOrDoor === 'survey'}
+                                    onChange={() => handleSurveyDoorToggle('survey')}
+                                    className="sr-only"
+                                />
+                                <div className={`w-5 h-5 border-2 rounded-full flex items-center justify-center transition-colors ${surveyOrDoor === 'survey' ? 'border-black' : 'border-gray-300 group-hover:border-gray-400'}`}>
+                                    {surveyOrDoor === 'survey' && <div className="w-2.5 h-2.5 bg-black rounded-full" />}
+                                </div>
+                            </div>
+                            <span className="text-sm font-sans text-gray-700">Survey Number</span>
+                        </label>
+
+                        <span className="text-sm font-sans text-gray-400">or</span>
+
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                            <div className="relative">
+                                <input
+                                    type="radio"
+                                    name="surveyOrDoor"
+                                    value="door"
+                                    checked={surveyOrDoor === 'door'}
+                                    onChange={() => handleSurveyDoorToggle('door')}
+                                    className="sr-only"
+                                />
+                                <div className={`w-5 h-5 border-2 rounded-full flex items-center justify-center transition-colors ${surveyOrDoor === 'door' ? 'border-black' : 'border-gray-300 group-hover:border-gray-400'}`}>
+                                    {surveyOrDoor === 'door' && <div className="w-2.5 h-2.5 bg-black rounded-full" />}
+                                </div>
+                            </div>
+                            <span className="text-sm font-sans text-gray-700">Door Number</span>
+                        </label>
                     </div>
-                    <span className="text-sm font-sans text-gray-700">Survey Number</span>
-                </label>
 
-                <label className="flex items-center gap-2 cursor-pointer group">
-                    <div className="relative">
-                        <input
-                            type="radio"
-                            name="surveyOrDoor"
-                            value="door"
-                            checked={surveyOrDoor === 'door'}
-                            onChange={() => handleSurveyDoorToggle('door')}
-                            className="sr-only"
+                    {/* Survey/Door Input - at bottom */}
+                    <div className="mt-4 md:mt-0 max-w-[200px]">
+                        <label className="block text-sm font-sans font-normal text-gray-700 mb-2">
+                            {surveyOrDoor === 'survey' ? 'Survey number *' : 'Door number *'}
+                        </label>
+                        <Controller
+                            control={control}
+                            name={surveyOrDoor === 'survey' ? 'surveyNumber' : 'doorNumber'}
+                            render={({ field }) => (
+                                <AnimatedSelect
+                                    value={field.value || ''}
+                                    onChange={(val) => handleLocationChange(surveyOrDoor === 'survey' ? 'surveyNumber' : 'doorNumber', val)}
+                                    placeholder={`Select ${surveyOrDoor === 'survey' ? 'Survey' : 'Door'} Number`}
+                                    options={surveyOrDoor === 'survey'
+                                        ? surveyNumbers.map(s => ({ value: s.number, label: s.number }))
+                                        : doorNumbers.map(d => ({ value: d.number, label: d.number }))
+                                    }
+                                    searchable={true}
+                                    disabled={!village}
+                                />
+                            )}
                         />
-                        <div className={`w-5 h-5 border-2 rounded-full flex items-center justify-center transition-colors ${surveyOrDoor === 'door' ? 'border-black' : 'border-gray-300 group-hover:border-gray-400'}`}>
-                            {surveyOrDoor === 'door' && <div className="w-2.5 h-2.5 bg-black rounded-full" />}
-                        </div>
-                    </div>
-                    <span className="text-sm font-sans text-gray-700">Door Number</span>
-                </label>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label className="block text-sm font-sans font-normal text-gray-700 mb-2">
-                        {surveyOrDoor === 'survey' ? 'Survey number *' : 'Door number *'}
-                    </label>
-                    <Controller
-                        control={control}
-                        name={surveyOrDoor === 'survey' ? 'surveyNumber' : 'doorNumber'}
-                        render={({ field }) => (
-                            <AnimatedSelect
-                                value={field.value || ''}
-                                onChange={(val) => handleLocationChange(surveyOrDoor === 'survey' ? 'surveyNumber' : 'doorNumber', val)}
-                                placeholder={`Select ${surveyOrDoor === 'survey' ? 'Survey' : 'Door'} Number`}
-                                options={surveyOrDoor === 'survey'
-                                    ? surveyNumbers.map(s => ({ value: s.number, label: s.number }))
-                                    : doorNumbers.map(d => ({ value: d.number, label: d.number }))
-                                }
-                                searchable={true}
-                                disabled={!village}
-                            />
+                        {(errors.surveyNumber || errors.doorNumber) && (
+                            <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                                <AlertCircle size={14} />
+                                {errors.surveyNumber ? errors.surveyNumber.message : errors.doorNumber?.message}
+                            </p>
                         )}
-                    />
-                    {(errors.surveyNumber || errors.doorNumber) && (
-                        <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-                            <AlertCircle size={14} />
-                            {errors.surveyNumber ? errors.surveyNumber.message : errors.doorNumber?.message}
-                        </p>
-                    )}
+                    </div>
                 </div>
 
-                {/* Fee Preview Card */}
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 font-sans md:-mt-9">
-                    <h4 className="text-sm font-semibold text-gray-800 mb-2">Estimated Fees</h4>
-                    <div className="space-y-1 text-sm">
-                        <div className="flex justify-between">
-                            <span className="text-gray-500">Government Value:</span>
-                            <span className="font-medium text-black">₹{(selectedSurvey?.govtValue || selectedDoor?.govtValue || 0).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-gray-500">Stamp Duty ({stampDutyRate || 0}%):</span>
-                            <span className="font-medium text-black">₹{(((selectedSurvey?.govtValue || selectedDoor?.govtValue || 0) * (stampDutyRate || 0)) / 100).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between pt-2 border-t border-gray-200 mt-2">
-                            <span className="text-gray-700 font-semibold">Total Est. Fee:</span>
-                            <span className="font-bold text-black">₹{estimatedFee.toLocaleString()}</span>
+                {/* Right Column: Fee Preview Card - stretches full height */}
+                <div>
+                    {/* Dashed line above card - mobile only */}
+                    <div className="block md:hidden border-t border-dashed border-gray-300 mb-4"></div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 font-sans flex flex-col justify-between">
+                        <h4 className="text-sm font-semibold text-gray-800 mb-2">Estimated Fees</h4>
+                        <div className="space-y-1 text-sm">
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">Government Value:</span>
+                                <span className="font-medium text-black">₹{(selectedSurvey?.govtValue || selectedDoor?.govtValue || 0).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">Stamp Duty ({stampDutyRate || 0}%):</span>
+                                <span className="font-medium text-black">₹{(((selectedSurvey?.govtValue || selectedDoor?.govtValue || 0) * (stampDutyRate || 0)) / 100).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between pt-2 border-t border-dashed border-gray-200 mt-2">
+                                <span className="text-gray-700 font-semibold">Total Est. Fee:</span>
+                                <span className="font-bold text-black">₹{estimatedFee.toLocaleString()}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -265,13 +292,13 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
 
 
             {/* Transaction Details Heading */}
-            <div className="border-t border-dashed border-gray-300 my-4 sm:my-6"></div>
-            <h3 className="text-lg font-sans font-normal text-black mb-4">Transaction Details</h3>
-            <div className="border-t border-dashed border-gray-300 mb-4 sm:mb-6"></div>
+            <div className="border-t border-dashed border-gray-300 my-3 sm:my-4"></div>
+            <h3 className="text-lg font-sans font-normal text-black my-2">Transaction Details</h3>
+            <div className="border-t border-dashed border-gray-300 mb-3 sm:mb-4"></div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6 items-end relative">
                 {/* Transaction Type */}
-                <div className="relative">
+                <div className="relative max-w-[200px]">
                     <label className="block text-sm font-sans font-normal text-gray-700 mb-2">Transaction type *</label>
                     <Controller
                         control={control}
@@ -302,61 +329,71 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                     <div className="hidden md:block absolute -right-3 top-8 bottom-0 w-px border-r-2 border-dashed border-gray-200"></div>
                 </div>
 
-                {/* Deed Doc Fee + Registration Fees */}
-                <div className="relative">
-                    <label className="block text-sm font-sans font-normal text-gray-700 mb-2 truncate" title="Deed Doc Fee + Registration Fees">
-                        Deed Doc Fee + Registration Fees...
-                    </label>
-                    <div className="relative">
-                        <input
-                            type="text"
-                            value={(() => {
-                                const getDeedDocFee = (type: string) => {
-                                    if (!type) return 0;
-                                    switch (type) {
-                                        case 'sale': return 200;
-                                        case 'gift': return 1500;
-                                        case 'partition': return 500;
-                                        case 'lease': return 200;
-                                        case 'mortgage': return 500;
-                                        case 'exchange': return 500;
-                                        default: return 200;
-                                    }
-                                };
-                                const deedFee = getDeedDocFee(transactionType);
-                                const regFee = parseFloat(watch('registrationFee') || '0');
-                                if (!transactionType) return '';
-                                return `${deedFee} + ${regFee}`;
-                            })()}
-                            readOnly={true}
-                            className="w-full border rounded-lg px-4 py-3 focus:outline-none bg-gray-100 text-gray-600 cursor-not-allowed border-gray-300"
-                            placeholder="Auto-calculated"
-                        />
-                    </div>
-                    {/* Plus Sign */}
-                    <div className="hidden md:flex absolute -right-6 bottom-0 h-11 w-6 items-center justify-center text-gray-400 font-bold text-xl pointer-events-none">
-                        +
-                    </div>
-                </div>
+                {/* Deed Doc Fee + Stamp Duty Row - Mobile: 3 columns layout */}
+                <div className="col-span-1 md:col-span-2">
+                    <div className="grid grid-cols-[1fr_auto_1fr] md:grid-cols-2 gap-2 md:gap-4 items-end">
+                        {/* Deed Doc Fee + Registration Fees */}
+                        <div className="relative">
+                            <label className="block text-sm font-sans font-normal text-gray-700 mb-2 truncate" title="Deed Doc Fee + Registration Fees">
+                                Deed Doc Fee + Reg...
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={(() => {
+                                        const getDeedDocFee = (type: string) => {
+                                            if (!type) return 0;
+                                            switch (type) {
+                                                case 'sale': return 200;
+                                                case 'gift': return 1500;
+                                                case 'partition': return 500;
+                                                case 'lease': return 200;
+                                                case 'mortgage': return 500;
+                                                case 'exchange': return 500;
+                                                default: return 200;
+                                            }
+                                        };
+                                        const deedFee = getDeedDocFee(transactionType);
+                                        const regFee = parseFloat(watch('registrationFee') || '0');
+                                        if (!transactionType) return '';
+                                        return `${deedFee} + ${regFee}`;
+                                    })()}
+                                    readOnly={true}
+                                    className="w-full border rounded-lg px-3 py-3 focus:outline-none bg-gray-100 text-gray-600 cursor-not-allowed border-gray-300 text-sm"
+                                    placeholder="Auto"
+                                />
+                            </div>
+                            {/* Plus Sign - Desktop */}
+                            <div className="hidden md:flex absolute -right-4 bottom-0 h-11 w-4 items-center justify-center text-gray-400 font-bold text-xl pointer-events-none">
+                                +
+                            </div>
+                        </div>
 
-                {/* Stamp Duty */}
-                <div className="relative">
-                    <label className="block text-sm font-sans font-normal text-gray-700 mb-2">Stamp duty (₹) *</label>
-                    <input
-                        type="number"
-                        {...register('stampDuty')}
-                        readOnly={true}
-                        className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:outline-none bg-gray-50 text-gray-500 cursor-not-allowed font-medium"
-                        placeholder="Auto-calculated"
-                    />
-                    {/* Equals Sign */}
-                    <div className="hidden md:flex absolute -right-6 bottom-0 h-11 w-6 items-center justify-center text-gray-400 font-bold text-xl pointer-events-none">
-                        =
+                        {/* Plus Sign - Mobile only */}
+                        <div className="flex md:hidden items-end justify-center pb-3">
+                            <span className="text-gray-400 font-bold text-lg">+</span>
+                        </div>
+
+                        {/* Stamp Duty */}
+                        <div className="relative">
+                            <label className="block text-sm font-sans font-normal text-gray-700 mb-2">Stamp duty (₹) *</label>
+                            <input
+                                type="number"
+                                {...register('stampDuty')}
+                                readOnly={true}
+                                className="w-full border border-gray-200 rounded-lg px-3 py-3 focus:outline-none bg-gray-50 text-gray-500 cursor-not-allowed font-medium text-sm"
+                                placeholder="Auto"
+                            />
+                            {/* Equals Sign - Desktop */}
+                            <div className="hidden md:flex absolute -right-4 bottom-0 h-11 w-4 items-center justify-center text-gray-400 font-bold text-xl pointer-events-none">
+                                =
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 {/* Total Fee */}
-                <div>
+                <div className="max-w-[200px]">
                     <label className="block text-sm font-sans font-normal text-gray-700 mb-2">Total Fee (₹) *</label>
                     <input
                         type="text"
@@ -369,15 +406,17 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
             </div>
 
             {/* Parties Involved Heading */}
-            <div className="border-t border-dashed border-gray-300 my-4 sm:my-6"></div>
-            <h3 className="text-lg font-sans font-normal text-black mb-4">Parties Involved</h3>
-            <div className="border-t border-dashed border-gray-300 mb-4 sm:mb-6"></div>
+            <div className="border-t border-dashed border-gray-300 my-3 sm:my-4"></div>
+            <h3 className="text-lg font-sans font-normal text-black my-2">Parties Involved</h3>
+            <div className="border-t border-dashed border-gray-300 mb-3 sm:mb-4"></div>
 
             {/* Seller Details Heading */}
             <h3 className="text-lg font-sans font-normal text-black mb-4">Seller Details</h3>
 
             {/* Seller Aadhar */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 relative">
+                {/* Vertical dashed divider - hidden on mobile */}
+                <div className="hidden md:block absolute left-1/2 top-2 bottom-10 border-l border-dashed border-gray-300 -translate-x-1/2"></div>
                 <div>
                     <label className="block text-sm font-sans font-normal text-gray-700 mb-2">Aadhar number *</label>
                     <div className="relative">
@@ -385,7 +424,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                             type="text"
                             {...register('sellerAadhar')}
                             className={`w-full border rounded-lg px-4 py-3 pr-20 transition-all duration-200 outline-none
-                                ${sellerFingerprintVerified
+                                ${isSellerAadharVerified
                                     ? 'bg-green-50 border-green-200 text-green-800 font-medium cursor-not-allowed'
                                     : errors.sellerAadhar
                                         ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-4 focus:ring-red-100'
@@ -393,9 +432,9 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                 }`}
                             placeholder="Enter 12-digit Aadhar number"
                             maxLength={12}
-                            disabled={!!(sellerFingerprintVerified)}
+                            disabled={!!(isSellerAadharVerified)}
                         />
-                        {sellerFingerprintVerified && (
+                        {isSellerAadharVerified && (
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs">
                                 <Check size={14} />
                                 Verified
@@ -404,30 +443,69 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                     </div>
                     {errors.sellerAadhar && <p className="mt-1 text-sm text-red-400 flex items-center gap-1"><AlertCircle size={14} />{errors.sellerAadhar.message}</p>}
 
-                    {/* Aadhar Action Row */}
+                    {/* Aadhar Verification Row: Fingerprint & OTP */}
                     <div className="mt-3">
-                        {sellerFingerprintVerified ? (
+                        {isSellerAadharVerified ? (
                             <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 px-3 py-1.5 rounded-lg transition-colors">
                                 <Check size={14} strokeWidth={2.5} />
-                                <span className="text-xs font-medium">Biometric Verified</span>
-                            </div>
-                        ) : isSellerScanning ? (
-                            <div className="inline-flex items-center gap-2 bg-gray-100 border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg animate-pulse">
-                                <Loader2 size={14} className="animate-spin" />
-                                <span className="text-xs font-medium">Scanning...</span>
+                                <span className="text-xs font-medium">Aadhar Verified</span>
                             </div>
                         ) : (
-                            <button
-                                type="button"
-                                onClick={handleSellerFingerprintScan}
-                                className="inline-flex items-center gap-2 bg-black text-white border border-black px-4 py-1.5 rounded-lg hover:bg-gray-800 transition-colors"
-                            >
-                                <FingerprintIcon className="text-white w-4 h-4" />
-                                <span className="text-xs font-medium">Fingerprint</span>
-                            </button>
+                            <div className="flex flex-row items-center gap-2">
+                                {/* OTP Section */}
+                                <div className="flex items-stretch gap-2">
+                                    <input
+                                        type="text"
+                                        value={sellerAadharOtp}
+                                        onChange={(e) => setSellerAadharOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                        className={`w-20 bg-white border rounded-lg px-2 py-1.5 text-black text-xs focus:outline-none focus:border-black transition-all ${sellerAadharOtpError ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-gray-200 focus:ring-4 focus:ring-gray-100'}`}
+                                        placeholder="Enter OTP"
+                                        maxLength={6}
+                                    />
+                                    {!sellerAadharOtpSent ? (
+                                        <button type="button" onClick={handleSendSellerAadharOtp} className="bg-black text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-gray-800 transition-colors whitespace-nowrap">Send OTP</button>
+                                    ) : (
+                                        <button type="button" onClick={handleVerifySellerAadharOtp} disabled={sellerAadharOtp.length !== 6} className="bg-black text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap">Verify</button>
+                                    )}
+                                </div>
+
+                                {/* "&" Separator - bold and grey */}
+                                <span className="text-gray-400 font-bold text-sm">&</span>
+
+                                {/* Fingerprint Section */}
+                                <div className="flex items-center">
+                                    {isSellerScanning ? (
+                                        <div className="inline-flex items-center gap-2 bg-gray-100 border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg animate-pulse">
+                                            <Loader2 size={14} className="animate-spin" />
+                                            <span className="text-xs font-medium">Scanning...</span>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={handleSellerFingerprintScan}
+                                            className="inline-flex items-center gap-2 bg-black text-white border border-black px-4 py-1.5 rounded-lg hover:bg-gray-800 transition-colors"
+                                        >
+                                            <FingerprintIcon className="text-white w-4 h-4" />
+                                            <span className="text-xs font-medium">Fingerprint</span>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
                         )}
+                        {/* OTP Timer/Resend Row */}
+                        {sellerAadharOtpSent && (
+                            <div className="flex items-center gap-3 text-xs mt-2">
+                                {sellerAadharOtpTimer > 0 ? (
+                                    <span className="flex items-center gap-1 text-gray-500 font-medium"><Clock size={12} /> Resend in {sellerAadharOtpTimer}s</span>
+                                ) : (
+                                    <button type="button" onClick={handleResendSellerAadharOtp} className="text-black underline decoration-gray-400 hover:text-gray-700 font-medium">Resend OTP</button>
+                                )}
+                                {sellerAadharMockOtp && <span className="text-gray-400 ml-auto font-mono bg-gray-100 px-2 py-0.5 rounded">Mock: {sellerAadharMockOtp}</span>}
+                            </div>
+                        )}
+                        {sellerAadharOtpError && <p className="text-xs text-red-500 font-medium mt-1">{sellerAadharOtpError}</p>}
                         {/* Biometric Validation Error */}
-                        {!sellerFingerprintVerified && sellerAadharError && (
+                        {!isSellerAadharVerified && sellerAadharError && (
                             <p className="mt-1.5 text-xs text-red-500 font-medium">{sellerAadharError}</p>
                         )}
                     </div>
@@ -468,7 +546,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     type="text"
                                     value={sellerOtp}
                                     onChange={(e) => setSellerOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                    className={`w-28 bg-white border rounded-lg px-3 py-1.5 text-black text-xs focus:outline-none focus:border-black transition-all ${sellerOtpError ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-gray-200 focus:ring-4 focus:ring-gray-100'}`}
+                                    className={`w-20 bg-white border rounded-lg px-2 py-1.5 text-black text-xs focus:outline-none focus:border-black transition-all ${sellerOtpError ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-gray-200 focus:ring-4 focus:ring-gray-100'}`}
                                     placeholder="Enter OTP"
                                     maxLength={6}
                                 />
@@ -502,7 +580,9 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
             {/* Buyer Details Heading */}
             <h3 className="text-lg font-sans font-normal text-black mb-4">Buyer Details</h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 relative">
+                {/* Vertical dashed divider - hidden on mobile */}
+                <div className="hidden md:block absolute left-1/2 top-2 bottom-10 border-l border-dashed border-gray-300 -translate-x-1/2"></div>
                 {/* Buyer Aadhar */}
                 <div>
                     <label className="block text-sm font-sans font-normal text-gray-700 mb-2">Aadhar number *</label>
@@ -511,7 +591,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                             type="text"
                             {...register('buyerAadhar')}
                             className={`w-full border rounded-lg px-4 py-3 pr-20 transition-all duration-200 outline-none
-                                ${buyerFingerprintVerified
+                                ${isBuyerAadharVerified
                                     ? 'bg-green-50 border-green-200 text-green-800 font-medium cursor-not-allowed'
                                     : errors.buyerAadhar
                                         ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-4 focus:ring-red-100'
@@ -519,9 +599,9 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                 }`}
                             placeholder="Enter 12-digit Aadhar number"
                             maxLength={12}
-                            disabled={!!(buyerFingerprintVerified)}
+                            disabled={!!(isBuyerAadharVerified)}
                         />
-                        {buyerFingerprintVerified && (
+                        {isBuyerAadharVerified && (
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs">
                                 <Check size={14} />
                                 Verified
@@ -530,30 +610,69 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                     </div>
                     {errors.buyerAadhar && <p className="mt-1 text-sm text-red-400 flex items-center gap-1"><AlertCircle size={14} />{errors.buyerAadhar.message}</p>}
 
-                    {/* Fingerprint */}
+                    {/* Aadhar Verification Row: Fingerprint & OTP */}
                     <div className="mt-3">
-                        {buyerFingerprintVerified ? (
+                        {isBuyerAadharVerified ? (
                             <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 px-3 py-1.5 rounded-lg transition-colors">
                                 <Check size={14} strokeWidth={2.5} />
-                                <span className="text-xs font-medium">Biometric Verified</span>
-                            </div>
-                        ) : isBuyerScanning ? (
-                            <div className="inline-flex items-center gap-2 bg-gray-100 border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg animate-pulse">
-                                <Loader2 size={14} className="animate-spin" />
-                                <span className="text-xs font-medium">Scanning...</span>
+                                <span className="text-xs font-medium">Aadhar Verified</span>
                             </div>
                         ) : (
-                            <button
-                                type="button"
-                                onClick={handleBuyerFingerprintScan}
-                                className="inline-flex items-center gap-2 bg-black text-white border border-black px-4 py-1.5 rounded-lg hover:bg-gray-800 transition-colors"
-                            >
-                                <FingerprintIcon className="text-white w-4 h-4" />
-                                <span className="text-xs font-medium">Fingerprint</span>
-                            </button>
+                            <div className="flex flex-row items-center gap-2">
+                                {/* OTP Section */}
+                                <div className="flex items-stretch gap-2">
+                                    <input
+                                        type="text"
+                                        value={buyerAadharOtp}
+                                        onChange={(e) => setBuyerAadharOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                        className={`w-20 bg-white border rounded-lg px-2 py-1.5 text-black text-xs focus:outline-none focus:border-black transition-all ${buyerAadharOtpError ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-gray-200 focus:ring-4 focus:ring-gray-100'}`}
+                                        placeholder="Enter OTP"
+                                        maxLength={6}
+                                    />
+                                    {!buyerAadharOtpSent ? (
+                                        <button type="button" onClick={handleSendBuyerAadharOtp} className="bg-black text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-gray-800 transition-colors whitespace-nowrap">Send OTP</button>
+                                    ) : (
+                                        <button type="button" onClick={handleVerifyBuyerAadharOtp} disabled={buyerAadharOtp.length !== 6} className="bg-black text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap">Verify</button>
+                                    )}
+                                </div>
+
+                                {/* "&" Separator - bold and grey */}
+                                <span className="text-gray-400 font-bold text-sm">&</span>
+
+                                {/* Fingerprint Section */}
+                                <div className="flex items-center">
+                                    {isBuyerScanning ? (
+                                        <div className="inline-flex items-center gap-2 bg-gray-100 border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg animate-pulse">
+                                            <Loader2 size={14} className="animate-spin" />
+                                            <span className="text-xs font-medium">Scanning...</span>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={handleBuyerFingerprintScan}
+                                            className="inline-flex items-center gap-2 bg-black text-white border border-black px-4 py-1.5 rounded-lg hover:bg-gray-800 transition-colors"
+                                        >
+                                            <FingerprintIcon className="text-white w-4 h-4" />
+                                            <span className="text-xs font-medium">Fingerprint</span>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
                         )}
+                        {/* OTP Timer/Resend Row */}
+                        {buyerAadharOtpSent && (
+                            <div className="flex items-center gap-3 text-xs mt-2">
+                                {buyerAadharOtpTimer > 0 ? (
+                                    <span className="flex items-center gap-1 text-gray-500 font-medium"><Clock size={12} /> Resend in {buyerAadharOtpTimer}s</span>
+                                ) : (
+                                    <button type="button" onClick={handleResendBuyerAadharOtp} className="text-black underline decoration-gray-400 hover:text-gray-700 font-medium">Resend OTP</button>
+                                )}
+                                {buyerAadharMockOtp && <span className="text-gray-400 ml-auto font-mono bg-gray-100 px-2 py-0.5 rounded">Mock: {buyerAadharMockOtp}</span>}
+                            </div>
+                        )}
+                        {buyerAadharOtpError && <p className="text-xs text-red-500 font-medium mt-1">{buyerAadharOtpError}</p>}
                         {/* Biometric Validation Error */}
-                        {!buyerFingerprintVerified && buyerAadharError && (
+                        {!isBuyerAadharVerified && buyerAadharError && (
                             <p className="mt-1.5 text-xs text-red-500 font-medium">{buyerAadharError}</p>
                         )}
                     </div>
@@ -594,7 +713,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     type="text"
                                     value={buyerOtp}
                                     onChange={(e) => setBuyerOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                    className={`w-28 bg-white border rounded-lg px-3 py-1.5 text-black text-xs focus:outline-none focus:border-black transition-all ${buyerOtpError ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-gray-200 focus:ring-4 focus:ring-gray-100'}`}
+                                    className={`w-20 bg-white border rounded-lg px-2 py-1.5 text-black text-xs focus:outline-none focus:border-black transition-all ${buyerOtpError ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-gray-200 focus:ring-4 focus:ring-gray-100'}`}
                                     placeholder="Enter OTP"
                                     maxLength={6}
                                 />
@@ -621,6 +740,10 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                         </div>
                     )}
                 </div>
+            </div>
+            <div className="border-t border-dashed border-gray-300 my-3 sm:my-4"></div>
+            <div className="flex justify-center pb-2">
+                <span className="text-gray-400 font-medium">1</span>
             </div>
 
 

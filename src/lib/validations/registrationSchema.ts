@@ -52,6 +52,8 @@ export const registrationSchema = z.object({
     buyerOtpVerified: z.boolean().default(false),
     sellerFingerprintVerified: z.boolean().default(false),
     buyerFingerprintVerified: z.boolean().default(false),
+    sellerAadharOtpVerified: z.boolean().default(false),
+    buyerAadharOtpVerified: z.boolean().default(false),
     declarationChecked: z.boolean().default(false),
 
     // Payment

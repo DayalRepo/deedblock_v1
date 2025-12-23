@@ -2,7 +2,7 @@
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronLeft, CheckCircle, Loader2 } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle, Loader2, ArrowLeft, X } from 'lucide-react';
 import { Toaster } from '@/components/ui/Toaster';
 import { toast } from 'sonner';
 
@@ -414,6 +414,23 @@ export default function RegistrationPage() {
       <div className="min-h-screen bg-white pt-24 sm:pt-32 pb-8 px-4 sm:px-6 font-sans">
         <Toaster />
         <div className="w-full max-w-4xl mx-auto">
+          {/* Navigation Header */}
+          <div className="flex justify-between items-center mb-6 px-4 sm:px-8">
+            <button
+              onClick={() => router.push('/')}
+              className="flex items-center gap-2 text-gray-600 hover:text-black transition-colors"
+            >
+              <ArrowLeft size={20} />
+              <span className="hidden sm:inline font-medium">Back</span>
+            </button>
+
+            <button
+              onClick={() => router.push('/')}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X size={24} />
+            </button>
+          </div>
 
           {/* Progress Indicator */}
           <div className="mb-2 sm:mb-4 px-4 sm:px-8">
@@ -439,28 +456,34 @@ export default function RegistrationPage() {
           </div>
 
           {/* Steps Header (Desktop) */}
-          <div className="mb-4 sm:mb-6 px-4 sm:px-8 hidden sm:block">
-            <div className="flex items-center justify-between relative">
-              {steps.map((step, index) => (
-                <React.Fragment key={step.id}>
-                  <div className="flex items-center flex-1">
-                    <div className="flex flex-col items-center flex-1 relative">
-                      <span className={`text-base font-normal text-center ${currentStep === step.id ? 'text-black' : 'text-gray-400'}`}>
-                        {step.title}
-                      </span>
-                    </div>
-                  </div>
-                  {index < steps.length - 1 && (
-                    <div className="flex-1 mx-4 border-t border-dashed border-gray-300"></div>
-                  )}
-                </React.Fragment>
-              ))}
+          <div className="mb-4 sm:mb-6 px-6 sm:px-12 hidden sm:block">
+            <div className="flex items-center justify-between">
+              {/* Deed Details - Left aligned */}
+              <span className={`text-base font-normal whitespace-nowrap ${currentStep === 1 ? 'text-black' : 'text-gray-400'}`}>
+                Deed Details
+              </span>
+
+              {/* Dashed line */}
+              <div className="flex-1 mx-6 border-t border-dashed border-gray-300"></div>
+
+              {/* Documents - Center aligned */}
+              <span className={`text-base font-normal whitespace-nowrap ${currentStep === 2 ? 'text-black' : 'text-gray-400'}`}>
+                Documents
+              </span>
+
+              {/* Dashed line */}
+              <div className="flex-1 mx-6 border-t border-dashed border-gray-300"></div>
+
+              {/* Payment & Submit - Right aligned */}
+              <span className={`text-base font-normal whitespace-nowrap ${currentStep === 3 ? 'text-black' : 'text-gray-400'}`}>
+                Payment & Submit
+              </span>
             </div>
           </div>
 
           {/* Mobile Step Heading */}
           <div className="sm:hidden px-4 mb-2">
-            <h2 className="text-xl font-normal text-black">{steps.find(s => s.id === currentStep)?.title}</h2>
+            <h2 className="text-base font-normal text-black">{steps.find(s => s.id === currentStep)?.title}</h2>
           </div>
 
           {/* Step Content */}
