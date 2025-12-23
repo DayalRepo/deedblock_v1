@@ -47,7 +47,7 @@ export default function NavigationLinks() {
           className="p-2 rounded-lg bg-white"
           aria-label="Toggle menu"
         >
-          <Menu size={24} className="text-black" />
+          <Menu size={32} className="text-black" />
         </button>
         <SignInButton />
       </div>
@@ -175,14 +175,14 @@ export default function NavigationLinks() {
 
         <Link
           href="/registration"
-          className={` ${pathname === '/registration' ? 'text-gray-500' : 'text-gray-500'} text-[17px] font-normal pb-1 relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1.5px] after:bg-gray-500 after:origin-center after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 ${pathname === '/registration' ? 'after:scale-x-100' : ''}
+          className={` ${pathname === '/registration' ? 'text-gray-500' : 'text-gray-500'} text-[19px] font-normal pb-1 relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1.5px] after:bg-gray-500 after:origin-center after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 ${pathname === '/registration' ? 'after:scale-x-100' : ''}
             }`}
         >
           Registry
         </Link>
         <Link
           href="/search"
-          className={` ${pathname === '/search' ? 'text-gray-500' : 'text-gray-500'} text-[17px] font-normal pb-1 relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1.5px] after:bg-gray-500 after:origin-center after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 ${pathname === '/search' ? 'after:scale-x-100' : ''}
+          className={` ${pathname === '/search' ? 'text-gray-500' : 'text-gray-500'} text-[19px] font-normal pb-1 relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1.5px] after:bg-gray-500 after:origin-center after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 ${pathname === '/search' ? 'after:scale-x-100' : ''}
             }`}
         >
           Search
@@ -190,7 +190,7 @@ export default function NavigationLinks() {
         <div className="relative flex items-center h-full" ref={desktopMoreRef}>
           <button
             onClick={() => setIsMoreOpen(!isMoreOpen)}
-            className={` ${isMoreOpen ? 'text-gray-500' : 'text-gray-500'} text-[17px] font-normal flex items-center gap-0.5 -mt-1`}
+            className={` ${isMoreOpen ? 'text-gray-500' : 'text-gray-500'} text-[19px] font-normal flex items-center gap-0.5 -mt-1`}
           >
             More
             <svg

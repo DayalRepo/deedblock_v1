@@ -220,10 +220,10 @@ export default function SignInButton() {
                 alt="Profile"
                 width={40}
                 height={40}
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-gray-200"
+                className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-gray-200"
               />
             ) : (
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 flex items-center justify-center">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gray-200 flex items-center justify-center">
                 <UserIcon size={20} className="text-gray-500" />
               </div>
             )}
@@ -233,12 +233,12 @@ export default function SignInButton() {
             </div>
           </div>
 
-          <span className="hidden sm:block text-gray-500 font-medium text-[15px] truncate max-w-[100px]">
+          <span className="hidden sm:block text-gray-500 font-medium text-[17px] truncate max-w-[120px]">
             {user.user_metadata.full_name || 'User'}
           </span>
 
           <ChevronDown
-            size={16}
+            size={22}
             className={`text-gray-500 transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
           />
         </button>
@@ -395,7 +395,7 @@ export default function SignInButton() {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-32 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-200 sm:left-1/2 sm:-translate-x-1/2 sm:right-auto right-0">
+        <div className="absolute top-full right-0 mt-2 w-32 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-200 sm:left-1/2 sm:right-auto sm:-translate-x-1/2">
           <div className="flex justify-end px-2 pt-2 pb-1">
             <button
               onClick={() => setIsOpen(false)}
