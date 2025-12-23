@@ -245,7 +245,6 @@ export default function RegistrationPage() {
       // Find first error and show toast?
       // Or RHF shows errors inline.
       // We can show a toast saying "Please fix errors".
-      toast.error('Please fix the errors before proceeding.');
     }
     return result;
   };

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { FileText, X, Download } from 'lucide-react';
-import { Skeleton } from '@/components/ui/Skeleton';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FileText, X, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 
 interface DocumentPreviewModalProps {
     file: File | null;
@@ -28,121 +27,189 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     propertyPhotoUrls,
     onClose
 }) => {
-    const [isLoading, setIsLoading] = useState(true);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [isLoaded, setIsLoaded] = useState(false);
 
-    // Reset loading state when file changes
     useEffect(() => {
-        setIsLoading(true);
-    }, [file]);
+        setIsLoaded(false);
+    }, [file, currentIndex]);
 
-    const fileName = showPropertyPhotos ? `Property Photos (${propertyPhotos.length})` : (file?.name || 'Document');
-    const fileSize = showPropertyPhotos
-        ? formatFileSize(propertyPhotos.reduce((acc, curr) => acc + curr.size, 0))
-        : (file ? formatFileSize(file.size) : '');
+    useEffect(() => {
+        if (showPropertyPhotos) {
+            setCurrentIndex(0);
+        }
+    }, [showPropertyPhotos]);
+
+    const currentPhoto = showPropertyPhotos ? propertyPhotos[currentIndex] : null;
+    const totalPhotos = propertyPhotos.length;
+
+    const currentFile = showPropertyPhotos ? currentPhoto : file;
+    const currentUrl = showPropertyPhotos
+        ? (propertyPhotoUrls.get(currentIndex) || (currentPhoto ? URL.createObjectURL(currentPhoto) : null))
+        : fileUrl;
+
+    const goToPrevious = () => {
+        setCurrentIndex((prev) => (prev > 0 ? prev - 1 : totalPhotos - 1));
+    };
+
+    const goToNext = () => {
+        setCurrentIndex((prev) => (prev < totalPhotos - 1 ? prev + 1 : 0));
+    };
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (showPropertyPhotos && totalPhotos > 1) {
+                if (e.key === 'ArrowLeft') goToPrevious();
+                if (e.key === 'ArrowRight') goToNext();
+            }
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [showPropertyPhotos, totalPhotos, onClose]);
 
     return (
-        <div
-            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-            onClick={onClose}
-        >
+        <AnimatePresence>
             <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[95vh] flex flex-col overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex flex-col bg-black/95"
+                onClick={onClose}
             >
-                {/* Header with Dashed Border */}
-                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-dashed border-gray-300 bg-white z-10">
-                    <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="bg-gray-100 p-2 rounded-lg shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor" className="text-gray-600">
-                                <path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h240l80 80h320q33 0 56.5 23.5T880-640v400q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H447l-80-80H160v480Zm0 0v-480 480Z" />
-                            </svg>
-                        </div>
+                {/* Top Bar */}
+                <div
+                    className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="flex items-center gap-3 text-white min-w-0">
                         <div className="min-w-0">
-                            <h3 className="text-lg font-semibold text-gray-900 truncate pr-4" title={fileName}>
-                                {fileName}
-                            </h3>
-                            {fileSize && (
-                                <p className="text-sm text-gray-500 font-mono">
-                                    {fileSize}
-                                </p>
-                            )}
+                            <p className="text-sm sm:text-base font-medium truncate">
+                                {currentFile?.name || 'Preview'}
+                            </p>
+                            <p className="text-xs text-white/60">
+                                {currentFile ? formatFileSize(currentFile.size) : ''}
+                                {showPropertyPhotos && totalPhotos > 1 && (
+                                    <span className="ml-2">• {currentIndex + 1} / {totalPhotos}</span>
+                                )}
+                            </p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-700 shrink-0"
+                        className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
                     >
-                        <X size={24} />
+                        <X size={22} />
                     </button>
                 </div>
 
-                {/* Content Area */}
-                <div className="flex-1 overflow-auto bg-gray-50 p-4 sm:p-6 min-h-[300px]">
-                    {showPropertyPhotos ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {propertyPhotos.map((photo, i) => (
-                                <div key={i} className="group relative rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-white aspect-[4/3]">
+                {/* Main Content */}
+                <div
+                    className="flex-1 flex items-center justify-center relative overflow-hidden px-4 sm:px-12"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {/* Navigation - Previous */}
+                    {showPropertyPhotos && totalPhotos > 1 && (
+                        <button
+                            onClick={goToPrevious}
+                            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 text-white/60 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                        >
+                            <ChevronLeft size={24} className="sm:w-8 sm:h-8" />
+                        </button>
+                    )}
+
+                    {/* Content Display */}
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={showPropertyPhotos ? currentIndex : 'single'}
+                            initial={{ opacity: 0, scale: 0.98 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.98 }}
+                            transition={{ duration: 0.15 }}
+                            className="w-full h-full flex items-center justify-center"
+                        >
+                            {currentFile && currentUrl ? (
+                                currentFile.type.startsWith('image/') ? (
                                     <img
-                                        src={propertyPhotoUrls.get(i) || URL.createObjectURL(photo)}
-                                        alt={`Property ${i + 1}`}
-                                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                                        loading="lazy"
+                                        src={currentUrl}
+                                        alt="Preview"
+                                        className={`max-w-full max-h-[70vh] sm:max-h-[75vh] object-contain transition-opacity duration-200 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+                                        onLoad={() => setIsLoaded(true)}
+                                        style={{ borderRadius: '4px' }}
                                     />
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="flex justify-center items-center h-full min-h-[400px] relative">
-                            {file && fileUrl ? (
-                                <>
-                                    {isLoading && (
-                                        <div className="absolute inset-0 flex items-center justify-center p-6">
-                                            <Skeleton className="w-full h-full max-w-2xl max-h-[60vh] rounded-lg" />
-                                        </div>
-                                    )}
-                                    {file.type.startsWith('image/') ? (
-                                        <img
-                                            src={fileUrl}
-                                            alt="Preview"
-                                            className={`max-w-full max-h-[60vh] object-contain rounded-lg shadow-sm transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
-                                            onLoad={() => setIsLoading(false)}
-                                        />
-                                    ) : file.type === 'application/pdf' ? (
+                                ) : currentFile.type === 'application/pdf' ? (
+                                    <div className="w-full max-w-3xl h-[70vh] sm:h-[75vh] bg-white rounded">
                                         <iframe
-                                            src={fileUrl}
+                                            src={currentUrl}
                                             title="PDF Preview"
-                                            className={`w-full h-[75vh] rounded-lg border border-gray-200 bg-white shadow-sm transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
-                                            onLoad={() => setIsLoading(false)}
+                                            className="w-full h-full rounded"
                                         />
-                                    ) : (
-                                        <div className="text-center p-12 bg-white rounded-xl shadow-sm border border-gray-200">
-                                            <FileText size={64} className="mx-auto mb-4 text-gray-300" />
-                                            <p className="text-lg text-gray-700 font-medium">Preview not available</p>
-                                            <p className="text-gray-500 mt-2">This file type cannot be previewed directly.</p>
-                                        </div>
-                                    )}
-                                </>
+                                    </div>
+                                ) : (
+                                    <div className="text-center text-white/70 py-12">
+                                        <FileText size={48} className="mx-auto mb-4 opacity-50" />
+                                        <p className="text-sm">Preview not available</p>
+                                    </div>
+                                )
                             ) : (
-                                <p className="text-gray-500">No file loaded</p>
+                                <p className="text-white/50 text-sm">No file to preview</p>
                             )}
-                        </div>
+                        </motion.div>
+                    </AnimatePresence>
+
+                    {/* Navigation - Next */}
+                    {showPropertyPhotos && totalPhotos > 1 && (
+                        <button
+                            onClick={goToNext}
+                            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 text-white/60 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                        >
+                            <ChevronRight size={24} className="sm:w-8 sm:h-8" />
+                        </button>
                     )}
                 </div>
 
-                {/* Footer with Dashed Border */}
-                <div className="p-4 border-t border-dashed border-gray-300 bg-white flex justify-end gap-3 z-10">
-
-                    <button
-                        onClick={onClose}
-                        className="px-6 py-2.5 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-sm"
+                {/* Bottom Bar - Thumbnail Strip for Multiple Photos */}
+                {showPropertyPhotos && totalPhotos > 1 && (
+                    <div
+                        className="px-4 py-3 sm:py-4 overflow-x-auto"
+                        onClick={(e) => e.stopPropagation()}
                     >
-                        Close Preview
-                    </button>
-                </div>
+                        <div className="flex gap-2 justify-center">
+                            {propertyPhotos.map((photo, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => setCurrentIndex(i)}
+                                    className={`relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded overflow-hidden transition-all ${i === currentIndex
+                                            ? 'ring-2 ring-white ring-offset-2 ring-offset-black opacity-100'
+                                            : 'opacity-40 hover:opacity-70'
+                                        }`}
+                                >
+                                    <img
+                                        src={propertyPhotoUrls.get(i) || URL.createObjectURL(photo)}
+                                        alt={`Thumbnail ${i + 1}`}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Bottom Bar - Single File */}
+                {!showPropertyPhotos && (
+                    <div
+                        className="px-4 py-3 sm:py-4 flex justify-center"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            onClick={onClose}
+                            className="px-5 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+                        >
+                            Close
+                        </button>
+                    </div>
+                )}
             </motion.div>
-        </div>
+        </AnimatePresence>
     );
 };
