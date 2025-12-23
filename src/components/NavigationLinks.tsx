@@ -47,7 +47,7 @@ export default function NavigationLinks() {
           className="p-2 rounded-lg bg-white"
           aria-label="Toggle menu"
         >
-          <Menu size={30} className="text-black" />
+          <Menu size={28} className="text-black" />
         </button>
         <SignInButton />
       </div>
@@ -123,7 +123,7 @@ export default function NavigationLinks() {
               </div>
             </button>
             {isMobileMoreOpen && (
-              <div className="absolute top-full left-0 mt-2 w-36 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-200">
+              <div className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-200">
                 <div className="flex justify-end px-2 pt-2 pb-1">
                   <button
                     onClick={() => setIsMobileMoreOpen(false)}
@@ -140,7 +140,7 @@ export default function NavigationLinks() {
                     setIsMobileMoreOpen(false);
                     setIsMenuOpen(false);
                   }}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors flex items-center gap-3"
+                  className="w-full px-3 py-2 text-left hover:bg-gray-100 transition-colors flex items-center gap-2"
                 >
                   <div className="w-5 h-5 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor" className="text-[#808080]">
@@ -157,7 +157,7 @@ export default function NavigationLinks() {
                     setIsMobileMoreOpen(false);
                     setIsMenuOpen(false);
                   }}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors flex items-center gap-3 mb-1"
+                  className="w-full px-3 py-2 text-left hover:bg-gray-100 transition-colors flex items-center gap-2 mb-1"
                 >
                   <div className="w-5 h-5 flex items-center justify-center">
                     <MessageSquare size={14} className="text-[#808080]" />
@@ -175,14 +175,14 @@ export default function NavigationLinks() {
 
         <Link
           href="/registration"
-          className={` ${pathname === '/registration' ? 'text-gray-500' : 'text-gray-500'} text-[15px] font-normal pb-1 relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1.5px] after:bg-gray-500 after:origin-center after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 ${pathname === '/registration' ? 'after:scale-x-100' : ''}
+          className={` ${pathname === '/registration' ? 'text-gray-500' : 'text-gray-500'} text-[17.5px] font-normal pb-1 relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1.5px] after:bg-gray-500 after:origin-center after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 ${pathname === '/registration' ? 'after:scale-x-100' : ''}
             }`}
         >
           Registry
         </Link>
         <Link
           href="/search"
-          className={` ${pathname === '/search' ? 'text-gray-500' : 'text-gray-500'} text-[15px] font-normal pb-1 relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1.5px] after:bg-gray-500 after:origin-center after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 ${pathname === '/search' ? 'after:scale-x-100' : ''}
+          className={` ${pathname === '/search' ? 'text-gray-500' : 'text-gray-500'} text-[17.5px] font-normal pb-1 relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1.5px] after:bg-gray-500 after:origin-center after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 ${pathname === '/search' ? 'after:scale-x-100' : ''}
             }`}
         >
           Search
@@ -190,7 +190,7 @@ export default function NavigationLinks() {
         <div className="relative flex items-center h-full" ref={desktopMoreRef}>
           <button
             onClick={() => setIsMoreOpen(!isMoreOpen)}
-            className={` ${isMoreOpen ? 'text-gray-500' : 'text-gray-500'} text-[15px] font-normal flex items-center gap-0.5 -mt-1`}
+            className={` ${isMoreOpen ? 'text-gray-500' : 'text-gray-500'} text-[17.5px] font-normal flex items-center gap-0.5 -mt-1`}
           >
             More
             <svg
@@ -209,7 +209,7 @@ export default function NavigationLinks() {
             </svg>
           </button>
           {isMoreOpen && (
-            <div className="absolute top-full right-[-60px] mt-2 w-36 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-200">
+            <div className="absolute top-full right-[-60px] mt-2 w-32 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-200">
               <div className="flex justify-end px-2 pt-2 pb-1">
                 <button
                   onClick={() => setIsMoreOpen(false)}
@@ -223,7 +223,7 @@ export default function NavigationLinks() {
               <Link
                 href="/help"
                 onClick={() => setIsMoreOpen(false)}
-                className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors flex items-center gap-3"
+                className="w-full px-3 py-2 text-left hover:bg-gray-100 transition-colors flex items-center gap-2"
               >
                 <div className="w-5 h-5 flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor" className="text-[#808080]">
@@ -237,7 +237,7 @@ export default function NavigationLinks() {
               <Link
                 href="/feedback"
                 onClick={() => setIsMoreOpen(false)}
-                className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors flex items-center gap-3 mb-1"
+                className="w-full px-3 py-2 text-left hover:bg-gray-100 transition-colors flex items-center gap-2 mb-1"
               >
                 <div className="w-5 h-5 flex items-center justify-center">
                   <MessageSquare size={14} className="text-[#808080]" />

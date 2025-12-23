@@ -31,7 +31,7 @@ body {
 
 /* Header Styles */
 .header {
-  @apply fixed top-0 w-full px-3 sm:px-36 pt-6 pb-2 sm:py-6 z-40 bg-white/90 backdrop-blur-sm;
+  @apply fixed top-0 w-full px-3 sm:px-36 lg:px-44 pt-6 pb-2 sm:py-6 z-40 bg-white/90 backdrop-blur-sm;
 }
 
 .header-container {
@@ -39,7 +39,7 @@ body {
 }
 
 .logo-container {
-  @apply relative min-w-[50px] w-[50px] h-[50px] sm:w-[65px] sm:h-[65px] lg:w-[65px] lg:h-[65px] bg-black/5 rounded-lg;
+  @apply relative min-w-[50px] w-[50px] h-[50px] sm:w-[65px] sm:h-[65px] lg:w-[58px] lg:h-[58px] bg-black/5 rounded-lg;
 }
 
 .logo-image {

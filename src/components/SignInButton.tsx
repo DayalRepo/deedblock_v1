@@ -220,10 +220,10 @@ export default function SignInButton() {
                 alt="Profile"
                 width={40}
                 height={40}
-                className="w-10 h-10 sm:w-11 sm:h-11 rounded-full border border-gray-200"
+                className="w-10 h-10 sm:w-10 sm:h-10 rounded-full border border-gray-200"
               />
             ) : (
-              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gray-200 flex items-center justify-center">
+              <div className="w-10 h-10 sm:w-10 sm:h-10 rounded-full bg-gray-200 flex items-center justify-center">
                 <UserIcon size={20} className="text-gray-500" />
               </div>
             )}
@@ -233,12 +233,12 @@ export default function SignInButton() {
             </div>
           </div>
 
-          <span className="hidden sm:block text-gray-500 font-medium text-[16px] truncate max-w-[120px]">
+          <span className="hidden sm:block text-gray-500 font-medium text-[15px] truncate max-w-[120px]">
             {user.user_metadata.full_name || 'User'}
           </span>
 
           <ChevronDown
-            size={19}
+            size={18}
             className={`text-gray-500 transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
           />
         </button>
@@ -388,10 +388,10 @@ export default function SignInButton() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="text-gray-400 bg-black px-4 py-2 sm:px-5 sm:py-2 rounded-lg text-[15px] sm:text-[15px] font-medium sm:font-normal hover:bg-gray-800 transition-colors flex items-center gap-1"
+        className="text-white bg-black px-4 py-2 sm:px-5 sm:py-2 rounded-lg text-[15px] sm:text-[15px] font-medium sm:font-normal hover:bg-gray-800 transition-colors flex items-center gap-1"
       >
         Sign in
-        <ChevronDown size={16} className={`transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} text-gray-400`} />
+        <ChevronDown size={16} className={`transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
