@@ -1,0 +1,123 @@
+{
+    "name": "Maharashtra",
+    "stampDuty": 6.0,
+    "districts": [
+        {
+            "name": "Mumbai City",
+            "mandals": [
+                {
+                    "name": "Colaba",
+                    "villages": [
+                        {
+                            "name": "Colaba",
+                            "surveyNumbers": [
+                                {
+                                    "number": "1/A",
+                                    "govtValue": 15000000
+                                },
+                                {
+                                    "number": "1/B",
+                                    "govtValue": 16000000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "1-100",
+                                    "govtValue": 15500000
+                                },
+                                {
+                                    "number": "1-101",
+                                    "govtValue": 16500000
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "Fort",
+                    "villages": [
+                        {
+                            "name": "Fort",
+                            "surveyNumbers": [
+                                {
+                                    "number": "10/X",
+                                    "govtValue": 25000000
+                                },
+                                {
+                                    "number": "11/Y",
+                                    "govtValue": 28000000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "2-200",
+                                    "govtValue": 26000000
+                                },
+                                {
+                                    "number": "2-201",
+                                    "govtValue": 29000000
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Pune",
+            "mandals": [
+                {
+                    "name": "Haveli",
+                    "villages": [
+                        {
+                            "name": "Kothrud",
+                            "surveyNumbers": [
+                                {
+                                    "number": "44/K",
+                                    "govtValue": 7000000
+                                },
+                                {
+                                    "number": "45/L",
+                                    "govtValue": 7500000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "3-300",
+                                    "govtValue": 7200000
+                                },
+                                {
+                                    "number": "3-301",
+                                    "govtValue": 7800000
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Baner",
+                            "surveyNumbers": [
+                                {
+                                    "number": "22/B",
+                                    "govtValue": 6500000
+                                },
+                                {
+                                    "number": "23/C",
+                                    "govtValue": 6800000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "4-400",
+                                    "govtValue": 6600000
+                                },
+                                {
+                                    "number": "4-401",
+                                    "govtValue": 7000000
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -210,7 +210,7 @@ export default function HelpPage() {
   });
 
   return (
-    <main className={dmSans.className + " min-h-screen bg-[#FAF9F6] text-black pt-24 sm:pt-32 pb-20"}>
+    <main className={dmSans.className + " min-h-screen bg-white text-black pt-24 sm:pt-32 pb-20"}>
       <div className="px-3 sm:px-6 lg:px-36 max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

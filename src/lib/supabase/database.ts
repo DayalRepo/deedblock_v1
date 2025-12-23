@@ -3,14 +3,16 @@ import { supabase } from './client';
 // Types
 export interface RegistrationData {
   id?: string;
+  user_id: string;
   registration_id: string;
   registration_date: string;
   wallet_address: string;
   status: 'active' | 'pending' | 'verified';
-  
+
   // Property Details
   property_type: string;
   survey_number: string;
+  door_number: string;
   plot_number: string;
   village: string;
   taluka: string;
@@ -20,56 +22,58 @@ export interface RegistrationData {
   area: string;
   area_unit: string;
   property_description?: string;
-  
+
   // Transaction Details
   transaction_type: string;
   consideration_amount: string;
   stamp_duty: string;
   registration_fee: string;
-  sale_agreement_date: string;
-  
+
+  // Legacy / Additional Fields (used in Search or other components)
+  sale_agreement_date?: string;
+
   // Seller Information
   seller_name: string;
-  seller_father_name: string;
+  seller_father_name?: string;
   seller_age?: string;
   seller_address?: string;
   seller_pan?: string;
   seller_aadhar?: string;
   seller_phone?: string;
   seller_email?: string;
-  
+
   // Buyer Information
   buyer_name: string;
-  buyer_father_name: string;
+  buyer_father_name?: string;
   buyer_age?: string;
   buyer_address?: string;
   buyer_pan?: string;
   buyer_aadhar?: string;
   buyer_phone?: string;
   buyer_email?: string;
-  
-  // Witnesses (JSON array)
+
+  // Witnesses
   witnesses?: Array<{
     name: string;
     address: string;
     phone: string;
     aadhar: string;
   }>;
-  
+
   // Documents (JSON object) - Now stores IPFS hashes
   documents?: Record<string, {
     name: string;
     ipfsHash: string; // IPFS hash (CID)
     mimeType: string;
   }>;
-  
+
   // Property Photos (JSON array) - Now stores IPFS hashes
   property_photos?: Array<{
     name: string;
     ipfsHash: string; // IPFS hash (CID)
     mimeType: string;
   }>;
-  
+
   created_at?: string;
   updated_at?: string;
 }
@@ -113,7 +117,7 @@ export async function saveRegistration(data: RegistrationData) {
     .single();
 
   if (error) {
-    console.error('Error saving registration:', error);
+    console.error('Error saving registration:', JSON.stringify(error, null, 2));
     throw error;
   }
 
@@ -337,4 +341,3 @@ export async function getSearchHistory(walletAddress: string) {
 
   return data || [];
 }
-

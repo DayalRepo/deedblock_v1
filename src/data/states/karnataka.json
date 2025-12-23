@@ -1,0 +1,123 @@
+{
+    "name": "Karnataka",
+    "stampDuty": 5.65,
+    "districts": [
+        {
+            "name": "Bangalore Urban",
+            "mandals": [
+                {
+                    "name": "Bangalore North",
+                    "villages": [
+                        {
+                            "name": "Yelahanka",
+                            "surveyNumbers": [
+                                {
+                                    "number": "100/1",
+                                    "govtValue": 6000000
+                                },
+                                {
+                                    "number": "100/2",
+                                    "govtValue": 6200000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "1-101",
+                                    "govtValue": 6300000
+                                },
+                                {
+                                    "number": "1-102",
+                                    "govtValue": 6500000
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "Bangalore South",
+                    "villages": [
+                        {
+                            "name": "Jayanagar",
+                            "surveyNumbers": [
+                                {
+                                    "number": "9/A",
+                                    "govtValue": 9000000
+                                },
+                                {
+                                    "number": "9/B",
+                                    "govtValue": 9500000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "2-201",
+                                    "govtValue": 9200000
+                                },
+                                {
+                                    "number": "2-202",
+                                    "govtValue": 9600000
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Koramangala",
+                            "surveyNumbers": [
+                                {
+                                    "number": "8/K",
+                                    "govtValue": 9800000
+                                },
+                                {
+                                    "number": "8/L",
+                                    "govtValue": 10000000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "3-301",
+                                    "govtValue": 9900000
+                                },
+                                {
+                                    "number": "3-302",
+                                    "govtValue": 10200000
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Mysore",
+            "mandals": [
+                {
+                    "name": "Mysore Taluk",
+                    "villages": [
+                        {
+                            "name": "Hebbal",
+                            "surveyNumbers": [
+                                {
+                                    "number": "50/M",
+                                    "govtValue": 4500000
+                                },
+                                {
+                                    "number": "51/N",
+                                    "govtValue": 4800000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "4-401",
+                                    "govtValue": 4600000
+                                },
+                                {
+                                    "number": "4-402",
+                                    "govtValue": 4900000
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

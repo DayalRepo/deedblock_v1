@@ -7,6 +7,7 @@ import { FileText, Calendar, Loader2, AlertCircle, X, Copy, Check, Download, QrC
 import { QRCodeSVG } from 'qrcode.react';
 import { searchRegistrations, savePayment, saveSearchHistory, getSearchHistory, type RegistrationData } from '@/lib/supabase/database';
 import { getIPFSUrl } from '@/lib/ipfs/pinata';
+import AuthGate from '@/components/AuthGate';
 
 
 
@@ -824,834 +825,836 @@ Generated on: ${new Date().toLocaleString()}
   };
 
   return (
-    <div className={` min-h-screen bg-[#FAF9F6] text-black pt-20 sm:pt-24 lg:pt-32 px-3 sm:px-6 pb-20 flex items-center justify-center`}>
-      <div className="max-w-4xl w-full mx-auto">
-        {/* Search Form */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="bg-white border border-gray-200 shadow-sm rounded-lg p-4 sm:p-6 mb-6 mx-auto"
-        >
-          {/* Header - Top Left */}
-          <div className="mb-5">
-            <h1 className={` text-xl sm:text-2xl font-medium mb-1.5`}>
-              Search Land Titles
-            </h1>
-            <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
-              Search for registered land titles using registration id and survey no.
-            </p>
-          </div>
-
-          {/* Search Type Selector */}
-          <div className="mb-4">
-            <label className={`block text-sm text-gray-600 mb-2`}>
-              Search By
-            </label>
-            <div className="flex gap-2 w-fit">
-              {[
-                { value: 'registrationId', label: 'Registration ID' },
-                { value: 'surveyNumber', label: 'Survey No.' },
-              ].map((type) => (
-                <button
-                  key={type.value}
-                  onClick={() => handleInputChange('searchType', type.value)}
-                  className={`px-3 py-2 rounded-lg border transition-colors text-xs sm:text-sm whitespace-nowrap ${searchForm.searchType === type.value
-                    ? 'bg-black text-white border-black'
-                    : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400 hover:text-black'
-                    }`}
-                >
-                  {type.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Search Input Fields */}
-          <div className="space-y-3">
-            <AnimatePresence mode="wait">
-              {searchForm.searchType === 'registrationId' && (
-                <motion.div
-                  key="registrationId"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <label className={`block text-sm text-gray-600 mb-2`}>
-                    Registration ID
-                  </label>
-                  <input
-                    type="text"
-                    value={searchForm.registrationId}
-                    onChange={(e) => handleInputChange('registrationId', e.target.value)}
-                    placeholder="Enter Registration ID (e.g., REG-12345678)"
-                    className="max-w-lg w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-black placeholder-gray-400 focus:outline-none focus:border-gray-400 transition-colors text-sm"
-                  />
-                </motion.div>
-              )}
-
-              {searchForm.searchType === 'surveyNumber' && (
-                <motion.div
-                  key="surveyNumber"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <label className={`block text-sm text-gray-600 mb-2`}>
-                    Survey Number
-                  </label>
-                  <input
-                    type="text"
-                    value={searchForm.surveyNumber}
-                    onChange={(e) => handleInputChange('surveyNumber', e.target.value)}
-                    placeholder="Enter Survey Number"
-                    className="max-w-lg w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-black placeholder-gray-400 focus:outline-none focus:border-gray-400 transition-colors text-sm"
-                  />
-                </motion.div>
-              )}
-
-            </AnimatePresence>
-          </div>
-
-          {/* Error Message */}
-          {searchError && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2"
-            >
-              <AlertCircle size={20} className="text-red-500 sm:w-6 sm:h-6" />
-              <p className="text-red-600 text-xs sm:text-sm">{searchError}</p>
-            </motion.div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-2.5 mt-5 items-stretch sm:items-center">
-            <button
-              onClick={handleSearch}
-              disabled={isSearching || !connected}
-              className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 sm:py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSearching ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Searching...
-                </>
-              ) : (
-                'Search'
-              )}
-            </button>
-            {(searchResults.length > 0 || searchForm.registrationId || searchForm.surveyNumber) && (
-              <button
-                onClick={resetSearch}
-                className="px-3 py-2 bg-white border border-gray-300 text-black rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-50 transition-colors"
-              >
-                Reset
-              </button>
-            )}
-          </div>
-
-          {/* Wallet Connection Warning */}
-          {!connected && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2"
-            >
-              <AlertCircle size={20} className="text-yellow-600 sm:w-6 sm:h-6" />
-              <p className="text-yellow-700 text-xs sm:text-sm">Please connect your wallet to search for land titles.</p>
-            </motion.div>
-          )}
-        </motion.div>
-
-        {/* Search History - Dropdown */}
-        {searchHistory.length > 0 && (
+    <AuthGate>
+      <div className={` min-h-screen bg-white text-black pt-20 sm:pt-24 lg:pt-32 px-3 sm:px-6 pb-20 flex items-center justify-center`}>
+        <div className="max-w-4xl w-full mx-auto">
+          {/* Search Form */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="mb-6 flex justify-start relative"
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="bg-white border border-gray-200 shadow-sm rounded-lg p-4 sm:p-6 mb-6 mx-auto"
           >
-            <div className="relative z-20">
-              <button
-                onClick={() => setIsRecentSearchesOpen(!isRecentSearchesOpen)}
-                className={`w-full sm:w-auto sm:max-w-xs bg-white border border-gray-300 shadow-sm rounded-lg px-4 py-3 sm:py-2.5 text-black text-sm hover:bg-gray-50 transition-colors flex items-center gap-2 justify-between`}
-              >
-                <span className="text-gray-600">Recent Searches</span>
-                <ChevronDown
-                  size={16}
-                  className={`text-gray-500 transition-transform duration-200 ${isRecentSearchesOpen ? 'rotate-180' : ''}`}
-                />
-              </button>
-              <AnimatePresence>
-                {isRecentSearchesOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute top-full left-0 mt-2 max-w-xs w-full bg-white rounded-lg shadow-xl py-1 z-20 border border-gray-200"
-                  >
-                    <div className="dropdown-header">
-                      <h3 className={` font-medium text-black tracking-tight text-sm`}>Recent Searches</h3>
-                      <button
-                        onClick={() => setIsRecentSearchesOpen(false)}
-                        className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        <X size={14} className="text-black" />
-                      </button>
-                    </div>
-                    <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                      {searchHistory.map((entry, index) => (
-                        <div key={index}>
-                          <button
-                            onClick={() => loadFromHistory(entry)}
-                            className="dropdown-item w-full text-left"
-                          >
-                            <div className="dropdown-title">
-                              {entry.type === 'registrationId' ? 'Registration ID' : 'Survey No.'}
-                            </div>
-                            <div className="dropdown-description">{entry.query}</div>
-                          </button>
-                          {index < searchHistory.length - 1 && (
-                            <div className="dropdown-divider" />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            {/* Header - Top Left */}
+            <div className="mb-5">
+              <h1 className={` text-xl sm:text-2xl font-medium mb-1.5`}>
+                Search Land Titles
+              </h1>
+              <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
+                Search for registered land titles using registration id and survey no.
+              </p>
             </div>
-            {/* Click outside to close */}
-            {isRecentSearchesOpen && (
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setIsRecentSearchesOpen(false)}
-              />
-            )}
-          </motion.div>
-        )}
 
-
-        {/* Search Results */}
-        <AnimatePresence>
-          {searchResults.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-              className="mb-8"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className={` text-xl sm:text-2xl font-medium`}>
-                  Search Results ({filteredResults.length})
-                </h2>
-              </div>
-
-              <div className="space-y-4">
-                {paginatedResults.map((result, index) => (
-                  <motion.div
-                    key={result.registrationId}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    onClick={() => handleViewDetails(result)}
-                    className="bg-white border border-gray-200 shadow-sm rounded-lg p-4 sm:p-6 cursor-pointer hover:border-gray-300 transition-colors"
+            {/* Search Type Selector */}
+            <div className="mb-4">
+              <label className={`block text-sm text-gray-600 mb-2`}>
+                Search By
+              </label>
+              <div className="flex gap-2 w-fit">
+                {[
+                  { value: 'registrationId', label: 'Registration ID' },
+                  { value: 'surveyNumber', label: 'Survey No.' },
+                ].map((type) => (
+                  <button
+                    key={type.value}
+                    onClick={() => handleInputChange('searchType', type.value)}
+                    className={`px-3 py-2 rounded-lg border transition-colors text-xs sm:text-sm whitespace-nowrap ${searchForm.searchType === type.value
+                      ? 'bg-black text-white border-black'
+                      : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400 hover:text-black'
+                      }`}
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 sm:gap-3 mb-3">
-                          <div className="flex items-center gap-2">
-                            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                            <span className="font-mono text-black text-sm sm:text-base">{result.registrationId}</span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                copyRegistrationId(result.registrationId);
-                              }}
-                              className="p-1 hover:bg-gray-100 rounded transition-colors"
-                            >
-                              {copiedId ? (
-                                <Check size={16} className="text-green-400 sm:w-5 sm:h-5" />
-                              ) : (
-                                <Copy size={16} className="text-gray-400 sm:w-5 sm:h-5" />
-                              )}
-                            </button>
-                          </div>
-                          <span className={`px-2 py-1 rounded text-xs border ${getStatusColor(result.status)}`}>
-                            {result.status.toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-sm">
-                          <div className="flex items-center gap-2 text-gray-500">
-                            <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                            <span className="break-words">{result.village}, {result.taluka}, {result.district}, {result.state}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-gray-500">
-                            <Users className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                            <span className="break-words">Buyer: {result.buyerName} | Seller: {result.sellerName}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-gray-500">
-                            <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                            <span>Registered: {new Date(result.registrationDate).toLocaleDateString()}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-gray-500">
-                            <IndianRupee className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                            <span>Amount: ₹{parseFloat(result.considerationAmount).toLocaleString('en-IN')}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleViewDetails(result);
-                        }}
-                        className="px-3 sm:px-4 py-2.5 sm:py-2 bg-gray-100 border border-gray-200 text-black rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" height="14" viewBox="0 -960 960 960" width="14" fill="#000000" className="sm:w-4 sm:h-4">
-                          <path d="M240-40H120q-33 0-56.5-23.5T40-120v-120h80v120h120v80Zm480 0v-80h120v-120h80v120q0 33-23.5 56.5T840-40H720ZM480-220q-120 0-217.5-71T120-480q45-118 142.5-189T480-740q120 0 217.5 71T840-480q-45 118-142.5 189T480-220Zm0-80q88 0 161-48t112-132q-39-84-112-132t-161-48q-88 0-161 48T207-480q39 84 112 132t161 48Zm0-40q58 0 99-41t41-99q0-58-41-99t-99-41q-58 0-99 41t-41 99q0 58 41 99t99 41Zm0-80q-25 0-42.5-17.5T420-480q0-25 17.5-42.5T480-540q25 0 42.5 17.5T540-480q0 25-17.5 42.5T480-420ZM40-720v-120q0-33 23.5-56.5T120-920h120v80H120v120H40Zm800 0v-120H720v-80h120q33 0 56.5 23.5T920-840v120h-80ZM480-480Z" />
-                        </svg>
-                        View Details
-                      </button>
-                    </div>
-                  </motion.div>
+                    {type.label}
+                  </button>
                 ))}
               </div>
+            </div>
+
+            {/* Search Input Fields */}
+            <div className="space-y-3">
+              <AnimatePresence mode="wait">
+                {searchForm.searchType === 'registrationId' && (
+                  <motion.div
+                    key="registrationId"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <label className={`block text-sm text-gray-600 mb-2`}>
+                      Registration ID
+                    </label>
+                    <input
+                      type="text"
+                      value={searchForm.registrationId}
+                      onChange={(e) => handleInputChange('registrationId', e.target.value)}
+                      placeholder="Enter Registration ID (e.g., REG-12345678)"
+                      className="max-w-lg w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-black placeholder-gray-400 focus:outline-none focus:border-gray-400 transition-colors text-sm"
+                    />
+                  </motion.div>
+                )}
+
+                {searchForm.searchType === 'surveyNumber' && (
+                  <motion.div
+                    key="surveyNumber"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <label className={`block text-sm text-gray-600 mb-2`}>
+                      Survey Number
+                    </label>
+                    <input
+                      type="text"
+                      value={searchForm.surveyNumber}
+                      onChange={(e) => handleInputChange('surveyNumber', e.target.value)}
+                      placeholder="Enter Survey Number"
+                      className="max-w-lg w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-black placeholder-gray-400 focus:outline-none focus:border-gray-400 transition-colors text-sm"
+                    />
+                  </motion.div>
+                )}
+
+              </AnimatePresence>
+            </div>
+
+            {/* Error Message */}
+            {searchError && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2"
+              >
+                <AlertCircle size={20} className="text-red-500 sm:w-6 sm:h-6" />
+                <p className="text-red-600 text-xs sm:text-sm">{searchError}</p>
+              </motion.div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-2.5 mt-5 items-stretch sm:items-center">
+              <button
+                onClick={handleSearch}
+                disabled={isSearching || !connected}
+                className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 sm:py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSearching ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Searching...
+                  </>
+                ) : (
+                  'Search'
+                )}
+              </button>
+              {(searchResults.length > 0 || searchForm.registrationId || searchForm.surveyNumber) && (
+                <button
+                  onClick={resetSearch}
+                  className="px-3 py-2 bg-white border border-gray-300 text-black rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+
+            {/* Wallet Connection Warning */}
+            {!connected && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2"
+              >
+                <AlertCircle size={20} className="text-yellow-600 sm:w-6 sm:h-6" />
+                <p className="text-yellow-700 text-xs sm:text-sm">Please connect your wallet to search for land titles.</p>
+              </motion.div>
+            )}
+          </motion.div>
+
+          {/* Search History - Dropdown */}
+          {searchHistory.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mb-6 flex justify-start relative"
+            >
+              <div className="relative z-20">
+                <button
+                  onClick={() => setIsRecentSearchesOpen(!isRecentSearchesOpen)}
+                  className={`w-full sm:w-auto sm:max-w-xs bg-white border border-gray-300 shadow-sm rounded-lg px-4 py-3 sm:py-2.5 text-black text-sm hover:bg-gray-50 transition-colors flex items-center gap-2 justify-between`}
+                >
+                  <span className="text-gray-600">Recent Searches</span>
+                  <ChevronDown
+                    size={16}
+                    className={`text-gray-500 transition-transform duration-200 ${isRecentSearchesOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                <AnimatePresence>
+                  {isRecentSearchesOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full left-0 mt-2 max-w-xs w-full bg-white rounded-lg shadow-xl py-1 z-20 border border-gray-200"
+                    >
+                      <div className="dropdown-header">
+                        <h3 className={` font-medium text-black tracking-tight text-sm`}>Recent Searches</h3>
+                        <button
+                          onClick={() => setIsRecentSearchesOpen(false)}
+                          className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                          <X size={14} className="text-black" />
+                        </button>
+                      </div>
+                      <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                        {searchHistory.map((entry, index) => (
+                          <div key={index}>
+                            <button
+                              onClick={() => loadFromHistory(entry)}
+                              className="dropdown-item w-full text-left"
+                            >
+                              <div className="dropdown-title">
+                                {entry.type === 'registrationId' ? 'Registration ID' : 'Survey No.'}
+                              </div>
+                              <div className="dropdown-description">{entry.query}</div>
+                            </button>
+                            {index < searchHistory.length - 1 && (
+                              <div className="dropdown-divider" />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              {/* Click outside to close */}
+              {isRecentSearchesOpen && (
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setIsRecentSearchesOpen(false)}
+                />
+              )}
+            </motion.div>
+          )}
+
+
+          {/* Search Results */}
+          <AnimatePresence>
+            {searchResults.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5 }}
+                className="mb-8"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className={` text-xl sm:text-2xl font-medium`}>
+                    Search Results ({filteredResults.length})
+                  </h2>
+                </div>
+
+                <div className="space-y-4">
+                  {paginatedResults.map((result, index) => (
+                    <motion.div
+                      key={result.registrationId}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      onClick={() => handleViewDetails(result)}
+                      className="bg-white border border-gray-200 shadow-sm rounded-lg p-4 sm:p-6 cursor-pointer hover:border-gray-300 transition-colors"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 sm:gap-3 mb-3">
+                            <div className="flex items-center gap-2">
+                              <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                              <span className="font-mono text-black text-sm sm:text-base">{result.registrationId}</span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  copyRegistrationId(result.registrationId);
+                                }}
+                                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                              >
+                                {copiedId ? (
+                                  <Check size={16} className="text-green-400 sm:w-5 sm:h-5" />
+                                ) : (
+                                  <Copy size={16} className="text-gray-400 sm:w-5 sm:h-5" />
+                                )}
+                              </button>
+                            </div>
+                            <span className={`px-2 py-1 rounded text-xs border ${getStatusColor(result.status)}`}>
+                              {result.status.toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-sm">
+                            <div className="flex items-center gap-2 text-gray-500">
+                              <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                              <span className="break-words">{result.village}, {result.taluka}, {result.district}, {result.state}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-gray-500">
+                              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                              <span className="break-words">Buyer: {result.buyerName} | Seller: {result.sellerName}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-gray-500">
+                              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                              <span>Registered: {new Date(result.registrationDate).toLocaleDateString()}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-gray-500">
+                              <IndianRupee className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                              <span>Amount: ₹{parseFloat(result.considerationAmount).toLocaleString('en-IN')}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewDetails(result);
+                          }}
+                          className="px-3 sm:px-4 py-2.5 sm:py-2 bg-gray-100 border border-gray-200 text-black rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" height="14" viewBox="0 -960 960 960" width="14" fill="#000000" className="sm:w-4 sm:h-4">
+                            <path d="M240-40H120q-33 0-56.5-23.5T40-120v-120h80v120h120v80Zm480 0v-80h120v-120h80v120q0 33-23.5 56.5T840-40H720ZM480-220q-120 0-217.5-71T120-480q45-118 142.5-189T480-740q120 0 217.5 71T840-480q-45 118-142.5 189T480-220Zm0-80q88 0 161-48t112-132q-39-84-112-132t-161-48q-88 0-161 48T207-480q39 84 112 132t161 48Zm0-40q58 0 99-41t41-99q0-58-41-99t-99-41q-58 0-99 41t-41 99q0 58 41 99t99 41Zm0-80q-25 0-42.5-17.5T420-480q0-25 17.5-42.5T480-540q25 0 42.5 17.5T540-480q0 25-17.5 42.5T480-420ZM40-720v-120q0-33 23.5-56.5T120-920h120v80H120v120H40Zm800 0v-120H720v-80h120q33 0 56.5 23.5T920-840v120h-80ZM480-480Z" />
+                          </svg>
+                          View Details
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* No Results */}
+          {!isSearching && searchResults.length === 0 && searchError && searchError.includes('No registration found') && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-12"
+            >
+              <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-400">No results found. Please try different search criteria.</p>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Payment Modal */}
+        <AnimatePresence>
+          {showPaymentModal && pendingResult && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+              onClick={() => setShowPaymentModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white border border-gray-200 shadow-xl rounded-lg p-4 sm:p-6 lg:p-8 max-w-md w-full"
+              >
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <h2 className={` text-xl sm:text-2xl font-medium`}>
+                    Payment Required
+                  </h2>
+                  <button
+                    onClick={() => setShowPaymentModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X size={20} className="text-black" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
+                    <div className="text-xs sm:text-sm space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Registration ID:</span>
+                        <span className="text-black font-mono text-xs sm:text-sm">{pendingResult.registrationId}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Access Fee:</span>
+                        <span className="text-black font-medium">₹200</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-3 sm:p-4">
+                    <p className="text-amber-700 text-xs sm:text-sm">
+                      <AlertCircle size={16} className="inline mr-2 sm:w-4 sm:h-4" />
+                      Payment of ₹200 is required to view full registration details and download all associated documents and data.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                    <button
+                      onClick={() => setShowPaymentModal(false)}
+                      className="px-3 sm:px-4 py-2 bg-white border border-gray-200 shadow-sm text-black rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={processPayment}
+                      disabled={!connected}
+                      className="flex-1 px-3 sm:px-4 py-2 bg-black text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {connected ? (
+                        <>
+                          Pay ₹200
+                        </>
+                      ) : (
+                        <>
+                          Connect Wallet to Pay
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* No Results */}
-        {!isSearching && searchResults.length === 0 && searchError && searchError.includes('No registration found') && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12"
-          >
-            <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-400">No results found. Please try different search criteria.</p>
-          </motion.div>
-        )}
-      </div>
-
-      {/* Payment Modal */}
-      <AnimatePresence>
-        {showPaymentModal && pendingResult && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-            onClick={() => setShowPaymentModal(false)}
-          >
+        {/* Detail Modal */}
+        <AnimatePresence>
+          {selectedResult && (
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white border border-gray-200 shadow-xl rounded-lg p-4 sm:p-6 lg:p-8 max-w-md w-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto"
+              onClick={() => setSelectedResult(null)}
             >
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <h2 className={` text-xl sm:text-2xl font-medium`}>
-                  Payment Required
-                </h2>
-                <button
-                  onClick={() => setShowPaymentModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <X size={20} className="text-black" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
-                  <div className="text-xs sm:text-sm space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Registration ID:</span>
-                      <span className="text-black font-mono text-xs sm:text-sm">{pendingResult.registrationId}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Access Fee:</span>
-                      <span className="text-black font-medium">₹200</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-3 sm:p-4">
-                  <p className="text-amber-700 text-xs sm:text-sm">
-                    <AlertCircle size={16} className="inline mr-2 sm:w-4 sm:h-4" />
-                    Payment of ₹200 is required to view full registration details and download all associated documents and data.
-                  </p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 mt-6">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white border border-gray-200 shadow-xl rounded-lg p-4 sm:p-6 lg:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto my-8"
+              >
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <h2 className={` text-xl sm:text-2xl font-medium`}>
+                    Registration Details
+                  </h2>
                   <button
-                    onClick={() => setShowPaymentModal(false)}
-                    className="px-3 sm:px-4 py-2 bg-white border border-gray-200 shadow-sm text-black rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-50 transition-colors"
+                    onClick={() => setSelectedResult(null)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={processPayment}
-                    disabled={!connected}
-                    className="flex-1 px-3 sm:px-4 py-2 bg-black text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {connected ? (
-                      <>
-                        Pay ₹200
-                      </>
-                    ) : (
-                      <>
-                        Connect Wallet to Pay
-                      </>
-                    )}
+                    <X size={20} className="text-black" />
                   </button>
                 </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      {/* Detail Modal */}
-      <AnimatePresence>
-        {selectedResult && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto"
-            onClick={() => setSelectedResult(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white border border-gray-200 shadow-xl rounded-lg p-4 sm:p-6 lg:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto my-8"
-            >
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <h2 className={` text-xl sm:text-2xl font-medium`}>
-                  Registration Details
-                </h2>
-                <button
-                  onClick={() => setSelectedResult(null)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <X size={20} className="text-black" />
-                </button>
-              </div>
-
-              <div className="space-y-4 sm:space-y-6">
-                {/* Registration Info */}
-                <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
-                  <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
-                    <FileText size={20} className="sm:w-6 sm:h-6" />
-                    Registration Information
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">Registration ID:</span>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-black font-mono">{selectedResult.registrationId}</span>
-                        <button
-                          onClick={() => copyRegistrationId(selectedResult.registrationId)}
-                          className="p-1 hover:bg-gray-100 rounded transition-colors"
-                          title="Copy Registration ID"
-                        >
-                          {copiedId ? (
-                            <Check size={16} className="text-green-400" />
-                          ) : (
-                            <Copy size={16} className="text-gray-500" />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => setShowQRCode(true)}
-                          className="p-1 hover:bg-gray-100 rounded transition-colors"
-                          title="Show QR Code"
-                        >
-                          <QrCode size={18} className="text-gray-500 sm:w-5 sm:h-5" />
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Status:</span>
-                      <span className={`ml-2 px-2 py-1 rounded text-xs border ${getStatusColor(selectedResult.status)}`}>
-                        {selectedResult.status.toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Registration Date:</span>
-                      <p className="text-black">{new Date(selectedResult.registrationDate).toLocaleDateString()}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Sale Agreement Date:</span>
-                      <p className="text-black">{new Date(selectedResult.saleAgreementDate).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Property Details */}
-                <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
-                  <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="#000000" className="sm:w-6 sm:h-6">
-                      <path d="M480-480q33 0 56.5-23.5T560-560q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560q0 33 23.5 56.5T480-480Zm0 294q122-112 181-203.5T720-552q0-109-69.5-178.5T480-800q-101 0-170.5 69.5T240-552q0 71 59 162.5T480-186Zm0 106Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Zm0-480Z" />
-                    </svg>
-                    Property Details
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">Property Type:</span>
-                      <p className="text-black">{selectedResult.propertyType}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Survey Number:</span>
-                      <p className="text-black">{selectedResult.surveyNumber}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Plot Number:</span>
-                      <p className="text-black">{selectedResult.plotNumber}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Area:</span>
-                      <p className="text-black">{selectedResult.area} {selectedResult.areaUnit}</p>
-                    </div>
-                    <div className="sm:col-span-2">
-                      <span className="text-gray-500">Address:</span>
-                      <p className="text-black">{selectedResult.village}, {selectedResult.taluka}, {selectedResult.district}, {selectedResult.state} - {selectedResult.pincode}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Transaction Details */}
-                <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
-                  <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="#000000" className="sm:w-6 sm:h-6">
-                      <path d="M549-120 280-400v-80h140q53 0 91.5-34.5T558-600H240v-80h306q-17-35-50.5-57.5T420-760H240v-80h480v80H590q14 17 25 37t17 43h88v80h-81q-8 85-70 142.5T420-400h-29l269 280H549Z" />
-                    </svg>
-                    Transaction Details
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">Transaction Type:</span>
-                      <p className="text-black">{selectedResult.transactionType}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Consideration Amount:</span>
-                      <p className="text-black">₹{parseFloat(selectedResult.considerationAmount).toLocaleString('en-IN')}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Stamp Duty:</span>
-                      <p className="text-black">₹{parseFloat(selectedResult.stampDuty).toLocaleString('en-IN')}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Registration Fee:</span>
-                      <p className="text-black">₹{parseFloat(selectedResult.registrationFee).toLocaleString('en-IN')}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Party Details */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
-                    <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="#000000" className="sm:w-6 sm:h-6">
-                        <path d="M200-200v-560 179-19 400Zm80-240h221q2-22 10-42t20-38H280v80Zm0 160h157q17-20 39-32.5t46-20.5q-4-6-7-13t-5-14H280v80Zm0-320h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v258q-14-26-34-46t-46-33v-179H200v560h202q-1 6-1.5 12t-.5 12v56H200Zm480-200q-42 0-71-29t-29-71q0-42 29-71t71-29q42 0 71 29t29 71q0 42-29 71t-71 29ZM480-120v-56q0-24 12.5-44.5T528-250q36-15 74.5-22.5T680-280q39 0 77.5 7.5T832-250q23 9 35.5 29.5T880-176v56H480Z" />
-                      </svg>
-                      Seller Information
-                    </h3>
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <span className="text-gray-500">Name:</span>
-                        <p className="text-black">{selectedResult.sellerName}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Father&apos;s Name:</span>
-                        <p className="text-black">{selectedResult.sellerFatherName}</p>
-                      </div>
-                      {selectedResult.sellerAge && (
-                        <div>
-                          <span className="text-gray-500">Age:</span>
-                          <p className="text-black">{selectedResult.sellerAge}</p>
-                        </div>
-                      )}
-                      {selectedResult.sellerAddress && (
-                        <div>
-                          <span className="text-gray-500">Address:</span>
-                          <p className="text-black">{selectedResult.sellerAddress}</p>
-                        </div>
-                      )}
-                      {selectedResult.sellerPhone && (
-                        <div>
-                          <span className="text-gray-500">Phone:</span>
-                          <p className="text-black">{selectedResult.sellerPhone}</p>
-                        </div>
-                      )}
-                      {selectedResult.sellerEmail && (
-                        <div>
-                          <span className="text-gray-500">Email:</span>
-                          <p className="text-black break-all">{selectedResult.sellerEmail}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
-                    <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="#000000" className="sm:w-6 sm:h-6">
-                        <path d="M200-200v-560 179-19 400Zm80-240h221q2-22 10-42t20-38H280v80Zm0 160h157q17-20 39-32.5t46-20.5q-4-6-7-13t-5-14H280v80Zm0-320h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v258q-14-26-34-46t-46-33v-179H200v560h202q-1 6-1.5 12t-.5 12v56H200Zm480-200q-42 0-71-29t-29-71q0-42 29-71t71-29q42 0 71 29t29 71q0 42-29 71t-71 29ZM480-120v-56q0-24 12.5-44.5T528-250q36-15 74.5-22.5T680-280q39 0 77.5 7.5T832-250q23 9 35.5 29.5T880-176v56H480Z" />
-                      </svg>
-                      Buyer Information
-                    </h3>
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <span className="text-gray-500">Name:</span>
-                        <p className="text-black">{selectedResult.buyerName}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Father&apos;s Name:</span>
-                        <p className="text-black">{selectedResult.buyerFatherName}</p>
-                      </div>
-                      {selectedResult.buyerAge && (
-                        <div>
-                          <span className="text-gray-500">Age:</span>
-                          <p className="text-black">{selectedResult.buyerAge}</p>
-                        </div>
-                      )}
-                      {selectedResult.buyerAddress && (
-                        <div>
-                          <span className="text-gray-500">Address:</span>
-                          <p className="text-black">{selectedResult.buyerAddress}</p>
-                        </div>
-                      )}
-                      {selectedResult.buyerPhone && (
-                        <div>
-                          <span className="text-gray-500">Phone:</span>
-                          <p className="text-black">{selectedResult.buyerPhone}</p>
-                        </div>
-                      )}
-                      {selectedResult.buyerEmail && (
-                        <div>
-                          <span className="text-gray-500">Email:</span>
-                          <p className="text-black break-all">{selectedResult.buyerEmail}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Witnesses */}
-                {selectedResult.witnesses && selectedResult.witnesses.length > 0 && (
-                  <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
-                    <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="#000000" className="sm:w-6 sm:h-6">
-                        <path d="M480-400q33 0 56.5-23.5T560-480q0-33-23.5-56.5T480-560q-33 0-56.5 23.5T400-480q0 33 23.5 56.5T480-400ZM320-240h320v-23q0-24-13-44t-36-30q-26-11-53.5-17t-57.5-6q-30 0-57.5 6T369-337q-23 10-36 30t-13 44v23ZM720-80H240q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80Zm0-80v-446L526-800H240v640h480Zm-480 0v-640 640Z" />
-                      </svg>
-                      Witnesses ({selectedResult.witnesses.length})
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {selectedResult.witnesses.map((witness, index) => (
-                        <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                          <p className="text-black font-medium mb-2">Witness {index + 1}</p>
-                          <div className="space-y-1 text-sm">
-                            <div>
-                              <span className="text-gray-500">Name:</span>
-                              <p className="text-black">{witness.name}</p>
-                            </div>
-                            <div>
-                              <span className="text-gray-500">Address:</span>
-                              <p className="text-black">{witness.address}</p>
-                            </div>
-                            <div>
-                              <span className="text-gray-500">Phone:</span>
-                              <p className="text-black">{witness.phone}</p>
-                            </div>
-                            <div>
-                              <span className="text-gray-500">Aadhar:</span>
-                              <p className="text-black">{witness.aadhar}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Documents */}
-                {selectedResult.documents && selectedResult.documents.length > 0 && (
+                <div className="space-y-4 sm:space-y-6">
+                  {/* Registration Info */}
                   <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
                     <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
                       <FileText size={20} className="sm:w-6 sm:h-6" />
-                      Documents ({selectedResult.documents.length})
+                      Registration Information
                     </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {selectedResult.documents.map((doc, index) => (
-                        <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <FileText size={22} className="text-gray-500 sm:w-6 sm:h-6" />
-                            <div>
-                              <p className="text-black text-sm font-medium">{doc.type}</p>
-                              <p className="text-gray-500 text-xs">{doc.name}</p>
-                            </div>
-                          </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-500">Registration ID:</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-black font-mono">{selectedResult.registrationId}</span>
                           <button
-                            onClick={() => downloadDocument(doc)}
-                            className="p-2 bg-gray-100 border border-gray-300 text-black rounded-lg hover:bg-gray-200 transition-colors"
-                            title="Download Document"
+                            onClick={() => copyRegistrationId(selectedResult.registrationId)}
+                            className="p-1 hover:bg-gray-100 rounded transition-colors"
+                            title="Copy Registration ID"
                           >
-                            <Download size={18} className="sm:w-5 sm:h-5" />
+                            {copiedId ? (
+                              <Check size={16} className="text-green-400" />
+                            ) : (
+                              <Copy size={16} className="text-gray-500" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => setShowQRCode(true)}
+                            className="p-1 hover:bg-gray-100 rounded transition-colors"
+                            title="Show QR Code"
+                          >
+                            <QrCode size={18} className="text-gray-500 sm:w-5 sm:h-5" />
                           </button>
                         </div>
-                      ))}
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Status:</span>
+                        <span className={`ml-2 px-2 py-1 rounded text-xs border ${getStatusColor(selectedResult.status)}`}>
+                          {selectedResult.status.toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Registration Date:</span>
+                        <p className="text-black">{new Date(selectedResult.registrationDate).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Sale Agreement Date:</span>
+                        <p className="text-black">{new Date(selectedResult.saleAgreementDate).toLocaleDateString()}</p>
+                      </div>
                     </div>
                   </div>
-                )}
 
-                {/* Property Photos */}
-                {selectedResult.propertyPhotos && selectedResult.propertyPhotos.length > 0 && (
+                  {/* Property Details */}
                   <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
-                    <div className="flex items-center justify-between mb-3 sm:mb-4">
-                      <h3 className={` text-sm sm:text-base font-medium flex items-center gap-2`}>
-                        <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960" width="18" fill="#000000" className="sm:w-5 sm:h-5">
-                          <path d="M360-400h400L622-580l-92 120-62-80-108 140Zm-40 160q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-480H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z" />
-                        </svg>
-                        Property Photos ({selectedResult.propertyPhotos.length})
-                      </h3>
-                      <button
-                        onClick={() => {
-                          downloadAllPhotos(selectedResult.propertyPhotos!);
-                        }}
-                        className="px-2 sm:px-3 py-1.5 bg-gray-100 border border-gray-300 text-black rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center gap-2"
-                      >
-                        <Download size={16} className="sm:w-4 sm:h-4" />
-                        <span className="inline">Download All</span>
-                      </button>
+                    <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="#000000" className="sm:w-6 sm:h-6">
+                        <path d="M480-480q33 0 56.5-23.5T560-560q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560q0 33 23.5 56.5T480-480Zm0 294q122-112 181-203.5T720-552q0-109-69.5-178.5T480-800q-101 0-170.5 69.5T240-552q0 71 59 162.5T480-186Zm0 106Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Zm0-480Z" />
+                      </svg>
+                      Property Details
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-500">Property Type:</span>
+                        <p className="text-black">{selectedResult.propertyType}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Survey Number:</span>
+                        <p className="text-black">{selectedResult.surveyNumber}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Plot Number:</span>
+                        <p className="text-black">{selectedResult.plotNumber}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Area:</span>
+                        <p className="text-black">{selectedResult.area} {selectedResult.areaUnit}</p>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <span className="text-gray-500">Address:</span>
+                        <p className="text-black">{selectedResult.village}, {selectedResult.taluka}, {selectedResult.district}, {selectedResult.state} - {selectedResult.pincode}</p>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                      {selectedResult.propertyPhotos.map((photo, index) => {
-                        // Prefer IPFS URL, fallback to base64
-                        const imageSrc = photo.url
-                          ? photo.url
-                          : (photo.data && photo.data.startsWith('data:')
-                            ? photo.data
-                            : photo.data ? `data:${photo.mimeType || 'image/jpeg'};base64,${photo.data}` : null);
+                  </div>
 
-                        return (
-                          <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col items-center gap-2">
-                            {imageSrc ? (
-                              <img
-                                src={imageSrc}
-                                alt={`Photo ${index + 1}`}
-                                className="w-full h-40 sm:h-48 object-cover rounded border-2 border-gray-600 shadow-lg"
-                                onError={(e) => {
-                                  console.error('Failed to load image:', photo.name);
-                                  e.currentTarget.style.display = 'none';
-                                  const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
-                                  if (placeholder) placeholder.style.display = 'block';
-                                }}
-                              />
-                            ) : null}
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              height="32"
-                              viewBox="0 -960 960 960"
-                              width="32"
-                              fill="#6b7280"
-                              className="sm:w-10 sm:h-10"
-                              style={{ display: photo.data ? 'none' : 'block' }}
-                            >
-                              <path d="M360-400h400L622-580l-92 120-62-80-108 140Zm-40 160q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-480H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z" />
-                            </svg>
-                            <p className="text-gray-500 text-xs truncate w-full text-center">{photo.name}</p>
+                  {/* Transaction Details */}
+                  <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
+                    <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="#000000" className="sm:w-6 sm:h-6">
+                        <path d="M549-120 280-400v-80h140q53 0 91.5-34.5T558-600H240v-80h306q-17-35-50.5-57.5T420-760H240v-80h480v80H590q14 17 25 37t17 43h88v80h-81q-8 85-70 142.5T420-400h-29l269 280H549Z" />
+                      </svg>
+                      Transaction Details
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-500">Transaction Type:</span>
+                        <p className="text-black">{selectedResult.transactionType}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Consideration Amount:</span>
+                        <p className="text-black">₹{parseFloat(selectedResult.considerationAmount).toLocaleString('en-IN')}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Stamp Duty:</span>
+                        <p className="text-black">₹{parseFloat(selectedResult.stampDuty).toLocaleString('en-IN')}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Registration Fee:</span>
+                        <p className="text-black">₹{parseFloat(selectedResult.registrationFee).toLocaleString('en-IN')}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Party Details */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
+                      <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="#000000" className="sm:w-6 sm:h-6">
+                          <path d="M200-200v-560 179-19 400Zm80-240h221q2-22 10-42t20-38H280v80Zm0 160h157q17-20 39-32.5t46-20.5q-4-6-7-13t-5-14H280v80Zm0-320h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v258q-14-26-34-46t-46-33v-179H200v560h202q-1 6-1.5 12t-.5 12v56H200Zm480-200q-42 0-71-29t-29-71q0-42 29-71t71-29q42 0 71 29t29 71q0 42-29 71t-71 29ZM480-120v-56q0-24 12.5-44.5T528-250q36-15 74.5-22.5T680-280q39 0 77.5 7.5T832-250q23 9 35.5 29.5T880-176v56H480Z" />
+                        </svg>
+                        Seller Information
+                      </h3>
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <span className="text-gray-500">Name:</span>
+                          <p className="text-black">{selectedResult.sellerName}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Father&apos;s Name:</span>
+                          <p className="text-black">{selectedResult.sellerFatherName}</p>
+                        </div>
+                        {selectedResult.sellerAge && (
+                          <div>
+                            <span className="text-gray-500">Age:</span>
+                            <p className="text-black">{selectedResult.sellerAge}</p>
+                          </div>
+                        )}
+                        {selectedResult.sellerAddress && (
+                          <div>
+                            <span className="text-gray-500">Address:</span>
+                            <p className="text-black">{selectedResult.sellerAddress}</p>
+                          </div>
+                        )}
+                        {selectedResult.sellerPhone && (
+                          <div>
+                            <span className="text-gray-500">Phone:</span>
+                            <p className="text-black">{selectedResult.sellerPhone}</p>
+                          </div>
+                        )}
+                        {selectedResult.sellerEmail && (
+                          <div>
+                            <span className="text-gray-500">Email:</span>
+                            <p className="text-black break-all">{selectedResult.sellerEmail}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
+                      <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="#000000" className="sm:w-6 sm:h-6">
+                          <path d="M200-200v-560 179-19 400Zm80-240h221q2-22 10-42t20-38H280v80Zm0 160h157q17-20 39-32.5t46-20.5q-4-6-7-13t-5-14H280v80Zm0-320h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v258q-14-26-34-46t-46-33v-179H200v560h202q-1 6-1.5 12t-.5 12v56H200Zm480-200q-42 0-71-29t-29-71q0-42 29-71t71-29q42 0 71 29t29 71q0 42-29 71t-71 29ZM480-120v-56q0-24 12.5-44.5T528-250q36-15 74.5-22.5T680-280q39 0 77.5 7.5T832-250q23 9 35.5 29.5T880-176v56H480Z" />
+                        </svg>
+                        Buyer Information
+                      </h3>
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <span className="text-gray-500">Name:</span>
+                          <p className="text-black">{selectedResult.buyerName}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Father&apos;s Name:</span>
+                          <p className="text-black">{selectedResult.buyerFatherName}</p>
+                        </div>
+                        {selectedResult.buyerAge && (
+                          <div>
+                            <span className="text-gray-500">Age:</span>
+                            <p className="text-black">{selectedResult.buyerAge}</p>
+                          </div>
+                        )}
+                        {selectedResult.buyerAddress && (
+                          <div>
+                            <span className="text-gray-500">Address:</span>
+                            <p className="text-black">{selectedResult.buyerAddress}</p>
+                          </div>
+                        )}
+                        {selectedResult.buyerPhone && (
+                          <div>
+                            <span className="text-gray-500">Phone:</span>
+                            <p className="text-black">{selectedResult.buyerPhone}</p>
+                          </div>
+                        )}
+                        {selectedResult.buyerEmail && (
+                          <div>
+                            <span className="text-gray-500">Email:</span>
+                            <p className="text-black break-all">{selectedResult.buyerEmail}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Witnesses */}
+                  {selectedResult.witnesses && selectedResult.witnesses.length > 0 && (
+                    <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
+                      <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="#000000" className="sm:w-6 sm:h-6">
+                          <path d="M480-400q33 0 56.5-23.5T560-480q0-33-23.5-56.5T480-560q-33 0-56.5 23.5T400-480q0 33 23.5 56.5T480-400ZM320-240h320v-23q0-24-13-44t-36-30q-26-11-53.5-17t-57.5-6q-30 0-57.5 6T369-337q-23 10-36 30t-13 44v23ZM720-80H240q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80Zm0-80v-446L526-800H240v640h480Zm-480 0v-640 640Z" />
+                        </svg>
+                        Witnesses ({selectedResult.witnesses.length})
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {selectedResult.witnesses.map((witness, index) => (
+                          <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                            <p className="text-black font-medium mb-2">Witness {index + 1}</p>
+                            <div className="space-y-1 text-sm">
+                              <div>
+                                <span className="text-gray-500">Name:</span>
+                                <p className="text-black">{witness.name}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-500">Address:</span>
+                                <p className="text-black">{witness.address}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-500">Phone:</span>
+                                <p className="text-black">{witness.phone}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-500">Aadhar:</span>
+                                <p className="text-black">{witness.aadhar}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Documents */}
+                  {selectedResult.documents && selectedResult.documents.length > 0 && (
+                    <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
+                      <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
+                        <FileText size={20} className="sm:w-6 sm:h-6" />
+                        Documents ({selectedResult.documents.length})
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {selectedResult.documents.map((doc, index) => (
+                          <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <FileText size={22} className="text-gray-500 sm:w-6 sm:h-6" />
+                              <div>
+                                <p className="text-black text-sm font-medium">{doc.type}</p>
+                                <p className="text-gray-500 text-xs">{doc.name}</p>
+                              </div>
+                            </div>
                             <button
-                              onClick={() => downloadPhoto(photo)}
-                              className="px-2 py-1 bg-gray-100 border border-gray-300 text-black rounded hover:bg-gray-200 transition-colors text-xs flex items-center gap-1 w-full justify-center"
+                              onClick={() => downloadDocument(doc)}
+                              className="p-2 bg-gray-100 border border-gray-300 text-black rounded-lg hover:bg-gray-200 transition-colors"
+                              title="Download Document"
                             >
-                              <Download size={14} className="sm:w-4 sm:h-4" />
-                              Download
+                              <Download size={18} className="sm:w-5 sm:h-5" />
                             </button>
                           </div>
-                        );
-                      })}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
 
-              <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={() => setSelectedResult(null)}
-                  className="w-full sm:w-auto px-3 sm:px-4 py-2.5 sm:py-2 bg-white border border-gray-300 shadow-sm text-black rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer"
-                >
-                  Close
-                </button>
-                <button
-                  onClick={() => downloadCertificate(selectedResult)}
-                  className="w-full sm:w-auto px-3 sm:px-4 py-2.5 sm:py-2 bg-white border border-gray-200 shadow-sm text-black rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-50 active:bg-gray-100 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 -960 960 960" width="16" fill="#000000" className="sm:w-5 sm:h-5 flex-shrink-0">
-                    <path d="m648-140 112-112v92h40v-160H640v40h92L620-168l28 28Zm-448 20q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v268q-19-9-39-15.5t-41-9.5v-243H200v560h242q3 22 9.5 42t15.5 38H200Zm0-120v40-560 243-3 280Zm80-40h163q3-21 9.5-41t14.5-39H280v80Zm0-160h244q32-30 71.5-50t84.5-27v-3H280v80Zm0-160h400v-80H280v80ZM720-40q-83 0-141.5-58.5T520-240q0-83 58.5-141.5T720-440q83 0 141.5 58.5T920-240q0 83-58.5 141.5T720-40Z" />
-                  </svg>
-                  Download Certificate
-                </button>
-                <button
-                  onClick={() => downloadAllData(selectedResult)}
-                  className="w-full sm:w-auto px-3 sm:px-4 py-2.5 sm:py-2 bg-gray-100 border border-gray-300 shadow-sm text-black rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-200 active:bg-gray-300 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 -960 960 960" width="16" fill="#000000" className="sm:w-5 sm:h-5 flex-shrink-0">
-                    <path d="m648-140 112-112v92h40v-160H640v40h92L620-168l28 28Zm-448 20q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v268q-19-9-39-15.5t-41-9.5v-243H200v560h242q3 22 9.5 42t15.5 38H200Zm0-120v40-560 243-3 280Zm80-40h163q3-21 9.5-41t14.5-39H280v80Zm0-160h244q32-30 71.5-50t84.5-27v-3H280v80Zm0-160h400v-80H280v80ZM720-40q-83 0-141.5-58.5T520-240q0-83 58.5-141.5T720-440q83 0 141.5 58.5T920-240q0 83-58.5 141.5T720-40Z" />
-                  </svg>
-                  Download All Data
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                  {/* Property Photos */}
+                  {selectedResult.propertyPhotos && selectedResult.propertyPhotos.length > 0 && (
+                    <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
+                      <div className="flex items-center justify-between mb-3 sm:mb-4">
+                        <h3 className={` text-sm sm:text-base font-medium flex items-center gap-2`}>
+                          <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960" width="18" fill="#000000" className="sm:w-5 sm:h-5">
+                            <path d="M360-400h400L622-580l-92 120-62-80-108 140Zm-40 160q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-480H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z" />
+                          </svg>
+                          Property Photos ({selectedResult.propertyPhotos.length})
+                        </h3>
+                        <button
+                          onClick={() => {
+                            downloadAllPhotos(selectedResult.propertyPhotos!);
+                          }}
+                          className="px-2 sm:px-3 py-1.5 bg-gray-100 border border-gray-300 text-black rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center gap-2"
+                        >
+                          <Download size={16} className="sm:w-4 sm:h-4" />
+                          <span className="inline">Download All</span>
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                        {selectedResult.propertyPhotos.map((photo, index) => {
+                          // Prefer IPFS URL, fallback to base64
+                          const imageSrc = photo.url
+                            ? photo.url
+                            : (photo.data && photo.data.startsWith('data:')
+                              ? photo.data
+                              : photo.data ? `data:${photo.mimeType || 'image/jpeg'};base64,${photo.data}` : null);
 
-      {/* QR Code Modal */}
-      <AnimatePresence>
-        {showQRCode && selectedResult && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-            onClick={() => setShowQRCode(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white border border-gray-200 shadow-xl rounded-lg p-4 sm:p-6 lg:p-8 max-w-md w-full"
-            >
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <h3 className="text-lg sm:text-xl font-medium">
-                  Registration ID QR Code
-                </h3>
-                <button
-                  onClick={() => setShowQRCode(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <X size={20} className="text-black" />
-                </button>
-              </div>
-              <div className="flex flex-col items-center">
-                <div className="bg-white p-4 rounded-lg mb-4 border border-gray-200">
-                  <QRCodeSVG value={selectedResult.registrationId} size={200} />
+                          return (
+                            <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col items-center gap-2">
+                              {imageSrc ? (
+                                <img
+                                  src={imageSrc}
+                                  alt={`Photo ${index + 1}`}
+                                  className="w-full h-40 sm:h-48 object-cover rounded border-2 border-gray-600 shadow-lg"
+                                  onError={(e) => {
+                                    console.error('Failed to load image:', photo.name);
+                                    e.currentTarget.style.display = 'none';
+                                    const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
+                                    if (placeholder) placeholder.style.display = 'block';
+                                  }}
+                                />
+                              ) : null}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                height="32"
+                                viewBox="0 -960 960 960"
+                                width="32"
+                                fill="#6b7280"
+                                className="sm:w-10 sm:h-10"
+                                style={{ display: photo.data ? 'none' : 'block' }}
+                              >
+                                <path d="M360-400h400L622-580l-92 120-62-80-108 140Zm-40 160q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-480H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z" />
+                              </svg>
+                              <p className="text-gray-500 text-xs truncate w-full text-center">{photo.name}</p>
+                              <button
+                                onClick={() => downloadPhoto(photo)}
+                                className="px-2 py-1 bg-gray-100 border border-gray-300 text-black rounded hover:bg-gray-200 transition-colors text-xs flex items-center gap-1 w-full justify-center"
+                              >
+                                <Download size={14} className="sm:w-4 sm:h-4" />
+                                Download
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <p className="text-gray-500 text-sm mb-2">Scan to view registration details</p>
-                <p className="font-mono text-black text-sm">{selectedResult.registrationId}</p>
-              </div>
+
+                <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => setSelectedResult(null)}
+                    className="w-full sm:w-auto px-3 sm:px-4 py-2.5 sm:py-2 bg-white border border-gray-300 shadow-sm text-black rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={() => downloadCertificate(selectedResult)}
+                    className="w-full sm:w-auto px-3 sm:px-4 py-2.5 sm:py-2 bg-white border border-gray-200 shadow-sm text-black rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-50 active:bg-gray-100 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 -960 960 960" width="16" fill="#000000" className="sm:w-5 sm:h-5 flex-shrink-0">
+                      <path d="m648-140 112-112v92h40v-160H640v40h92L620-168l28 28Zm-448 20q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v268q-19-9-39-15.5t-41-9.5v-243H200v560h242q3 22 9.5 42t15.5 38H200Zm0-120v40-560 243-3 280Zm80-40h163q3-21 9.5-41t14.5-39H280v80Zm0-160h244q32-30 71.5-50t84.5-27v-3H280v80Zm0-160h400v-80H280v80ZM720-40q-83 0-141.5-58.5T520-240q0-83 58.5-141.5T720-440q83 0 141.5 58.5T920-240q0 83-58.5 141.5T720-40Z" />
+                    </svg>
+                    Download Certificate
+                  </button>
+                  <button
+                    onClick={() => downloadAllData(selectedResult)}
+                    className="w-full sm:w-auto px-3 sm:px-4 py-2.5 sm:py-2 bg-gray-100 border border-gray-300 shadow-sm text-black rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-200 active:bg-gray-300 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 -960 960 960" width="16" fill="#000000" className="sm:w-5 sm:h-5 flex-shrink-0">
+                      <path d="m648-140 112-112v92h40v-160H640v40h92L620-168l28 28Zm-448 20q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v268q-19-9-39-15.5t-41-9.5v-243H200v560h242q3 22 9.5 42t15.5 38H200Zm0-120v40-560 243-3 280Zm80-40h163q3-21 9.5-41t14.5-39H280v80Zm0-160h244q32-30 71.5-50t84.5-27v-3H280v80Zm0-160h400v-80H280v80ZM720-40q-83 0-141.5-58.5T520-240q0-83 58.5-141.5T720-440q83 0 141.5 58.5T920-240q0 83-58.5 141.5T720-40Z" />
+                    </svg>
+                    Download All Data
+                  </button>
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+          )}
+        </AnimatePresence>
+
+        {/* QR Code Modal */}
+        <AnimatePresence>
+          {showQRCode && selectedResult && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+              onClick={() => setShowQRCode(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white border border-gray-200 shadow-xl rounded-lg p-4 sm:p-6 lg:p-8 max-w-md w-full"
+              >
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <h3 className="text-lg sm:text-xl font-medium">
+                    Registration ID QR Code
+                  </h3>
+                  <button
+                    onClick={() => setShowQRCode(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X size={20} className="text-black" />
+                  </button>
+                </div>
+                <div className="flex flex-col items-center">
+                  <div className="bg-white p-4 rounded-lg mb-4 border border-gray-200">
+                    <QRCodeSVG value={selectedResult.registrationId} size={200} />
+                  </div>
+                  <p className="text-gray-500 text-sm mb-2">Scan to view registration details</p>
+                  <p className="font-mono text-black text-sm">{selectedResult.registrationId}</p>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </AuthGate>
   );
 }
 

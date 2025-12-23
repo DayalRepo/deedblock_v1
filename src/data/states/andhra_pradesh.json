@@ -1,0 +1,100 @@
+{
+    "name": "Andhra Pradesh",
+    "stampDuty": 7.5,
+    "districts": [
+        {
+            "name": "Visakhapatnam",
+            "mandals": [
+                {
+                    "name": "Maharani Peta",
+                    "villages": [
+                        {
+                            "name": "Maharani Peta",
+                            "surveyNumbers": [
+                                {
+                                    "number": "10/A",
+                                    "govtValue": 5000000
+                                },
+                                {
+                                    "number": "10/B",
+                                    "govtValue": 5500000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "1-101",
+                                    "govtValue": 5200000
+                                },
+                                {
+                                    "number": "1-102",
+                                    "govtValue": 5800000
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "Gajuwaka",
+                    "villages": [
+                        {
+                            "name": "Gajuwaka",
+                            "surveyNumbers": [
+                                {
+                                    "number": "45/1",
+                                    "govtValue": 4000000
+                                },
+                                {
+                                    "number": "45/2",
+                                    "govtValue": 4200000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "2-201",
+                                    "govtValue": 4100000
+                                },
+                                {
+                                    "number": "2-202",
+                                    "govtValue": 4300000
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Krishna",
+            "mandals": [
+                {
+                    "name": "Vijayawada Urban",
+                    "villages": [
+                        {
+                            "name": "Benz Circle",
+                            "surveyNumbers": [
+                                {
+                                    "number": "12/X",
+                                    "govtValue": 7500000
+                                },
+                                {
+                                    "number": "13/Y",
+                                    "govtValue": 8000000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "3-301",
+                                    "govtValue": 7800000
+                                },
+                                {
+                                    "number": "3-302",
+                                    "govtValue": 8200000
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

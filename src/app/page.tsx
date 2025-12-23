@@ -28,7 +28,7 @@ const punktFont = localFont({
 export default function Home() {
 
   return (
-    <main className={`flex flex-col min-h-screen bg-[#FAF9F6] text-black`}>
+    <main className={`flex flex-col min-h-screen bg-white text-black`}>
       <div className="flex-1 px-3 sm:px-6 lg:px-36 pb-16 pt-32 flex flex-col justify-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

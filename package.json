@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.32.1",
+    "@hookform/resolvers": "^3.10.0",
     "@pinata/sdk": "^2.1.0",
     "@solana/wallet-adapter-base": "^0.9.23",
     "@solana/wallet-adapter-react": "^0.15.35",
@@ -18,14 +19,20 @@
     "@solana/wallet-adapter-wallets": "^0.19.25",
     "@solana/web3.js": "^1.87.6",
     "@supabase/supabase-js": "^2.78.0",
+    "clsx": "^2.1.1",
     "framer-motion": "^11.18.2",
+    "idb": "^8.0.3",
     "jszip": "^3.10.1",
     "lucide-react": "^0.487.0",
     "next": "^16.0.8",
     "nodemailer": "^7.0.11",
     "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.69.0",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.4.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

@@ -1,0 +1,95 @@
+{
+    "name": "Odisha",
+    "stampDuty": 5.0,
+    "districts": [
+        {
+            "name": "Khordha",
+            "mandals": [
+                {
+                    "name": "Bhubaneswar",
+                    "villages": [
+                        {
+                            "name": "Patia",
+                            "surveyNumbers": [
+                                {
+                                    "number": "101/P",
+                                    "govtValue": 5000000
+                                },
+                                {
+                                    "number": "102/Q",
+                                    "govtValue": 5500000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "1-100",
+                                    "govtValue": 5100000
+                                },
+                                {
+                                    "number": "1-101",
+                                    "govtValue": 5600000
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Chandrasekharpur",
+                            "surveyNumbers": [
+                                {
+                                    "number": "55/C",
+                                    "govtValue": 4800000
+                                },
+                                {
+                                    "number": "56/D",
+                                    "govtValue": 5200000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "2-200",
+                                    "govtValue": 4900000
+                                },
+                                {
+                                    "number": "2-201",
+                                    "govtValue": 5400000
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Cuttack",
+            "mandals": [
+                {
+                    "name": "Cuttack Sadar",
+                    "villages": [
+                        {
+                            "name": "Bidanasi",
+                            "surveyNumbers": [
+                                {
+                                    "number": "12/B",
+                                    "govtValue": 3500000
+                                },
+                                {
+                                    "number": "13/C",
+                                    "govtValue": 3800000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "3-300",
+                                    "govtValue": 3600000
+                                },
+                                {
+                                    "number": "3-301",
+                                    "govtValue": 3900000
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

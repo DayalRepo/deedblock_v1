@@ -1,0 +1,150 @@
+{
+    "name": "Telangana",
+    "stampDuty": 7.5,
+    "districts": [
+        {
+            "name": "Hyderabad",
+            "mandals": [
+                {
+                    "name": "Amberpet",
+                    "villages": [
+                        {
+                            "name": "Amberpet",
+                            "surveyNumbers": [
+                                {
+                                    "number": "24/A",
+                                    "govtValue": 4500000
+                                },
+                                {
+                                    "number": "24/B",
+                                    "govtValue": 5200000
+                                },
+                                {
+                                    "number": "25/1",
+                                    "govtValue": 3800000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "1-101",
+                                    "govtValue": 4800000
+                                },
+                                {
+                                    "number": "1-102",
+                                    "govtValue": 5500000
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Bag Amberpet",
+                            "surveyNumbers": [
+                                {
+                                    "number": "102/C",
+                                    "govtValue": 4100000
+                                },
+                                {
+                                    "number": "103/A",
+                                    "govtValue": 4700000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "2-201",
+                                    "govtValue": 4300000
+                                },
+                                {
+                                    "number": "2-202",
+                                    "govtValue": 4900000
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "Khairatabad",
+                    "villages": [
+                        {
+                            "name": "Khairatabad",
+                            "surveyNumbers": [
+                                {
+                                    "number": "15/X",
+                                    "govtValue": 6000000
+                                },
+                                {
+                                    "number": "16/Y",
+                                    "govtValue": 6500000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "3-301",
+                                    "govtValue": 6200000
+                                },
+                                {
+                                    "number": "3-302",
+                                    "govtValue": 6800000
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Ranga Reddy",
+            "mandals": [
+                {
+                    "name": "Serilingampally",
+                    "villages": [
+                        {
+                            "name": "Gachibowli",
+                            "surveyNumbers": [
+                                {
+                                    "number": "55/G",
+                                    "govtValue": 8500000
+                                },
+                                {
+                                    "number": "56/H",
+                                    "govtValue": 9000000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "4-401",
+                                    "govtValue": 8800000
+                                },
+                                {
+                                    "number": "4-402",
+                                    "govtValue": 9200000
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Madhapur",
+                            "surveyNumbers": [
+                                {
+                                    "number": "88/M",
+                                    "govtValue": 9500000
+                                },
+                                {
+                                    "number": "89/N",
+                                    "govtValue": 10500000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "5-501",
+                                    "govtValue": 9800000
+                                },
+                                {
+                                    "number": "5-502",
+                                    "govtValue": 10800000
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

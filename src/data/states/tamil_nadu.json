@@ -1,0 +1,100 @@
+{
+    "name": "Tamil Nadu",
+    "stampDuty": 7.0,
+    "districts": [
+        {
+            "name": "Chennai",
+            "mandals": [
+                {
+                    "name": "Mylapore",
+                    "villages": [
+                        {
+                            "name": "Mylapore",
+                            "surveyNumbers": [
+                                {
+                                    "number": "33/A",
+                                    "govtValue": 8000000
+                                },
+                                {
+                                    "number": "33/B",
+                                    "govtValue": 8500000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "1-10",
+                                    "govtValue": 8200000
+                                },
+                                {
+                                    "number": "1-11",
+                                    "govtValue": 8600000
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "Egmore",
+                    "villages": [
+                        {
+                            "name": "Egmore",
+                            "surveyNumbers": [
+                                {
+                                    "number": "20/X",
+                                    "govtValue": 7500000
+                                },
+                                {
+                                    "number": "21/Y",
+                                    "govtValue": 7800000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "2-20",
+                                    "govtValue": 7600000
+                                },
+                                {
+                                    "number": "2-21",
+                                    "govtValue": 8100000
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Coimbatore",
+            "mandals": [
+                {
+                    "name": "Coimbatore North",
+                    "villages": [
+                        {
+                            "name": "Ganapathy",
+                            "surveyNumbers": [
+                                {
+                                    "number": "77/G",
+                                    "govtValue": 5500000
+                                },
+                                {
+                                    "number": "78/H",
+                                    "govtValue": 6000000
+                                }
+                            ],
+                            "doorNumbers": [
+                                {
+                                    "number": "3-30",
+                                    "govtValue": 5600000
+                                },
+                                {
+                                    "number": "3-31",
+                                    "govtValue": 6200000
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

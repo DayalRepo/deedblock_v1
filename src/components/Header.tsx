@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import NavigationLinks from "./NavigationLinks";
-import WalletConnectButton from "./WalletConnectButton";
+import SignInButton from "./SignInButton";
 
 export default function Header() {
   return (
@@ -26,7 +26,7 @@ export default function Header() {
 
         {/* Desktop Actions */}
         <div className="desktop-actions">
-          <WalletConnectButton />
+          <SignInButton />
         </div>
 
         {/* Mobile Navigation */}

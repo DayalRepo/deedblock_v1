@@ -31,7 +31,7 @@ body {
 
 /* Header Styles */
 .header {
-  @apply fixed top-0 w-full px-3 sm:px-36 pt-6 pb-2 sm:py-6 z-40 bg-[#FAF9F6]/90 backdrop-blur-sm;
+  @apply fixed top-0 w-full px-3 sm:px-36 pt-6 pb-2 sm:py-6 z-40 bg-white/90 backdrop-blur-sm;
 }
 
 .header-container {
@@ -47,7 +47,7 @@ body {
 }
 
 .desktop-nav {
-  @apply hidden sm:block;
+  @apply hidden lg:block absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2;
 }
 
 .desktop-actions {
@@ -60,11 +60,11 @@ body {
 
 /* Navigation Links Styles */
 .nav-link {
-  @apply text-black text-[15px] font-medium px-2 py-0.5;
+  @apply text-gray-500 hover:text-gray-500 text-[15px] font-normal pt-0.5 pb-1 w-fit relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1.5px] after:bg-gray-500 after:origin-center after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300;
 }
 
 .nav-link-active {
-  @apply font-semibold;
+  @apply font-normal after:scale-x-100 text-gray-500;
 }
 
 .more-button {
@@ -72,11 +72,11 @@ body {
 }
 
 .more-button-content {
-  @apply text-black text-[15px] font-medium px-2 mb-1.5 flex items-center justify-between;
+  @apply text-[15px] font-normal mb-1.5 flex items-center justify-between;
 }
 
 .more-dropdown {
-  @apply bg-[#FAF9F6] rounded-lg ml-2 w-60 border border-gray-200 shadow-lg mb-4;
+  @apply bg-white rounded-lg ml-2 w-60 border border-gray-200 shadow-lg mb-4;
 }
 
 .dropdown-header {
@@ -166,9 +166,43 @@ select option:focus {
 
 /* Material Symbols Outlined Styles */
 .material-symbols-outlined {
-  font-variation-settings:
-    'FILL' 0,
+  font-variation-settings: 'FILL' 0,
     'wght' 400,
     'GRAD' 0,
     'opsz' 24;
+}
+
+/* Dropdown Animations */
+@keyframes dropdown-enter-mobile {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes dropdown-enter-desktop {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-dropdown {
+  animation: dropdown-enter-mobile 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (min-width: 640px) {
+  .animate-dropdown {
+    animation: dropdown-enter-desktop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
 }
