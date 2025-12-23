@@ -99,9 +99,15 @@ export interface SearchHistoryData {
 
 // Registration Functions
 export async function saveRegistration(data: RegistrationData) {
+  // Map user_id to wallet_address for DB compatibility
+  const { user_id, ...rest } = data;
+
   const { data: result, error } = await supabase
     .from('registrations')
-    .insert([data])
+    .insert([{
+      ...rest,
+      wallet_address: user_id,
+    }])
     .select()
     .single();
 
@@ -178,10 +184,14 @@ export async function searchRegistrations(searchType: 'registrationId' | 'survey
 
 // Payment Functions
 export async function savePayment(paymentData: Omit<PaymentData, 'id' | 'created_at'>) {
+  // Map user_id to wallet_address for DB compatibility
+  const { user_id, ...rest } = paymentData;
+
   const { data, error } = await supabase
     .from('payments')
     .insert([{
-      ...paymentData,
+      ...rest,
+      wallet_address: user_id,
       payment_status: 'completed',
     }])
     .select()
@@ -199,7 +209,7 @@ export async function checkPayment(registrationId: string, userId: string) {
     .from('payments')
     .select('*')
     .eq('registration_id', registrationId)
-    .eq('user_id', userId)
+    .eq('wallet_address', userId) // Checking userId against wallet_address column
     .eq('payment_status', 'completed')
     .single();
 
@@ -217,14 +227,14 @@ export async function saveSearchHistory(userId: string, searchType: 'registratio
   const { data: existingHistory } = await supabase
     .from('search_history')
     .select('*')
-    .eq('user_id', userId)
+    .eq('wallet_address', userId) // Checking userId against wallet_address column
     .order('created_at', { ascending: false })
     .limit(10);
 
   const { data, error } = await supabase
     .from('search_history')
     .insert([{
-      user_id: userId,
+      wallet_address: userId, // Storing userId in wallet_address column
       search_type: searchType,
       query: query,
     }])
@@ -254,7 +264,7 @@ export async function getSearchHistory(userId: string) {
   const { data, error } = await supabase
     .from('search_history')
     .select('*')
-    .eq('user_id', userId)
+    .eq('wallet_address', userId) // Checking userId against wallet_address column
     .order('created_at', { ascending: false })
     .limit(10);
 

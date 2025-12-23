@@ -331,7 +331,6 @@ export default function RegistrationPage() {
         user_id: userId,
         registration_id: regId,
         registration_date: registrationDate,
-        wallet_address: walletAddress,
         status: 'verified',
         survey_number: data.surveyNumber || '',
         door_number: data.doorNumber || '',
