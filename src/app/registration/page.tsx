@@ -218,9 +218,7 @@ export default function RegistrationPage() {
       try {
         await navigator.clipboard.writeText(registrationId);
         setCopiedId(true);
-        setShowCopyOverlay(true);
         setTimeout(() => setCopiedId(false), 2000);
-        setTimeout(() => setShowCopyOverlay(false), 1500);
       } catch (err) {
         console.error('Failed to copy ID:', err);
       }
@@ -271,7 +269,7 @@ export default function RegistrationPage() {
 
       // Simulate processing
       await new Promise(resolve => setTimeout(resolve, 2000));
-      const regId = `REG-${Date.now().toString().slice(-8)}`;
+      const regId = `DB-${Date.now().toString().slice(-8)}`;
       setRegistrationId(regId);
 
       // Helper to upload IPFS
@@ -537,7 +535,7 @@ export default function RegistrationPage() {
                 {isSubmitting ? (
                   <> <Loader2 size={18} className="animate-spin" /> Submitting... </>
                 ) : (
-                  <>Submit</>
+                  <><CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" /> Submit</>
                 )}
               </button>
             )}
@@ -558,9 +556,6 @@ export default function RegistrationPage() {
             />
           )}
 
-
-
-          {showCopyOverlay && <CopyOverlay key="copy-overlay" />}
 
           {(showDocuments || showPropertyPhotos) && (
             <DocumentPreviewModal

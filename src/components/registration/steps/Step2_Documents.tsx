@@ -8,6 +8,7 @@ import { ResetButton } from '../ResetButton';
 // Allowed file types
 const ALLOWED_DOC_TYPES = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const CustomFolderIcon = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor" className={className}>
@@ -56,6 +57,14 @@ export const Step2_Documents: React.FC<Step2Props> = ({
         return allowedTypes.includes(file.type);
     }, []);
 
+    const validateFileSize = useCallback((file: File): boolean => {
+        return file.size <= MAX_FILE_SIZE;
+    }, []);
+
+    const formatFileSize = useCallback((bytes: number): string => {
+        return (bytes / (1024 * 1024)).toFixed(2) + 'MB';
+    }, []);
+
     const isDuplicatePhoto = useCallback((file: File): boolean => {
         return propertyPhotos.some(
             photo => photo.name === file.name && photo.size === file.size
@@ -92,6 +101,11 @@ export const Step2_Documents: React.FC<Step2Props> = ({
             return;
         }
 
+        if (!validateFileSize(file)) {
+            setFileErrors(prev => ({ ...prev, [key]: `File size (${formatFileSize(file.size)}) exceeds 5MB limit` }));
+            return;
+        }
+
         setUploading(prev => ({ ...prev, [key]: true }));
         try {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -113,6 +127,10 @@ export const Step2_Documents: React.FC<Step2Props> = ({
         Array.from(files).forEach(file => {
             if (!validateFileType(file, ALLOWED_IMAGE_TYPES)) {
                 errors.push(`${file.name}: Unsupported format`);
+                return;
+            }
+            if (!validateFileSize(file)) {
+                errors.push(`${file.name}: Exceeds 5MB limit (${formatFileSize(file.size)})`);
                 return;
             }
             if (isDuplicatePhoto(file)) {

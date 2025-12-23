@@ -6,7 +6,6 @@ export interface RegistrationData {
   user_id: string;
   registration_id: string;
   registration_date: string;
-  wallet_address: string;
   status: 'active' | 'pending' | 'verified';
 
   // Property Details
@@ -83,7 +82,7 @@ export interface RegistrationData {
 export interface PaymentData {
   id?: string;
   registration_id: string;
-  wallet_address: string;
+  user_id: string;
   amount: number;
   transaction_id: string;
   payment_status: 'completed' | 'pending' | 'failed';
@@ -92,7 +91,7 @@ export interface PaymentData {
 
 export interface SearchHistoryData {
   id?: string;
-  wallet_address: string;
+  user_id: string;
   search_type: 'registrationId' | 'surveyNumber';
   query: string;
   created_at?: string;
@@ -189,19 +188,18 @@ export async function savePayment(paymentData: Omit<PaymentData, 'id' | 'created
     .single();
 
   if (error) {
-    console.error('Error saving payment:', error);
     throw error;
   }
 
   return data;
 }
 
-export async function checkPayment(registrationId: string, walletAddress: string) {
+export async function checkPayment(registrationId: string, userId: string) {
   const { data, error } = await supabase
     .from('payments')
     .select('*')
     .eq('registration_id', registrationId)
-    .eq('wallet_address', walletAddress)
+    .eq('user_id', userId)
     .eq('payment_status', 'completed')
     .single();
 
@@ -214,19 +212,19 @@ export async function checkPayment(registrationId: string, walletAddress: string
 }
 
 // Search History Functions
-export async function saveSearchHistory(walletAddress: string, searchType: 'registrationId' | 'surveyNumber', query: string) {
+export async function saveSearchHistory(userId: string, searchType: 'registrationId' | 'surveyNumber', query: string) {
   // Get existing history to maintain limit of 10
   const { data: existingHistory } = await supabase
     .from('search_history')
     .select('*')
-    .eq('wallet_address', walletAddress)
+    .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(10);
 
   const { data, error } = await supabase
     .from('search_history')
     .insert([{
-      wallet_address: walletAddress,
+      user_id: userId,
       search_type: searchType,
       query: query,
     }])
@@ -252,17 +250,17 @@ export async function saveSearchHistory(walletAddress: string, searchType: 'regi
   return data;
 }
 
-export async function getSearchHistory(walletAddress: string) {
+export async function getSearchHistory(userId: string) {
   const { data, error } = await supabase
     .from('search_history')
     .select('*')
-    .eq('wallet_address', walletAddress)
+    .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(10);
 
   if (error) {
     console.error('Error fetching search history:', error);
-    throw error;
+    return [];
   }
 
   return data || [];

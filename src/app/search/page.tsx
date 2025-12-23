@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { FileText, Calendar, Loader2, AlertCircle, X, Copy, Check, Download, QrCode, ChevronDown, MapPin, Users, IndianRupee } from 'lucide-react';
+import { FileText, Calendar, Loader2, AlertCircle, X, Copy, Check, Download, QrCode, ChevronDown, MapPin, Users, IndianRupee, Eye, Image as ImageIcon, Search, Shield, Clock, Filter, ChevronLeft, ChevronRight, Home, User } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { searchRegistrations, savePayment, saveSearchHistory, getSearchHistory, type RegistrationData } from '@/lib/supabase/database';
 import { getIPFSUrl } from '@/lib/ipfs/pinata';
 import AuthGate from '@/components/AuthGate';
+import { supabase } from '@/lib/supabase/client';
 
 
 
@@ -32,6 +32,7 @@ interface SearchResult {
   area: string;
   areaUnit: string;
   transactionType: string;
+  marketValue?: string;
   considerationAmount: string;
   stampDuty: string;
   registrationFee: string;
@@ -107,7 +108,7 @@ type SortOption = 'date' | 'amount' | 'status' | 'name';
 type SortOrder = 'asc' | 'desc';
 
 export default function SearchPage() {
-  const { connected, publicKey } = useWallet();
+  const [userId, setUserId] = useState<string | null>(null);
   const [searchForm, setSearchForm] = useState<SearchFormData>({
     searchType: 'registrationId',
     registrationId: '',
@@ -137,6 +138,17 @@ export default function SearchPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [pendingResult, setPendingResult] = useState<SearchResult | null>(null);
   const [paidRegistrations, setPaidRegistrations] = useState<string[]>([]);
+
+  // Get user ID from Supabase auth
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        setUserId(session.user.id);
+      }
+    };
+    getUser();
+  }, []);
 
   // Helper function to get all stored registrations from Supabase
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
@@ -227,11 +239,6 @@ export default function SearchPage() {
   };
 
   const handleSearch = async () => {
-    if (!connected) {
-      setSearchError('Please connect your wallet to search for land titles.');
-      return;
-    }
-
     // Validate that at least one search field is filled based on search type
     let hasSearchCriteria = false;
     let searchQuery = '';
@@ -317,31 +324,29 @@ export default function SearchPage() {
 
   // Process payment
   const processPayment = async () => {
-    if (!pendingResult || !connected || !publicKey) return;
+    if (!pendingResult) return;
 
-    // Generate transaction ID
-    const transactionId = `TXN-${Date.now().toString().slice(-10)}`;
+    // Add to session-based paid registrations array (this always works)
+    setPaidRegistrations(prev =>
+      prev.includes(pendingResult.registrationId)
+        ? prev
+        : [...prev, pendingResult.registrationId]
+    );
 
-    try {
-      // Save payment to Supabase
-      await savePayment({
-        registration_id: pendingResult.registrationId,
-        wallet_address: publicKey.toString(),
-        amount: 200,
-        transaction_id: transactionId,
-        payment_status: 'completed',
-      });
-
-      // Add to session-based paid registrations array
-      setPaidRegistrations(prev =>
-        prev.includes(pendingResult.registrationId)
-          ? prev
-          : [...prev, pendingResult.registrationId]
-      );
-    } catch (error) {
-      console.error('Error storing payment:', error);
-      setSearchError('Failed to process payment. Please try again.');
-      return;
+    // Try to save to database (non-blocking)
+    if (userId) {
+      const transactionId = `TXN-${Date.now().toString().slice(-10)}`;
+      try {
+        await savePayment({
+          registration_id: pendingResult.registrationId,
+          user_id: userId,
+          amount: 200,
+          transaction_id: transactionId,
+          payment_status: 'completed',
+        });
+      } catch {
+        // Silently fail - session tracking is sufficient for demo
+      }
     }
 
     // Simulate payment processing
@@ -384,10 +389,10 @@ export default function SearchPage() {
   // Load search history from Supabase
   useEffect(() => {
     const loadHistory = async () => {
-      if (!connected || !publicKey?.toString()) return;
+      if (!userId) return;
 
       try {
-        const history = await getSearchHistory(publicKey.toString());
+        const history = await getSearchHistory(userId);
         setSearchHistory(history.map(item => ({
           type: item.search_type,
           query: item.query,
@@ -398,10 +403,10 @@ export default function SearchPage() {
       }
     };
 
-    if (connected && publicKey) {
+    if (userId) {
       loadHistory();
     }
-  }, [connected, publicKey]);
+  }, [userId]);
 
   // Filter and sort results
   useEffect(() => {
@@ -469,26 +474,26 @@ export default function SearchPage() {
   const endIndex = startIndex + itemsPerPage;
   const paginatedResults = filteredResults.slice(startIndex, endIndex);
 
-  // Save to search history
+  // Save to search history (non-blocking - don't fail if this doesn't work)
   const saveToHistory = async (searchType: string, query: string) => {
-    if (!connected || !publicKey?.toString()) return;
+    if (!userId) return;
 
     try {
       await saveSearchHistory(
-        publicKey.toString(),
+        userId,
         searchType as 'registrationId' | 'surveyNumber',
         query
       );
 
       // Reload history to update UI
-      const history = await getSearchHistory(publicKey.toString());
+      const history = await getSearchHistory(userId);
       setSearchHistory(history.map(item => ({
         type: item.search_type,
         query: item.query,
         timestamp: new Date(item.created_at || '').getTime(),
       })));
-    } catch (error) {
-      console.error('Failed to save search history:', error);
+    } catch {
+      // Silently fail - search history is non-essential
     }
   };
 
@@ -513,12 +518,6 @@ export default function SearchPage() {
         surveyNumber: searchType === 'surveyNumber' ? entry.query : '',
       };
       setSearchForm(newForm);
-
-      // Trigger the search
-      if (!connected) {
-        setSearchError('Please connect your wallet to search for land titles.');
-        return;
-      }
 
       const searchQuery = entry.query.trim().toUpperCase();
 
@@ -826,31 +825,25 @@ Generated on: ${new Date().toLocaleString()}
 
   return (
     <AuthGate>
-      <div className={` min-h-screen bg-white text-black pt-20 sm:pt-24 lg:pt-32 px-3 sm:px-6 pb-20 flex items-center justify-center`}>
-        <div className="max-w-4xl w-full mx-auto">
+      <div className="min-h-screen bg-white text-black pt-20 sm:pt-24 lg:pt-28 px-4 sm:px-6 pb-20">
+        <div className="max-w-2xl w-full mx-auto space-y-4 sm:space-y-6">
           {/* Search Form */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="bg-white border border-gray-200 shadow-sm rounded-lg p-4 sm:p-6 mb-6 mx-auto"
+            transition={{ duration: 0.4 }}
+            className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6"
           >
-            {/* Header - Top Left */}
-            <div className="mb-5">
-              <h1 className={` text-xl sm:text-2xl font-medium mb-1.5`}>
-                Search Land Titles
-              </h1>
-              <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
-                Search for registered land titles using registration id and survey no.
-              </p>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-xl sm:text-2xl font-sans font-normal text-black">Search Land Titles</h1>
             </div>
+            <div className="border-t border-dashed border-gray-300 mb-4 sm:mb-6"></div>
 
-            {/* Search Type Selector */}
+            {/* Search Type Toggle */}
             <div className="mb-4">
-              <label className={`block text-sm text-gray-600 mb-2`}>
-                Search By
-              </label>
-              <div className="flex gap-2 w-fit">
+              <label className="block text-sm text-gray-500 mb-1.5">Search By</label>
+              <div className="flex gap-2">
                 {[
                   { value: 'registrationId', label: 'Registration ID' },
                   { value: 'surveyNumber', label: 'Survey No.' },
@@ -858,9 +851,9 @@ Generated on: ${new Date().toLocaleString()}
                   <button
                     key={type.value}
                     onClick={() => handleInputChange('searchType', type.value)}
-                    className={`px-3 py-2 rounded-lg border transition-colors text-xs sm:text-sm whitespace-nowrap ${searchForm.searchType === type.value
+                    className={`px-3 sm:px-4 py-2 rounded-lg border transition-all text-sm ${searchForm.searchType === type.value
                       ? 'bg-black text-white border-black'
-                      : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400 hover:text-black'
+                      : 'bg-white border-gray-200 text-gray-600 hover:border-black hover:text-black'
                       }`}
                   >
                     {type.label}
@@ -869,26 +862,24 @@ Generated on: ${new Date().toLocaleString()}
               </div>
             </div>
 
-            {/* Search Input Fields */}
-            <div className="space-y-3">
+            {/* Search Input */}
+            <div className="mb-4">
               <AnimatePresence mode="wait">
                 {searchForm.searchType === 'registrationId' && (
                   <motion.div
                     key="registrationId"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.3 }}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    <label className={`block text-sm text-gray-600 mb-2`}>
-                      Registration ID
-                    </label>
+                    <label className="block text-sm text-gray-500 mb-1.5">Registration ID <span className="text-red-400">*</span></label>
                     <input
                       type="text"
                       value={searchForm.registrationId}
                       onChange={(e) => handleInputChange('registrationId', e.target.value)}
-                      placeholder="Enter Registration ID (e.g., REG-12345678)"
-                      className="max-w-lg w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-black placeholder-gray-400 focus:outline-none focus:border-gray-400 transition-colors text-sm"
+                      placeholder="Enter Registration ID (e.g., DB-12345678)"
+                      className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-black placeholder-gray-400 focus:outline-none focus:border-black focus:ring-4 focus:ring-gray-100 transition-all text-sm"
                     />
                   </motion.div>
                 )}
@@ -896,24 +887,21 @@ Generated on: ${new Date().toLocaleString()}
                 {searchForm.searchType === 'surveyNumber' && (
                   <motion.div
                     key="surveyNumber"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.3 }}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    <label className={`block text-sm text-gray-600 mb-2`}>
-                      Survey Number
-                    </label>
+                    <label className="block text-sm text-gray-500 mb-1.5">Survey Number <span className="text-red-400">*</span></label>
                     <input
                       type="text"
                       value={searchForm.surveyNumber}
                       onChange={(e) => handleInputChange('surveyNumber', e.target.value)}
                       placeholder="Enter Survey Number"
-                      className="max-w-lg w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-black placeholder-gray-400 focus:outline-none focus:border-gray-400 transition-colors text-sm"
+                      className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-black placeholder-gray-400 focus:outline-none focus:border-black focus:ring-4 focus:ring-gray-100 transition-all text-sm"
                     />
                   </motion.div>
                 )}
-
               </AnimatePresence>
             </div>
 
@@ -922,19 +910,21 @@ Generated on: ${new Date().toLocaleString()}
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2"
+                className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2"
               >
-                <AlertCircle size={20} className="text-red-500 sm:w-6 sm:h-6" />
-                <p className="text-red-600 text-xs sm:text-sm">{searchError}</p>
+                <AlertCircle size={16} className="text-red-500 shrink-0" />
+                <p className="text-red-600 text-sm">{searchError}</p>
               </motion.div>
             )}
 
+            <div className="border-t border-dashed border-gray-300 mb-4"></div>
+
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-2.5 mt-5 items-stretch sm:items-center">
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={handleSearch}
-                disabled={isSearching || !connected}
-                className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 sm:py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSearching}
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSearching ? (
                   <>
@@ -948,86 +938,70 @@ Generated on: ${new Date().toLocaleString()}
               {(searchResults.length > 0 || searchForm.registrationId || searchForm.surveyNumber) && (
                 <button
                   onClick={resetSearch}
-                  className="px-3 py-2 bg-white border border-gray-300 text-black rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-50 transition-colors"
+                  className="px-4 py-3 bg-white border border-gray-200 text-gray-600 hover:border-black hover:text-black rounded-lg text-sm font-medium transition-colors"
                 >
                   Reset
                 </button>
               )}
             </div>
-
-            {/* Wallet Connection Warning */}
-            {!connected && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2"
-              >
-                <AlertCircle size={20} className="text-yellow-600 sm:w-6 sm:h-6" />
-                <p className="text-yellow-700 text-xs sm:text-sm">Please connect your wallet to search for land titles.</p>
-              </motion.div>
-            )}
           </motion.div>
 
-          {/* Search History - Dropdown */}
+          {/* Search History */}
           {searchHistory.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="mb-6 flex justify-start relative"
+              className="relative"
             >
               <div className="relative z-20">
                 <button
                   onClick={() => setIsRecentSearchesOpen(!isRecentSearchesOpen)}
-                  className={`w-full sm:w-auto sm:max-w-xs bg-white border border-gray-300 shadow-sm rounded-lg px-4 py-3 sm:py-2.5 text-black text-sm hover:bg-gray-50 transition-colors flex items-center gap-2 justify-between`}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:border-black hover:text-black transition-colors"
                 >
-                  <span className="text-gray-600">Recent Searches</span>
+                  <Calendar size={14} />
+                  <span>Recent Searches</span>
                   <ChevronDown
-                    size={16}
-                    className={`text-gray-500 transition-transform duration-200 ${isRecentSearchesOpen ? 'rotate-180' : ''}`}
+                    size={14}
+                    className={`transition-transform duration-200 ${isRecentSearchesOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
                 <AnimatePresence>
                   {isRecentSearchesOpen && (
                     <motion.div
-                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute top-full left-0 mt-2 max-w-xs w-full bg-white rounded-lg shadow-xl py-1 z-20 border border-gray-200"
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg border border-gray-200 shadow-lg z-20 overflow-hidden"
                     >
-                      <div className="dropdown-header">
-                        <h3 className={` font-medium text-black tracking-tight text-sm`}>Recent Searches</h3>
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                        <span className="text-sm font-medium text-black">Recent Searches</span>
                         <button
                           onClick={() => setIsRecentSearchesOpen(false)}
-                          className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                          className="p-1 hover:bg-gray-100 rounded transition-colors"
                         >
-                          <X size={14} className="text-black" />
+                          <X size={14} className="text-gray-400" />
                         </button>
                       </div>
-                      <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                      <div className="max-h-48 overflow-y-auto">
                         {searchHistory.map((entry, index) => (
-                          <div key={index}>
-                            <button
-                              onClick={() => loadFromHistory(entry)}
-                              className="dropdown-item w-full text-left"
-                            >
-                              <div className="dropdown-title">
-                                {entry.type === 'registrationId' ? 'Registration ID' : 'Survey No.'}
-                              </div>
-                              <div className="dropdown-description">{entry.query}</div>
-                            </button>
-                            {index < searchHistory.length - 1 && (
-                              <div className="dropdown-divider" />
-                            )}
-                          </div>
+                          <button
+                            key={index}
+                            onClick={() => loadFromHistory(entry)}
+                            className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
+                          >
+                            <div className="text-xs text-gray-400 mb-0.5">
+                              {entry.type === 'registrationId' ? 'Registration ID' : 'Survey No.'}
+                            </div>
+                            <div className="text-sm text-black font-mono">{entry.query}</div>
+                          </button>
                         ))}
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
-              {/* Click outside to close */}
               {isRecentSearchesOpen && (
                 <div
                   className="fixed inset-0 z-10"
@@ -1037,7 +1011,6 @@ Generated on: ${new Date().toLocaleString()}
             </motion.div>
           )}
 
-
           {/* Search Results */}
           <AnimatePresence>
             {searchResults.length > 0 && (
@@ -1045,78 +1018,69 @@ Generated on: ${new Date().toLocaleString()}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.5 }}
-                className="mb-8"
+                transition={{ duration: 0.4 }}
+                className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className={` text-xl sm:text-2xl font-medium`}>
+                  <h2 className="text-lg sm:text-xl font-sans font-normal text-black">
                     Search Results ({filteredResults.length})
                   </h2>
                 </div>
+                <div className="border-t border-dashed border-gray-300 mb-4"></div>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {paginatedResults.map((result, index) => (
                     <motion.div
                       key={result.registrationId}
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
+                      transition={{ delay: index * 0.05 }}
                       onClick={() => handleViewDetails(result)}
-                      className="bg-white border border-gray-200 shadow-sm rounded-lg p-4 sm:p-6 cursor-pointer hover:border-gray-300 transition-colors"
+                      className="bg-gray-50 border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-black transition-all"
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 sm:gap-3 mb-3">
-                            <div className="flex items-center gap-2">
-                              <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                              <span className="font-mono text-black text-sm sm:text-base">{result.registrationId}</span>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  copyRegistrationId(result.registrationId);
-                                }}
-                                className="p-1 hover:bg-gray-100 rounded transition-colors"
-                              >
-                                {copiedId ? (
-                                  <Check size={16} className="text-green-400 sm:w-5 sm:h-5" />
-                                ) : (
-                                  <Copy size={16} className="text-gray-400 sm:w-5 sm:h-5" />
-                                )}
-                              </button>
-                            </div>
-                            <span className={`px-2 py-1 rounded text-xs border ${getStatusColor(result.status)}`}>
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          {/* Header Row */}
+                          <div className="flex items-center gap-2 flex-wrap mb-2">
+                            <span className="font-mono text-black text-sm">{result.registrationId}</span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyRegistrationId(result.registrationId);
+                              }}
+                              className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            >
+                              {copiedId ? (
+                                <Check size={14} className="text-green-500" />
+                              ) : (
+                                <Copy size={14} className="text-gray-400" />
+                              )}
+                            </button>
+                            <span className={`px-2 py-0.5 rounded text-xs border ${getStatusColor(result.status)}`}>
                               {result.status.toUpperCase()}
                             </span>
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-sm">
-                            <div className="flex items-center gap-2 text-gray-500">
-                              <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                              <span className="break-words">{result.village}, {result.taluka}, {result.district}, {result.state}</span>
+
+                          {/* Details Grid */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-sm">
+                            <div className="flex items-center gap-1.5 text-gray-500">
+                              <MapPin size={14} className="shrink-0" />
+                              <span className="truncate">{result.village}, {result.district}</span>
                             </div>
-                            <div className="flex items-center gap-2 text-gray-500">
-                              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                              <span className="break-words">Buyer: {result.buyerName} | Seller: {result.sellerName}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-500">
-                              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                              <span>Registered: {new Date(result.registrationDate).toLocaleDateString()}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-500">
-                              <IndianRupee className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                              <span>Amount: ₹{parseFloat(result.considerationAmount).toLocaleString('en-IN')}</span>
+                            <div className="flex items-center gap-1.5 text-gray-500">
+                              <Calendar size={14} className="shrink-0" />
+                              <span>{new Date(result.registrationDate).toLocaleDateString()}</span>
                             </div>
                           </div>
                         </div>
+
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleViewDetails(result);
                           }}
-                          className="px-3 sm:px-4 py-2.5 sm:py-2 bg-gray-100 border border-gray-200 text-black rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start"
+                          className="px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition-colors shrink-0"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" height="14" viewBox="0 -960 960 960" width="14" fill="#000000" className="sm:w-4 sm:h-4">
-                            <path d="M240-40H120q-33 0-56.5-23.5T40-120v-120h80v120h120v80Zm480 0v-80h120v-120h80v120q0 33-23.5 56.5T840-40H720ZM480-220q-120 0-217.5-71T120-480q45-118 142.5-189T480-740q120 0 217.5 71T840-480q-45 118-142.5 189T480-220Zm0-80q88 0 161-48t112-132q-39-84-112-132t-161-48q-88 0-161 48T207-480q39 84 112 132t161 48Zm0-40q58 0 99-41t41-99q0-58-41-99t-99-41q-58 0-99 41t-41 99q0 58 41 99t99 41Zm0-80q-25 0-42.5-17.5T420-480q0-25 17.5-42.5T480-540q25 0 42.5 17.5T540-480q0 25-17.5 42.5T480-420ZM40-720v-120q0-33 23.5-56.5T120-920h120v80H120v120H40Zm800 0v-120H720v-80h120q33 0 56.5 23.5T920-840v120h-80ZM480-480Z" />
-                          </svg>
                           View Details
                         </button>
                       </div>
@@ -1147,72 +1111,67 @@ Generated on: ${new Date().toLocaleString()}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
               onClick={() => setShowPaymentModal(false)}
             >
               <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
+                initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ duration: 0.2 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-white border border-gray-200 shadow-xl rounded-lg p-4 sm:p-6 lg:p-8 max-w-md w-full"
+                className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 max-w-sm w-full"
               >
-                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                  <h2 className={` text-xl sm:text-2xl font-medium`}>
-                    Payment Required
-                  </h2>
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg sm:text-xl font-sans font-normal text-black">Payment Required</h2>
                   <button
                     onClick={() => setShowPaymentModal(false)}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                   >
-                    <X size={20} className="text-black" />
+                    <X size={18} className="text-gray-400" />
                   </button>
                 </div>
+                <div className="border-t border-dashed border-gray-300 mb-4"></div>
 
-                <div className="space-y-4">
-                  <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
-                    <div className="text-xs sm:text-sm space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Registration ID:</span>
-                        <span className="text-black font-mono text-xs sm:text-sm">{pendingResult.registrationId}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Access Fee:</span>
-                        <span className="text-black font-medium">₹200</span>
-                      </div>
+                {/* Payment Details */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Registration ID</span>
+                      <span className="text-black font-mono">{pendingResult.registrationId}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Access Fee</span>
+                      <span className="text-black font-medium">₹200</span>
                     </div>
                   </div>
+                </div>
 
-                  <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-3 sm:p-4">
-                    <p className="text-amber-700 text-xs sm:text-sm">
-                      <AlertCircle size={16} className="inline mr-2 sm:w-4 sm:h-4" />
-                      Payment of ₹200 is required to view full registration details and download all associated documents and data.
-                    </p>
-                  </div>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                  <p className="text-amber-700 text-xs sm:text-sm flex items-start gap-2">
+                    <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                    <span>Payment is required to view full details and download documents.</span>
+                  </p>
+                </div>
 
-                  <div className="flex flex-col sm:flex-row gap-3 mt-6">
-                    <button
-                      onClick={() => setShowPaymentModal(false)}
-                      className="px-3 sm:px-4 py-2 bg-white border border-gray-200 shadow-sm text-black rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-50 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={processPayment}
-                      disabled={!connected}
-                      className="flex-1 px-3 sm:px-4 py-2 bg-black text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {connected ? (
-                        <>
-                          Pay ₹200
-                        </>
-                      ) : (
-                        <>
-                          Connect Wallet to Pay
-                        </>
-                      )}
-                    </button>
-                  </div>
+                <div className="border-t border-dashed border-gray-300 mb-4"></div>
+
+                {/* Actions */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowPaymentModal(false)}
+                    className="flex-1 px-4 py-2.5 bg-white border border-gray-200 text-gray-600 hover:border-black hover:text-black rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={processPayment}
+                    disabled={!userId}
+                    className="flex-1 px-4 py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Pay ₹200
+                  </button>
                 </div>
               </motion.div>
             </motion.div>
@@ -1226,234 +1185,211 @@ Generated on: ${new Date().toLocaleString()}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto"
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
               onClick={() => setSelectedResult(null)}
             >
               <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                transition={{ duration: 0.2 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-white border border-gray-200 shadow-xl rounded-lg p-4 sm:p-6 lg:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto my-8"
+                className="bg-white rounded-xl shadow-xl w-full max-w-4xl overflow-hidden my-8 flex flex-col max-h-[90vh]"
               >
-                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                  <h2 className={` text-xl sm:text-2xl font-medium`}>
-                    Registration Details
-                  </h2>
+                {/* Header */}
+                <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
+                  <div>
+                    <h2 className="text-xl font-medium text-gray-900">Registration Details</h2>
+                    <p className="text-sm text-gray-500 mt-1">View complete details of this registration</p>
+                  </div>
                   <button
                     onClick={() => setSelectedResult(null)}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 hover:bg-gray-50 rounded-full transition-colors text-gray-400 hover:text-gray-600"
                   >
-                    <X size={20} className="text-black" />
+                    <X size={20} />
                   </button>
                 </div>
 
-                <div className="space-y-4 sm:space-y-6">
-                  {/* Registration Info */}
-                  <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
-                    <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
-                      <FileText size={20} className="sm:w-6 sm:h-6" />
-                      Registration Information
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-500">Registration ID:</span>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-black font-mono">{selectedResult.registrationId}</span>
-                          <button
-                            onClick={() => copyRegistrationId(selectedResult.registrationId)}
-                            className="p-1 hover:bg-gray-100 rounded transition-colors"
-                            title="Copy Registration ID"
-                          >
-                            {copiedId ? (
-                              <Check size={16} className="text-green-400" />
-                            ) : (
-                              <Copy size={16} className="text-gray-500" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => setShowQRCode(true)}
-                            className="p-1 hover:bg-gray-100 rounded transition-colors"
-                            title="Show QR Code"
-                          >
-                            <QrCode size={18} className="text-gray-500 sm:w-5 sm:h-5" />
-                          </button>
-                        </div>
+                <div className="overflow-y-auto p-6 space-y-8">
+                  {/* Registration Status Section */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm text-gray-500">Registration ID</span>
+                        <button
+                          onClick={() => copyRegistrationId(selectedResult.registrationId)}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          {copiedId ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                        </button>
                       </div>
-                      <div>
-                        <span className="text-gray-500">Status:</span>
-                        <span className={`ml-2 px-2 py-1 rounded text-xs border ${getStatusColor(selectedResult.status)}`}>
-                          {selectedResult.status.toUpperCase()}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Registration Date:</span>
-                        <p className="text-black">{new Date(selectedResult.registrationDate).toLocaleDateString()}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Sale Agreement Date:</span>
-                        <p className="text-black">{new Date(selectedResult.saleAgreementDate).toLocaleDateString()}</p>
-                      </div>
+                      <div className="font-mono text-lg font-medium text-gray-900">{selectedResult.registrationId}</div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                      <span className="text-sm text-gray-500 block mb-2">Status</span>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize border ${selectedResult.status === 'verified'
+                        ? 'bg-green-50 text-green-700 border-green-200'
+                        : selectedResult.status === 'pending'
+                          ? 'bg-amber-50 text-amber-700 border-amber-200'
+                          : 'bg-red-50 text-red-700 border-red-200'
+                        }`}>
+                        {selectedResult.status}
+                      </span>
                     </div>
                   </div>
 
                   {/* Property Details */}
-                  <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
-                    <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="#000000" className="sm:w-6 sm:h-6">
-                        <path d="M480-480q33 0 56.5-23.5T560-560q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560q0 33 23.5 56.5T480-480Zm0 294q122-112 181-203.5T720-552q0-109-69.5-178.5T480-800q-101 0-170.5 69.5T240-552q0 71 59 162.5T480-186Zm0 106Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Zm0-480Z" />
-                      </svg>
-                      Property Details
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <section>
+                    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-dashed border-gray-200">
+                      <Home size={18} className="text-gray-400" />
+                      <h3 className="font-medium text-gray-900">Property Information</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                       <div>
-                        <span className="text-gray-500">Property Type:</span>
-                        <p className="text-black">{selectedResult.propertyType}</p>
+                        <span className="text-sm text-gray-500 block mb-1">Property Type</span>
+                        <span className="text-gray-900 font-medium capitalize">{selectedResult.propertyType}</span>
                       </div>
                       <div>
-                        <span className="text-gray-500">Survey Number:</span>
-                        <p className="text-black">{selectedResult.surveyNumber}</p>
+                        <span className="text-sm text-gray-500 block mb-1">Survey Number</span>
+                        <span className="text-gray-900 font-medium">{selectedResult.surveyNumber}</span>
                       </div>
                       <div>
-                        <span className="text-gray-500">Plot Number:</span>
-                        <p className="text-black">{selectedResult.plotNumber}</p>
+                        <span className="text-sm text-gray-500 block mb-1">Plot Number</span>
+                        <span className="text-gray-900 font-medium">{selectedResult.plotNumber || '-'}</span>
                       </div>
                       <div>
-                        <span className="text-gray-500">Area:</span>
-                        <p className="text-black">{selectedResult.area} {selectedResult.areaUnit}</p>
+                        <span className="text-sm text-gray-500 block mb-1">Area</span>
+                        <span className="text-gray-900 font-medium">{selectedResult.area} {selectedResult.areaUnit}</span>
                       </div>
-                      <div className="sm:col-span-2">
-                        <span className="text-gray-500">Address:</span>
-                        <p className="text-black">{selectedResult.village}, {selectedResult.taluka}, {selectedResult.district}, {selectedResult.state} - {selectedResult.pincode}</p>
+                      <div className="sm:col-span-2 lg:col-span-2">
+                        <span className="text-sm text-gray-500 block mb-1">Address</span>
+                        <span className="text-gray-900 font-medium">
+                          {selectedResult.village}, {selectedResult.taluka}, {selectedResult.district}, {selectedResult.state} - {selectedResult.pincode}
+                        </span>
                       </div>
                     </div>
-                  </div>
+                  </section>
 
                   {/* Transaction Details */}
-                  <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
-                    <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="#000000" className="sm:w-6 sm:h-6">
-                        <path d="M549-120 280-400v-80h140q53 0 91.5-34.5T558-600H240v-80h306q-17-35-50.5-57.5T420-760H240v-80h480v80H590q14 17 25 37t17 43h88v80h-81q-8 85-70 142.5T420-400h-29l269 280H549Z" />
-                      </svg>
-                      Transaction Details
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <section>
+                    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-dashed border-gray-200">
+                      <FileText size={18} className="text-gray-400" />
+                      <h3 className="font-medium text-gray-900">Transaction Details</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                       <div>
-                        <span className="text-gray-500">Transaction Type:</span>
-                        <p className="text-black">{selectedResult.transactionType}</p>
+                        <span className="text-sm text-gray-500 block mb-1">Transaction Type</span>
+                        <span className="text-gray-900 font-medium capitalize">{selectedResult.transactionType}</span>
                       </div>
                       <div>
-                        <span className="text-gray-500">Consideration Amount:</span>
-                        <p className="text-black">₹{parseFloat(selectedResult.considerationAmount).toLocaleString('en-IN')}</p>
+                        <span className="text-sm text-gray-500 block mb-1">Market Value</span>
+                        <span className="text-gray-900 font-medium">₹{parseFloat(selectedResult.marketValue || selectedResult.considerationAmount).toLocaleString('en-IN')}</span>
                       </div>
                       <div>
-                        <span className="text-gray-500">Stamp Duty:</span>
-                        <p className="text-black">₹{parseFloat(selectedResult.stampDuty).toLocaleString('en-IN')}</p>
+                        <span className="text-sm text-gray-500 block mb-1">Consideration</span>
+                        <span className="text-gray-900 font-medium">₹{parseFloat(selectedResult.considerationAmount).toLocaleString('en-IN')}</span>
                       </div>
                       <div>
-                        <span className="text-gray-500">Registration Fee:</span>
-                        <p className="text-black">₹{parseFloat(selectedResult.registrationFee).toLocaleString('en-IN')}</p>
+                        <span className="text-sm text-gray-500 block mb-1">Registration Fee</span>
+                        <span className="text-gray-900 font-medium">₹{parseFloat(selectedResult.registrationFee).toLocaleString('en-IN')}</span>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-500 block mb-1">Stamp Duty</span>
+                        <span className="text-gray-900 font-medium">₹{parseFloat(selectedResult.stampDuty).toLocaleString('en-IN')}</span>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-500 block mb-1">Date</span>
+                        <span className="text-gray-900 font-medium">{new Date(selectedResult.registrationDate).toLocaleDateString()}</span>
                       </div>
                     </div>
-                  </div>
+                  </section>
 
-                  {/* Party Details */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
-                      <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
-                        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="#000000" className="sm:w-6 sm:h-6">
-                          <path d="M200-200v-560 179-19 400Zm80-240h221q2-22 10-42t20-38H280v80Zm0 160h157q17-20 39-32.5t46-20.5q-4-6-7-13t-5-14H280v80Zm0-320h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v258q-14-26-34-46t-46-33v-179H200v560h202q-1 6-1.5 12t-.5 12v56H200Zm480-200q-42 0-71-29t-29-71q0-42 29-71t71-29q42 0 71 29t29 71q0 42-29 71t-71 29ZM480-120v-56q0-24 12.5-44.5T528-250q36-15 74.5-22.5T680-280q39 0 77.5 7.5T832-250q23 9 35.5 29.5T880-176v56H480Z" />
-                        </svg>
-                        Seller Information
-                      </h3>
-                      <div className="space-y-2 text-sm">
+                  {/* Parties */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Seller */}
+                    <section className="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
+                      <div className="flex items-center gap-2 mb-4">
+                        <User size={18} className="text-blue-500" />
+                        <h3 className="font-medium text-gray-900">Seller Details</h3>
+                      </div>
+                      <div className="space-y-4">
                         <div>
-                          <span className="text-gray-500">Name:</span>
-                          <p className="text-black">{selectedResult.sellerName}</p>
+                          <span className="text-sm text-gray-500 block mb-1">Name</span>
+                          <span className="text-gray-900 font-medium block">{selectedResult.sellerName}</span>
                         </div>
                         <div>
-                          <span className="text-gray-500">Father&apos;s Name:</span>
-                          <p className="text-black">{selectedResult.sellerFatherName}</p>
+                          <span className="text-sm text-gray-500 block mb-1">Father's Name</span>
+                          <span className="text-gray-900 text-sm block">{selectedResult.sellerFatherName}</span>
                         </div>
-                        {selectedResult.sellerAge && (
-                          <div>
-                            <span className="text-gray-500">Age:</span>
-                            <p className="text-black">{selectedResult.sellerAge}</p>
-                          </div>
-                        )}
+                        <div className="grid grid-cols-2 gap-4">
+                          {selectedResult.sellerAge && (
+                            <div>
+                              <span className="text-sm text-gray-500 block mb-1">Age</span>
+                              <span className="text-gray-900 text-sm block">{selectedResult.sellerAge}</span>
+                            </div>
+                          )}
+                          {selectedResult.sellerPhone && (
+                            <div>
+                              <span className="text-sm text-gray-500 block mb-1">Phone</span>
+                              <span className="text-gray-900 text-sm block">{selectedResult.sellerPhone}</span>
+                            </div>
+                          )}
+                        </div>
                         {selectedResult.sellerAddress && (
                           <div>
-                            <span className="text-gray-500">Address:</span>
-                            <p className="text-black">{selectedResult.sellerAddress}</p>
-                          </div>
-                        )}
-                        {selectedResult.sellerPhone && (
-                          <div>
-                            <span className="text-gray-500">Phone:</span>
-                            <p className="text-black">{selectedResult.sellerPhone}</p>
-                          </div>
-                        )}
-                        {selectedResult.sellerEmail && (
-                          <div>
-                            <span className="text-gray-500">Email:</span>
-                            <p className="text-black break-all">{selectedResult.sellerEmail}</p>
+                            <span className="text-sm text-gray-500 block mb-1">Address</span>
+                            <span className="text-gray-900 text-sm block">{selectedResult.sellerAddress}</span>
                           </div>
                         )}
                       </div>
-                    </div>
-                    <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
-                      <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
-                        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="#000000" className="sm:w-6 sm:h-6">
-                          <path d="M200-200v-560 179-19 400Zm80-240h221q2-22 10-42t20-38H280v80Zm0 160h157q17-20 39-32.5t46-20.5q-4-6-7-13t-5-14H280v80Zm0-320h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v258q-14-26-34-46t-46-33v-179H200v560h202q-1 6-1.5 12t-.5 12v56H200Zm480-200q-42 0-71-29t-29-71q0-42 29-71t71-29q42 0 71 29t29 71q0 42-29 71t-71 29ZM480-120v-56q0-24 12.5-44.5T528-250q36-15 74.5-22.5T680-280q39 0 77.5 7.5T832-250q23 9 35.5 29.5T880-176v56H480Z" />
-                        </svg>
-                        Buyer Information
-                      </h3>
-                      <div className="space-y-2 text-sm">
+                    </section>
+
+                    {/* Buyer */}
+                    <section className="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
+                      <div className="flex items-center gap-2 mb-4">
+                        <User size={18} className="text-green-500" />
+                        <h3 className="font-medium text-gray-900">Buyer Details</h3>
+                      </div>
+                      <div className="space-y-4">
                         <div>
-                          <span className="text-gray-500">Name:</span>
-                          <p className="text-black">{selectedResult.buyerName}</p>
+                          <span className="text-sm text-gray-500 block mb-1">Name</span>
+                          <span className="text-gray-900 font-medium block">{selectedResult.buyerName}</span>
                         </div>
                         <div>
-                          <span className="text-gray-500">Father&apos;s Name:</span>
-                          <p className="text-black">{selectedResult.buyerFatherName}</p>
+                          <span className="text-sm text-gray-500 block mb-1">Father's Name</span>
+                          <span className="text-gray-900 text-sm block">{selectedResult.buyerFatherName}</span>
                         </div>
-                        {selectedResult.buyerAge && (
-                          <div>
-                            <span className="text-gray-500">Age:</span>
-                            <p className="text-black">{selectedResult.buyerAge}</p>
-                          </div>
-                        )}
+                        <div className="grid grid-cols-2 gap-4">
+                          {selectedResult.buyerAge && (
+                            <div>
+                              <span className="text-sm text-gray-500 block mb-1">Age</span>
+                              <span className="text-gray-900 text-sm block">{selectedResult.buyerAge}</span>
+                            </div>
+                          )}
+                          {selectedResult.buyerPhone && (
+                            <div>
+                              <span className="text-sm text-gray-500 block mb-1">Phone</span>
+                              <span className="text-gray-900 text-sm block">{selectedResult.buyerPhone}</span>
+                            </div>
+                          )}
+                        </div>
                         {selectedResult.buyerAddress && (
                           <div>
-                            <span className="text-gray-500">Address:</span>
-                            <p className="text-black">{selectedResult.buyerAddress}</p>
-                          </div>
-                        )}
-                        {selectedResult.buyerPhone && (
-                          <div>
-                            <span className="text-gray-500">Phone:</span>
-                            <p className="text-black">{selectedResult.buyerPhone}</p>
-                          </div>
-                        )}
-                        {selectedResult.buyerEmail && (
-                          <div>
-                            <span className="text-gray-500">Email:</span>
-                            <p className="text-black break-all">{selectedResult.buyerEmail}</p>
+                            <span className="text-sm text-gray-500 block mb-1">Address</span>
+                            <span className="text-gray-900 text-sm block">{selectedResult.buyerAddress}</span>
                           </div>
                         )}
                       </div>
-                    </div>
+                    </section>
                   </div>
 
-                  {/* Witnesses */}
+                  {/* Witnesses if present */}
                   {selectedResult.witnesses && selectedResult.witnesses.length > 0 && (
-                    <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
-                      <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
-                        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="#000000" className="sm:w-6 sm:h-6">
-                          <path d="M480-400q33 0 56.5-23.5T560-480q0-33-23.5-56.5T480-560q-33 0-56.5 23.5T400-480q0 33 23.5 56.5T480-400ZM320-240h320v-23q0-24-13-44t-36-30q-26-11-53.5-17t-57.5-6q-30 0-57.5 6T369-337q-23 10-36 30t-13 44v23ZM720-80H240q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80Zm0-80v-446L526-800H240v640h480Zm-480 0v-640 640Z" />
-                        </svg>
-                        Witnesses ({selectedResult.witnesses.length})
-                      </h3>
+                    <section>
+                      <div className="flex items-center gap-2 mb-4 pb-2 border-b border-dashed border-gray-200">
+                        <Users size={18} className="text-gray-400" />
+                        <h3 className="font-medium text-gray-900">Witnesses ({selectedResult.witnesses.length})</h3>
+                      </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {selectedResult.witnesses.map((witness, index) => (
                           <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
@@ -1479,61 +1415,63 @@ Generated on: ${new Date().toLocaleString()}
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </section>
                   )}
 
                   {/* Documents */}
                   {selectedResult.documents && selectedResult.documents.length > 0 && (
-                    <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
-                      <h3 className={` text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2`}>
-                        <FileText size={20} className="sm:w-6 sm:h-6" />
-                        Documents ({selectedResult.documents.length})
-                      </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {selectedResult.documents.map((doc, index) => (
-                          <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-center justify-between">
+                    <section>
+                      <div className="flex items-center gap-2 mb-4 pb-2 border-b border-dashed border-gray-200">
+                        <FileText size={18} className="text-gray-400" />
+                        <h3 className="font-medium text-gray-900">Documents</h3>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {selectedResult.documents.map((doc: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg group hover:border-blue-200 transition-colors">
                             <div className="flex items-center gap-3">
-                              <FileText size={22} className="text-gray-500 sm:w-6 sm:h-6" />
+                              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                                <FileText size={18} />
+                              </div>
                               <div>
-                                <p className="text-black text-sm font-medium">{doc.type}</p>
-                                <p className="text-gray-500 text-xs">{doc.name}</p>
+                                <div className="text-sm font-medium text-gray-900 capitalize">
+                                  {doc.type.replace(/_/g, ' ')}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {(doc.size / 1024 / 1024).toFixed(2)} MB • {doc.name.split('.').pop().toUpperCase()}
+                                </div>
                               </div>
                             </div>
-                            <button
-                              onClick={() => downloadDocument(doc)}
-                              className="p-2 bg-gray-100 border border-gray-300 text-black rounded-lg hover:bg-gray-200 transition-colors"
-                              title="Download Document"
-                            >
-                              <Download size={18} className="sm:w-5 sm:h-5" />
-                            </button>
+                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => window.open(`https://gateway.pinata.cloud/ipfs/${doc.ipfsHash}`, '_blank')}
+                                className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700"
+                                title="View"
+                              >
+                                <Eye size={16} />
+                              </button>
+                              <button
+                                onClick={() => downloadDocument(doc)}
+                                className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700"
+                                title="Download"
+                              >
+                                <Download size={16} />
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </section>
                   )}
 
                   {/* Property Photos */}
                   {selectedResult.propertyPhotos && selectedResult.propertyPhotos.length > 0 && (
-                    <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-3 sm:p-4">
-                      <div className="flex items-center justify-between mb-3 sm:mb-4">
-                        <h3 className={` text-sm sm:text-base font-medium flex items-center gap-2`}>
-                          <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960" width="18" fill="#000000" className="sm:w-5 sm:h-5">
-                            <path d="M360-400h400L622-580l-92 120-62-80-108 140Zm-40 160q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-480H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z" />
-                          </svg>
-                          Property Photos ({selectedResult.propertyPhotos.length})
-                        </h3>
-                        <button
-                          onClick={() => {
-                            downloadAllPhotos(selectedResult.propertyPhotos!);
-                          }}
-                          className="px-2 sm:px-3 py-1.5 bg-gray-100 border border-gray-300 text-black rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center gap-2"
-                        >
-                          <Download size={16} className="sm:w-4 sm:h-4" />
-                          <span className="inline">Download All</span>
-                        </button>
+                    <section>
+                      <div className="flex items-center gap-2 mb-4 pb-2 border-b border-dashed border-gray-200">
+                        <ImageIcon size={18} className="text-gray-400" />
+                        <h3 className="font-medium text-gray-900">Property Photos</h3>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                        {selectedResult.propertyPhotos.map((photo, index) => {
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        {selectedResult.propertyPhotos.map((photo: any, index: number) => {
                           // Prefer IPFS URL, fallback to base64
                           const imageSrc = photo.url
                             ? photo.url
@@ -1542,71 +1480,55 @@ Generated on: ${new Date().toLocaleString()}
                               : photo.data ? `data:${photo.mimeType || 'image/jpeg'};base64,${photo.data}` : null);
 
                           return (
-                            <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-2 sm:p-3 flex flex-col items-center gap-2">
+                            <div key={index} className="group relative aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
                               {imageSrc ? (
                                 <img
                                   src={imageSrc}
-                                  alt={`Photo ${index + 1}`}
-                                  className="w-full h-40 sm:h-48 object-cover rounded border-2 border-gray-600 shadow-lg"
-                                  onError={(e) => {
-                                    console.error('Failed to load image:', photo.name);
-                                    e.currentTarget.style.display = 'none';
-                                    const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
-                                    if (placeholder) placeholder.style.display = 'block';
-                                  }}
+                                  alt={`Property ${index + 1}`}
+                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                 />
-                              ) : null}
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                height="32"
-                                viewBox="0 -960 960 960"
-                                width="32"
-                                fill="#6b7280"
-                                className="sm:w-10 sm:h-10"
-                                style={{ display: photo.data ? 'none' : 'block' }}
-                              >
-                                <path d="M360-400h400L622-580l-92 120-62-80-108 140Zm-40 160q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-480H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z" />
-                              </svg>
-                              <p className="text-gray-500 text-xs truncate w-full text-center">{photo.name}</p>
-                              <button
-                                onClick={() => downloadPhoto(photo)}
-                                className="px-2 py-1 bg-gray-100 border border-gray-300 text-black rounded hover:bg-gray-200 transition-colors text-xs flex items-center gap-1 w-full justify-center"
-                              >
-                                <Download size={14} className="sm:w-4 sm:h-4" />
-                                Download
-                              </button>
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <ImageIcon size={24} className="text-gray-300" />
+                                </div>
+                              )}
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                <button
+                                  onClick={() => window.open(`https://gateway.pinata.cloud/ipfs/${photo.ipfsHash}`, '_blank')}
+                                  className="p-2 bg-white/90 rounded-full hover:bg-white text-gray-900 transition-colors shadow-sm"
+                                  title="View"
+                                >
+                                  <Eye size={16} />
+                                </button>
+                                <button
+                                  onClick={() => downloadDocument(photo)}
+                                  className="p-2 bg-white/90 rounded-full hover:bg-white text-gray-900 transition-colors shadow-sm"
+                                  title="Download"
+                                >
+                                  <Download size={16} />
+                                </button>
+                              </div>
                             </div>
                           );
                         })}
                       </div>
-                    </div>
+                    </section>
                   )}
                 </div>
 
                 <div className="mt-6 flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={() => setSelectedResult(null)}
-                    className="w-full sm:w-auto px-3 sm:px-4 py-2.5 sm:py-2 bg-white border border-gray-300 shadow-sm text-black rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer"
+                    className="w-full sm:w-auto px-5 py-2.5 bg-white border border-gray-300 shadow-sm text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
                   >
                     Close
                   </button>
                   <button
                     onClick={() => downloadCertificate(selectedResult)}
-                    className="w-full sm:w-auto px-3 sm:px-4 py-2.5 sm:py-2 bg-white border border-gray-200 shadow-sm text-black rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-50 active:bg-gray-100 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full sm:w-auto px-5 py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors flex items-center justify-center gap-2"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 -960 960 960" width="16" fill="#000000" className="sm:w-5 sm:h-5 flex-shrink-0">
-                      <path d="m648-140 112-112v92h40v-160H640v40h92L620-168l28 28Zm-448 20q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v268q-19-9-39-15.5t-41-9.5v-243H200v560h242q3 22 9.5 42t15.5 38H200Zm0-120v40-560 243-3 280Zm80-40h163q3-21 9.5-41t14.5-39H280v80Zm0-160h244q32-30 71.5-50t84.5-27v-3H280v80Zm0-160h400v-80H280v80ZM720-40q-83 0-141.5-58.5T520-240q0-83 58.5-141.5T720-440q83 0 141.5 58.5T920-240q0 83-58.5 141.5T720-40Z" />
-                    </svg>
+                    <Download size={16} />
                     Download Certificate
-                  </button>
-                  <button
-                    onClick={() => downloadAllData(selectedResult)}
-                    className="w-full sm:w-auto px-3 sm:px-4 py-2.5 sm:py-2 bg-gray-100 border border-gray-300 shadow-sm text-black rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-200 active:bg-gray-300 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 -960 960 960" width="16" fill="#000000" className="sm:w-5 sm:h-5 flex-shrink-0">
-                      <path d="m648-140 112-112v92h40v-160H640v40h92L620-168l28 28Zm-448 20q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v268q-19-9-39-15.5t-41-9.5v-243H200v560h242q3 22 9.5 42t15.5 38H200Zm0-120v40-560 243-3 280Zm80-40h163q3-21 9.5-41t14.5-39H280v80Zm0-160h244q32-30 71.5-50t84.5-27v-3H280v80Zm0-160h400v-80H280v80ZM720-40q-83 0-141.5-58.5T520-240q0-83 58.5-141.5T720-440q83 0 141.5 58.5T920-240q0 83-58.5 141.5T720-40Z" />
-                    </svg>
-                    Download All Data
                   </button>
                 </div>
               </motion.div>
@@ -1631,23 +1553,25 @@ Generated on: ${new Date().toLocaleString()}
                 onClick={(e) => e.stopPropagation()}
                 className="bg-white border border-gray-200 shadow-xl rounded-lg p-4 sm:p-6 lg:p-8 max-w-md w-full"
               >
-                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                  <h3 className="text-lg sm:text-xl font-medium">
-                    Registration ID QR Code
-                  </h3>
+                <div className="text-center">
+                  <h3 className="text-xl font-bold mb-4">Registration QR</h3>
+                  <div className="bg-white p-4 inline-block rounded-lg shadow-inner border border-gray-200">
+                    <QRCodeSVG
+                      value={`https://deedblock.com/verify/${selectedResult.registrationId}`}
+                      size={200}
+                      level="H"
+                      includeMargin={true}
+                    />
+                  </div>
+                  <p className="mt-4 text-gray-600 font-mono text-lg">{selectedResult.registrationId}</p>
+                  <p className="mt-2 text-sm text-gray-500">Scan to verify registration details</p>
+
                   <button
                     onClick={() => setShowQRCode(false)}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="mt-6 w-full py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
                   >
-                    <X size={20} className="text-black" />
+                    Close
                   </button>
-                </div>
-                <div className="flex flex-col items-center">
-                  <div className="bg-white p-4 rounded-lg mb-4 border border-gray-200">
-                    <QRCodeSVG value={selectedResult.registrationId} size={200} />
-                  </div>
-                  <p className="text-gray-500 text-sm mb-2">Scan to view registration details</p>
-                  <p className="font-mono text-black text-sm">{selectedResult.registrationId}</p>
                 </div>
               </motion.div>
             </motion.div>

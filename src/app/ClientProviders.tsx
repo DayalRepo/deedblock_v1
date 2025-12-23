@@ -1,8 +1,7 @@
 'use client';
 
 import { ReactNode, useState, useEffect } from 'react';
-import { WalletProvider } from "../providers/WalletProvider";
-import WalletErrorSuppressor from "../components/WalletErrorSuppressor";
+
 import LayoutContent from "./LayoutContent";
 
 interface ClientProvidersProps {
@@ -20,12 +19,9 @@ export default function ClientProviders({ children }: ClientProvidersProps) {
   // Children will be rendered after mount to avoid Set serialization issues
   return (
     <>
-      <WalletErrorSuppressor />
-      <WalletProvider>
-        <LayoutContent>
-          {mounted ? children : null}
-        </LayoutContent>
-      </WalletProvider>
+      <LayoutContent>
+        {mounted ? children : null}
+      </LayoutContent>
     </>
   );
 }

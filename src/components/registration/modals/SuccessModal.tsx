@@ -1,17 +1,15 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, Check, Copy, FileText } from 'lucide-react';
+import { Check, Copy, Download } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface SuccessModalProps {
     registrationId: string;
     formTimeElapsed: number;
     downloadSummary: () => void;
-    // We can handle copy logic inside or pass it. Passing for consistency if reused. 
-    // Actually, SuccessModal has its own copy button for ID.
     onCopyId: () => void;
     isIdCopied: boolean;
-    onClose: () => void; // Usually just redirects or resets
+    onClose: () => void;
 }
 
 export const SuccessModal: React.FC<SuccessModalProps> = ({
@@ -27,62 +25,93 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
     const formatTime = (ms: number) => {
         const minutes = Math.floor(ms / 60000);
         const seconds = Math.floor((ms % 60000) / 1000);
-        return `${minutes}min ${seconds}s`;
+        if (minutes > 0) {
+            return `${minutes}m ${seconds}s`;
+        }
+        return `${seconds}s`;
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
+                initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white border border-gray-300 rounded-lg p-8 max-w-md w-full text-center"
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white border border-gray-200 rounded-lg w-full max-w-sm sm:max-w-md overflow-hidden"
             >
-                <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-4 mx-auto">
-                    <CheckCircle size={40} className="text-green-500" />
-                </div>
-                <h3 className="text-2xl font-medium mb-2">Registration Submitted Successfully!</h3>
-                <div className="w-full mb-6">
-                    <div className="flex justify-between mb-2 text-sm">
-                        <span className="text-gray-600">Progress</span>
-                        <span className="font-bold text-green-600">100%</span>
+                {/* Header */}
+                <div className="p-4 sm:p-6">
+                    {/* Success Icon */}
+                    <div className="flex justify-center mb-4">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-green-50 border border-green-200 rounded-full flex items-center justify-center">
+                            <Check className="w-7 h-7 sm:w-8 sm:h-8 text-green-600" strokeWidth={2.5} />
+                        </div>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div className="h-full bg-green-500 rounded-full w-full"></div>
+
+                    {/* Title */}
+                    <h2 className="text-lg sm:text-xl font-sans font-normal text-black text-center mb-1">
+                        Registration Submitted
+                    </h2>
+                    <p className="text-sm text-gray-500 text-center mb-4 sm:mb-6">
+                        Completed in {formatTime(formTimeElapsed)}
+                    </p>
+
+                    <div className="border-t border-dashed border-gray-200 mb-4 sm:mb-6"></div>
+
+                    {/* Registration ID */}
+                    <div className="mb-4 sm:mb-6">
+                        <label className="block text-sm text-gray-500 mb-1.5">Registration ID</label>
+                        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5">
+                            <span className="flex-1 text-black font-mono text-sm sm:text-base font-medium truncate">
+                                {registrationId}
+                            </span>
+                            <button
+                                onClick={onCopyId}
+                                className="shrink-0 p-1.5 hover:bg-gray-200 rounded-md text-gray-400 hover:text-black transition-colors"
+                                aria-label="Copy registration ID"
+                            >
+                                {isIdCopied ? (
+                                    <Check className="w-4 h-4 text-green-600" />
+                                ) : (
+                                    <Copy className="w-4 h-4" />
+                                )}
+                            </button>
+                        </div>
+                        {isIdCopied && (
+                            <p className="text-xs text-green-600 mt-1">Copied to clipboard</p>
+                        )}
                     </div>
-                    <div className="mt-2 text-right text-xs text-gray-500">
-                        Time: {formatTime(formTimeElapsed)}
+
+                    {/* Progress Bar */}
+                    <div className="mb-4 sm:mb-6">
+                        <div className="flex justify-between items-center mb-1.5">
+                            <span className="text-sm text-gray-500">Progress</span>
+                            <span className="text-sm font-medium text-green-600">100%</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-1.5">
+                            <div className="h-full bg-green-500 rounded-full w-full"></div>
+                        </div>
                     </div>
-                </div>
-                <div className="mb-4 text-left">
-                    <label className="block text-xs uppercase text-gray-500 font-semibold mb-2">
-                        Registration ID
-                    </label>
-                    <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                        <span className="flex-1 text-black font-mono font-medium text-sm">
-                            {registrationId}
-                        </span>
+
+                    <div className="border-t border-dashed border-gray-200 mb-4 sm:mb-6"></div>
+
+                    {/* Actions */}
+                    <div className="space-y-3">
                         <button
-                            onClick={onCopyId}
-                            className="p-1.5 hover:bg-gray-200 rounded-md text-gray-500 hover:text-black transition-colors"
+                            onClick={downloadSummary}
+                            className="w-full flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-black text-gray-700 hover:text-black font-medium py-2.5 sm:py-3 rounded-lg transition-colors text-sm sm:text-base"
                         >
-                            {isIdCopied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
+                            <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+                            Download Summary
+                        </button>
+                        <button
+                            onClick={() => router.push('/')}
+                            className="w-full bg-black hover:bg-gray-800 text-white font-medium py-2.5 sm:py-3 rounded-lg transition-colors text-sm sm:text-base"
+                        >
+                            Back to Home
                         </button>
                     </div>
-                </div>
-                <div className="flex flex-col gap-3">
-                    <button
-                        onClick={downloadSummary}
-                        className="w-full flex items-center justify-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 rounded-lg transition-colors"
-                    >
-                        <FileText size={18} /> Download Summary
-                    </button>
-                    <button
-                        onClick={() => router.push('/')}
-                        className="w-full py-2 text-sm font-medium text-gray-500 hover:text-black transition-colors"
-                    >
-                        Back to Home
-                    </button>
                 </div>
             </motion.div>
         </div>
