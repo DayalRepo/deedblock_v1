@@ -7,7 +7,7 @@ import { Toaster } from '@/components/ui/Toaster';
 import { toast } from 'sonner';
 
 // Supabase & IPFS
-import { deleteDraft, saveRegistration, type RegistrationData } from '@/lib/supabase/database';
+import { saveRegistration, type RegistrationData } from '@/lib/supabase/database';
 import { uploadFileToIPFS, uploadFilesToIPFS, uploadJSONToIPFS } from '@/lib/ipfs/pinata';
 import { supabase } from '@/lib/supabase/client';
 
@@ -343,12 +343,12 @@ export default function RegistrationPage() {
         stamp_duty: data.stampDuty || '0',
         registration_fee: data.registrationFee || '0',
         seller_name: '',
-        seller_aadhar: data.sellerAadhar,
-        seller_phone: data.sellerPhone,
+        seller_aadhar: data.sellerAadhar ? data.sellerAadhar.replace(/\s/g, '') : '',
+        seller_phone: data.sellerPhone ? data.sellerPhone.replace(/\s/g, '') : '',
         seller_email: data.sellerEmail,
         buyer_name: '',
-        buyer_aadhar: data.buyerAadhar,
-        buyer_phone: data.buyerPhone,
+        buyer_aadhar: data.buyerAadhar ? data.buyerAadhar.replace(/\s/g, '') : '',
+        buyer_phone: data.buyerPhone ? data.buyerPhone.replace(/\s/g, '') : '',
         buyer_email: data.buyerEmail,
         property_type: 'land',
         plot_number: '',
@@ -358,7 +358,7 @@ export default function RegistrationPage() {
       };
 
       await saveRegistration(registrationData);
-      await deleteDraft(walletAddress).catch(() => { });
+
       await clearUserFilesFromIndexedDB(userId);
       await deleteFormDataFromIndexedDB(userId);
 
@@ -426,9 +426,9 @@ export default function RegistrationPage() {
 
             <button
               onClick={() => router.push('/')}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-600 hover:text-black transition-colors"
             >
-              <X size={24} />
+              <X size={20} />
             </button>
           </div>
 

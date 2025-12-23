@@ -267,10 +267,10 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                 </div>
 
                 {/* Right Column: Fee Preview Card - stretches full height */}
-                <div>
+                <div className="sticky top-24 self-start">
                     {/* Dashed line above card - mobile only */}
                     <div className="block md:hidden border-t border-dashed border-gray-300 mb-4"></div>
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 font-sans flex flex-col justify-between">
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 font-sans flex flex-col justify-between shadow-sm">
                         <h4 className="text-sm font-semibold text-gray-800 mb-2">Estimated Fees</h4>
                         <div className="space-y-1 text-sm">
                             <div className="flex justify-between">
@@ -420,24 +420,40 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                 <div>
                     <label className="block text-sm font-sans font-normal text-gray-700 mb-2">Aadhar number *</label>
                     <div className="relative">
-                        <input
-                            type="text"
-                            {...register('sellerAadhar')}
-                            className={`w-full border rounded-lg px-4 py-3 pr-20 transition-all duration-200 outline-none
-                                ${isSellerAadharVerified
-                                    ? 'bg-green-50 border-green-200 text-green-800 font-medium cursor-not-allowed'
-                                    : errors.sellerAadhar
-                                        ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-4 focus:ring-red-100'
-                                        : 'border-gray-200 bg-white text-gray-900 focus:border-black focus:ring-4 focus:ring-gray-100'
-                                }`}
-                            placeholder="Enter 12-digit Aadhar number"
-                            maxLength={12}
-                            disabled={!!(isSellerAadharVerified)}
+                        <Controller
+                            control={control}
+                            name="sellerAadhar"
+                            render={({ field }) => (
+                                <input
+                                    type="text"
+                                    value={field.value || ''}
+                                    onChange={(e) => {
+                                        // Auto-format format: 1234 5678 9012
+                                        const val = e.target.value.replace(/\D/g, '').slice(0, 12);
+                                        const formatted = val.replace(/(\d{4})(?=\d)/g, '$1 ');
+                                        field.onChange(formatted);
+                                    }}
+                                    className={`w-full border rounded-lg px-4 py-3 pr-20 transition-all duration-200 outline-none
+                                    ${isSellerAadharVerified
+                                            ? 'bg-green-50 border-green-200 text-green-800 font-medium cursor-not-allowed'
+                                            : errors.sellerAadhar
+                                                ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-4 focus:ring-red-100'
+                                                : 'border-gray-200 bg-white text-gray-900 focus:border-black focus:ring-4 focus:ring-gray-100'
+                                        }`}
+                                    placeholder="0000 0000 0000"
+                                    maxLength={14} // 12 digits + 2 spaces
+                                    disabled={!!(isSellerAadharVerified)}
+                                />
+                            )}
                         />
-                        {isSellerAadharVerified && (
+                        {isSellerAadharVerified ? (
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs">
                                 <Check size={14} />
                                 Verified
+                            </span>
+                        ) : (watch('sellerAadhar')?.replace(/\s/g, '').length === 12) && (
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-500 animate-in fade-in zoom-in duration-200">
+                                <Check size={18} />
                             </span>
                         )}
                     </div>
@@ -517,24 +533,42 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                     <div className="block md:hidden border-t border-dashed border-gray-300 mb-3 mt-1"></div>
                     <label className="block text-sm font-sans font-normal text-gray-700 mb-2">Phone number *</label>
                     <div className="relative">
-                        <input
-                            type="tel"
-                            {...register('sellerPhone')}
-                            className={`w-full border rounded-lg px-4 py-3 pr-10 transition-all duration-200 outline-none
-                                ${sellerOtpVerified
-                                    ? 'bg-green-50 border-green-200 text-green-800 font-medium cursor-not-allowed'
-                                    : errors.sellerPhone
-                                        ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-4 focus:ring-red-100'
-                                        : 'border-gray-200 bg-white text-gray-900 focus:border-black focus:ring-4 focus:ring-gray-100'
-                                }`}
-                            placeholder="Enter 10-digit phone number"
-                            maxLength={10}
-                            disabled={sellerOtpVerified}
+                        <div className="absolute left-0 top-0 bottom-0 flex items-center pl-4 pointer-events-none">
+                            <span className="text-gray-500 font-medium text-sm">+91</span>
+                            <div className="h-5 w-px border-l border-dashed border-gray-300 ml-3"></div>
+                        </div>
+                        <Controller
+                            control={control}
+                            name="sellerPhone"
+                            render={({ field }) => (
+                                <input
+                                    type="tel"
+                                    value={field.value || ''}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                        field.onChange(val);
+                                    }}
+                                    className={`w-full border rounded-lg py-3 pr-10 pl-[4.5rem] transition-all duration-200 outline-none
+                                    ${sellerOtpVerified
+                                            ? 'bg-green-50 border-green-200 text-green-800 font-medium cursor-not-allowed'
+                                            : errors.sellerPhone
+                                                ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-4 focus:ring-red-100'
+                                                : 'border-gray-200 bg-white text-gray-900 focus:border-black focus:ring-4 focus:ring-gray-100'
+                                        }`}
+                                    placeholder="98765 43210"
+                                    maxLength={10}
+                                    disabled={sellerOtpVerified}
+                                />
+                            )}
                         />
-                        {sellerOtpVerified && (
+                        {sellerOtpVerified ? (
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs">
                                 <Check size={14} />
                                 Verified
+                            </span>
+                        ) : (watch('sellerPhone')?.replace(/\D/g, '').length === 10) && (
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-500 animate-in fade-in zoom-in duration-200">
+                                <Check size={18} />
                             </span>
                         )}
                     </div>
@@ -589,24 +623,39 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                 <div>
                     <label className="block text-sm font-sans font-normal text-gray-700 mb-2">Aadhar number *</label>
                     <div className="relative">
-                        <input
-                            type="text"
-                            {...register('buyerAadhar')}
-                            className={`w-full border rounded-lg px-4 py-3 pr-20 transition-all duration-200 outline-none
-                                ${isBuyerAadharVerified
-                                    ? 'bg-green-50 border-green-200 text-green-800 font-medium cursor-not-allowed'
-                                    : errors.buyerAadhar
-                                        ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-4 focus:ring-red-100'
-                                        : 'border-gray-200 bg-white text-gray-900 focus:border-black focus:ring-4 focus:ring-gray-100'
-                                }`}
-                            placeholder="Enter 12-digit Aadhar number"
-                            maxLength={12}
-                            disabled={!!(isBuyerAadharVerified)}
+                        <Controller
+                            control={control}
+                            name="buyerAadhar"
+                            render={({ field }) => (
+                                <input
+                                    type="text"
+                                    value={field.value || ''}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/\D/g, '').slice(0, 12);
+                                        const formatted = val.replace(/(\d{4})(?=\d)/g, '$1 ');
+                                        field.onChange(formatted);
+                                    }}
+                                    className={`w-full border rounded-lg px-4 py-3 pr-20 transition-all duration-200 outline-none
+                                    ${isBuyerAadharVerified
+                                            ? 'bg-green-50 border-green-200 text-green-800 font-medium cursor-not-allowed'
+                                            : errors.buyerAadhar
+                                                ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-4 focus:ring-red-100'
+                                                : 'border-gray-200 bg-white text-gray-900 focus:border-black focus:ring-4 focus:ring-gray-100'
+                                        }`}
+                                    placeholder="0000 0000 0000"
+                                    maxLength={14}
+                                    disabled={!!(isBuyerAadharVerified)}
+                                />
+                            )}
                         />
-                        {isBuyerAadharVerified && (
+                        {isBuyerAadharVerified ? (
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs">
                                 <Check size={14} />
                                 Verified
+                            </span>
+                        ) : (watch('buyerAadhar')?.replace(/\s/g, '').length === 12) && (
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-500 animate-in fade-in zoom-in duration-200">
+                                <Check size={18} />
                             </span>
                         )}
                     </div>
@@ -686,24 +735,42 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                     <div className="block md:hidden border-t border-dashed border-gray-300 mb-3 mt-1"></div>
                     <label className="block text-sm font-sans font-normal text-gray-700 mb-2">Phone number *</label>
                     <div className="relative">
-                        <input
-                            type="tel"
-                            {...register('buyerPhone')}
-                            className={`w-full border rounded-lg px-4 py-3 pr-10 transition-all duration-200 outline-none
-                                ${buyerOtpVerified
-                                    ? 'bg-green-50 border-green-200 text-green-800 font-medium cursor-not-allowed'
-                                    : errors.buyerPhone
-                                        ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-4 focus:ring-red-100'
-                                        : 'border-gray-200 bg-white text-gray-900 focus:border-black focus:ring-4 focus:ring-gray-100'
-                                }`}
-                            placeholder="Enter 10-digit phone number"
-                            maxLength={10}
-                            disabled={buyerOtpVerified}
+                        <div className="absolute left-0 top-0 bottom-0 flex items-center pl-4 pointer-events-none">
+                            <span className="text-gray-500 font-medium text-sm">+91</span>
+                            <div className="h-5 w-px border-l border-dashed border-gray-300 ml-3"></div>
+                        </div>
+                        <Controller
+                            control={control}
+                            name="buyerPhone"
+                            render={({ field }) => (
+                                <input
+                                    type="tel"
+                                    value={field.value || ''}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                        field.onChange(val);
+                                    }}
+                                    className={`w-full border rounded-lg py-3 pr-10 pl-[4.5rem] transition-all duration-200 outline-none
+                                    ${buyerOtpVerified
+                                            ? 'bg-green-50 border-green-200 text-green-800 font-medium cursor-not-allowed'
+                                            : errors.buyerPhone
+                                                ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-500 focus:ring-4 focus:ring-red-100'
+                                                : 'border-gray-200 bg-white text-gray-900 focus:border-black focus:ring-4 focus:ring-gray-100'
+                                        }`}
+                                    placeholder="98765 43210"
+                                    maxLength={10}
+                                    disabled={buyerOtpVerified}
+                                />
+                            )}
                         />
-                        {buyerOtpVerified && (
+                        {buyerOtpVerified ? (
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs">
                                 <Check size={14} />
                                 Verified
+                            </span>
+                        ) : (watch('buyerPhone')?.replace(/\D/g, '').length === 10) && (
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-500 animate-in fade-in zoom-in duration-200">
+                                <Check size={18} />
                             </span>
                         )}
                     </div>

@@ -78,17 +78,7 @@ export interface RegistrationData {
   updated_at?: string;
 }
 
-export interface DraftData {
-  id?: string;
-  wallet_address: string;
-  current_step: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  form_data: any; // JSON object with form fields
-  form_time_elapsed?: number;
-  form_start_time?: number;
-  created_at?: string;
-  updated_at?: string;
-}
+
 
 export interface PaymentData {
   id?: string;
@@ -185,71 +175,7 @@ export async function searchRegistrations(searchType: 'registrationId' | 'survey
   }
 }
 
-// Draft Functions
-export async function saveDraft(walletAddress: string, draftData: Omit<DraftData, 'id' | 'wallet_address' | 'created_at' | 'updated_at'>) {
-  try {
-    // Use upsert to handle both insert and update atomically, avoiding race conditions
-    const { data, error } = await supabase
-      .from('drafts')
-      .upsert({
-        wallet_address: walletAddress,
-        ...draftData,
-        updated_at: new Date().toISOString(),
-      }, {
-        onConflict: 'wallet_address', // Use the unique constraint column
-        ignoreDuplicates: false, // Update if exists
-      })
-      .select()
-      .single();
 
-    if (error) {
-      // Check if table doesn't exist
-      if (error.code === '42P01' || error.message?.includes('does not exist')) {
-        throw new Error('Database table "drafts" does not exist. Please run the SQL schema from database-schema.sql in your Supabase dashboard.');
-      }
-      throw new Error(`Failed to save draft: ${error.message || JSON.stringify(error)}`);
-    }
-
-    return data;
-  } catch (error) {
-    // Enhanced error logging
-    if (error instanceof Error) {
-      console.error('Error in saveDraft:', error.message);
-      throw error;
-    } else {
-      const errorMessage = `Unknown error saving draft: ${JSON.stringify(error)}`;
-      console.error(errorMessage);
-      throw new Error(errorMessage);
-    }
-  }
-}
-
-export async function getDraft(walletAddress: string) {
-  const { data, error } = await supabase
-    .from('drafts')
-    .select('*')
-    .eq('wallet_address', walletAddress)
-    .maybeSingle(); // Use maybeSingle to avoid error when no rows
-
-  if (error) {
-    console.error('Error fetching draft:', error.message || JSON.stringify(error));
-    throw new Error(`Failed to fetch draft: ${error.message || JSON.stringify(error)}`);
-  }
-
-  return data;
-}
-
-export async function deleteDraft(walletAddress: string) {
-  const { error } = await supabase
-    .from('drafts')
-    .delete()
-    .eq('wallet_address', walletAddress);
-
-  if (error) {
-    console.error('Error deleting draft:', error);
-    throw error;
-  }
-}
 
 // Payment Functions
 export async function savePayment(paymentData: Omit<PaymentData, 'id' | 'created_at'>) {

@@ -29,11 +29,11 @@ export const registrationSchema = z.object({
     registrationFee: z.string(),
 
     // Parties
-    sellerAadhar: z.string().regex(/^\d{12}$/, 'Aadhar must be 12 digits'),
+    sellerAadhar: z.string().refine((val) => val.replace(/\s/g, '').length === 12 && /^\d+$/.test(val.replace(/\s/g, '')), 'Aadhar must be 12 digits'),
     sellerPhone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits'),
     sellerEmail: z.string().email('Invalid email address').optional().or(z.literal('')),
 
-    buyerAadhar: z.string().regex(/^\d{12}$/, 'Aadhar must be 12 digits'),
+    buyerAadhar: z.string().refine((val) => val.replace(/\s/g, '').length === 12 && /^\d+$/.test(val.replace(/\s/g, '')), 'Aadhar must be 12 digits'),
     buyerPhone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits'),
     buyerEmail: z.string().email('Invalid email address').optional().or(z.literal('')),
 

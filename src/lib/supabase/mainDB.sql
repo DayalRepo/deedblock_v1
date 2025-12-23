@@ -67,18 +67,7 @@ CREATE TABLE registrations (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. Drafts Table (For saving partial progress)
-CREATE TABLE drafts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id),
-  wallet_address TEXT UNIQUE, -- Kept specific to wallet for now, but linked to user
-  current_step INTEGER DEFAULT 1,
-  form_data JSONB, -- Stores the entire form state blob
-  form_time_elapsed INTEGER DEFAULT 0,
-  form_start_time BIGINT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+
 
 -- 4. Payments History Table
 CREATE TABLE payments (
@@ -103,7 +92,7 @@ CREATE TABLE search_history (
 
 -- 6. Enable Row Level Security (RLS)
 ALTER TABLE registrations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE drafts ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE search_history ENABLE ROW LEVEL SECURITY;
 
@@ -122,22 +111,7 @@ CREATE POLICY "Users can update own pending registrations"
 ON registrations FOR UPDATE 
 USING (auth.uid() = user_id AND status = 'pending');
 
--- Drafts: Users can manage their own drafts
-CREATE POLICY "Users can view own drafts" 
-ON drafts FOR SELECT 
-USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert own drafts" 
-ON drafts FOR INSERT 
-WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own drafts" 
-ON drafts FOR UPDATE 
-USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own drafts" 
-ON drafts FOR DELETE 
-USING (auth.uid() = user_id);
 
 -- Payments: Users can view their own payment history
 CREATE POLICY "Users can view own payments" 
@@ -164,4 +138,4 @@ CREATE INDEX idx_registrations_user_id ON registrations(user_id);
 CREATE INDEX idx_registrations_registration_id ON registrations(registration_id);
 CREATE INDEX idx_registrations_survey_number ON registrations(survey_number);
 CREATE INDEX idx_registrations_status ON registrations(status);
-CREATE INDEX idx_drafts_user_id ON drafts(user_id);
+
