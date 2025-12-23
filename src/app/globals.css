@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import '@solana/wallet-adapter-react-ui/styles.css';
+
 
 :root {
   --background: #FAF9F6;
@@ -105,9 +105,7 @@ a.dropdown-item {
 }
 
 /* Wallet Connect Button Styles */
-.wallet-button {
-  @apply text-white bg-black px-2.5 py-0.5 rounded-full transition-colors tracking-tighter w-24 text-sm font-normal hover:bg-gray-800;
-}
+
 
 /* Registration Form Select Dropdown Styles */
 select {
