@@ -215,7 +215,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                             <span className="text-sm font-sans text-gray-700">Survey Number</span>
                         </label>
 
-                        <span className="text-sm font-sans text-gray-400">or</span>
+                        <span className="text-sm font-sans text-gray-400 hidden md:inline">or</span>
 
                         <label className="flex items-center gap-2 cursor-pointer group">
                             <div className="relative">
@@ -470,7 +470,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                 </div>
 
                                 {/* "&" Separator - bold and grey */}
-                                <span className="text-gray-400 font-bold text-sm">&</span>
+                                <span className="text-gray-400 font-bold text-sm mx-2">&</span>
 
                                 {/* Fingerprint Section */}
                                 <div className="flex items-center">
@@ -637,7 +637,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                 </div>
 
                                 {/* "&" Separator - bold and grey */}
-                                <span className="text-gray-400 font-bold text-sm">&</span>
+                                <span className="text-gray-400 font-bold text-sm mx-2">&</span>
 
                                 {/* Fingerprint Section */}
                                 <div className="flex items-center">
