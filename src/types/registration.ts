@@ -24,6 +24,7 @@ export interface FormData {
     // Documents
     documents: {
         saleDeed: File | null;
+        ec: File | null;
         khata: File | null;
         taxReceipt: File | null;
     };

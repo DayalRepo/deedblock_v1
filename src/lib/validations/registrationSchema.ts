@@ -40,6 +40,7 @@ export const registrationSchema = z.object({
     // Documents (nullable initially, required on submission - validated in submission handler)
     documents: z.object({
         saleDeed: requiredFileSchema,
+        ec: requiredFileSchema,
         khata: requiredFileSchema,
         taxReceipt: requiredFileSchema,
     }),

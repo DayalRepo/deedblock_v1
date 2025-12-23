@@ -24,6 +24,7 @@ export const INITIAL_FORM_DATA = {
     buyerEmail: '',
     documents: {
         saleDeed: null as File | null,
+        ec: null as File | null,
         khata: null as File | null,
         taxReceipt: null as File | null,
     },
@@ -65,7 +66,7 @@ export function useRegistrationForm() {
                 // Helper to load files
                 const loadFiles = async () => {
                     const docsToRestore: any = {};
-                    const docKeys = ['saleDeed', 'khata', 'taxReceipt'];
+                    const docKeys = ['saleDeed', 'ec', 'khata', 'taxReceipt'];
                     for (const key of docKeys) {
                         const file = await getFileFromIndexedDB(userId, `doc_${key}`);
                         if (file) docsToRestore[key] = file;

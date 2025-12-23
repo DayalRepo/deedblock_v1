@@ -1,28 +1,29 @@
 import React, { useState } from 'react';
-import { Download, AlertCircle } from 'lucide-react';
+import { Download, AlertCircle, Loader2, Check, Copy } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 import { RegistrationFormSchema } from '@/lib/validations/registrationSchema';
 import { ResetButton } from '../ResetButton';
+import { PreviewIcon } from '@/components/registration/icons/RegistrationIcons';
 
 interface Step3Props {
     form: UseFormReturn<RegistrationFormSchema>;
-    surveyOrDoor: 'survey' | 'door'; // passed from parent or watched
+    surveyOrDoor: 'survey' | 'door';
     downloadSummary: () => void;
     onReset: () => void;
+    previewDocument?: (type: string, file: File) => void;
 }
 
 export const Step3_ReviewPayment: React.FC<Step3Props> = ({
     form,
-    surveyOrDoor, // Can also watch it if consistent
+    surveyOrDoor,
     downloadSummary,
-    onReset
+    onReset,
+    previewDocument
 }) => {
     const { register, watch, setValue, formState: { errors } } = form;
-    const formData = watch(); // Access all fields for review
+    const formData = watch();
 
-    // Derived states for fee calculations
-    // Note: duplicated logic from Step1. In a real app, should be centralized in hook or selector.
-    // For now, I'll copy the logic as it's purely ensuring display consistency.
+    // Fee calculations
     const transactionType = formData.transactionType || '';
     const considerationAmount = Number(formData.considerationAmount || 0);
     const stampDuty = Number(formData.stampDuty || 0);
@@ -37,14 +38,23 @@ export const Step3_ReviewPayment: React.FC<Step3Props> = ({
     const deedDocFee = getDeedDocFee(transactionType);
     const totalPayable = stampDuty + registrationFee + deedDocFee;
 
-    // Local state for payment verification UI
-    const [paymentVerified, setPaymentVerified] = useState<'idle' | 'valid' | 'invalid'>('idle');
+    // Payment verification state
+    const [paymentVerified, setPaymentVerified] = useState<'idle' | 'verifying' | 'valid' | 'invalid'>('idle');
+    const [copiedPaymentId, setCopiedPaymentId] = useState(false);
     const paymentId = watch('paymentId');
 
-    const verifyPayment = (e: React.MouseEvent) => {
+    // Documents
+    const documents = watch('documents');
+    const propertyPhotos = watch('propertyPhotos') || [];
+
+    const verifyPayment = async (e: React.MouseEvent) => {
         e.preventDefault();
         if (!paymentId) return;
-        if (paymentId.startsWith('4')) { // Mock verification logic
+
+        setPaymentVerified('verifying');
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        if (paymentId.startsWith('4')) {
             setPaymentVerified('valid');
         } else {
             setPaymentVerified('invalid');
@@ -57,147 +67,264 @@ export const Step3_ReviewPayment: React.FC<Step3Props> = ({
         setPaymentVerified('idle');
     };
 
+    const copyPaymentId = async () => {
+        if (!paymentId) return;
+        await navigator.clipboard.writeText(paymentId);
+        setCopiedPaymentId(true);
+        setTimeout(() => setCopiedPaymentId(false), 2000);
+    };
+
     return (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 font-sans max-w-xl mx-auto">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-dashed border-gray-300">
-                <h3 className="text-lg font-semibold text-gray-800">Payment & Submit</h3>
+        <div className="space-y-4 sm:space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <h2 className="text-xl sm:text-2xl font-sans font-normal text-black">Review & Payment</h2>
                 <div className="flex items-center gap-2">
-                    <ResetButton
-                        size="sm"
-                        mobileIconOnly={true}
-                        onReset={onReset}
-                    />
+                    <ResetButton size="sm" onReset={onReset} mobileIconOnly={true} />
                     <button
-                        onClick={downloadSummary} // Ensure this handles RHF data or pass relevant data
-                        className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-black bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-lg transition-colors"
+                        onClick={downloadSummary}
+                        className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-black hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors"
                         type="button"
+                        aria-label="Download summary"
                     >
                         <Download size={16} />
                         <span className="hidden sm:inline">Download</span>
                     </button>
                 </div>
             </div>
+            <div className="border-t border-dashed border-gray-300 mb-2"></div>
 
-            {/* Property Info */}
-            <div className="mb-4 pb-3 border-b border-dashed border-gray-300">
-                <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-500">{surveyOrDoor === 'survey' ? 'Survey No:' : 'Door No:'}</span>
-                    <span className="font-medium text-black text-right">
-                        {surveyOrDoor === 'survey' ? formData.surveyNumber : formData.doorNumber}
-                    </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Location:</span>
-                    <span className="font-medium text-black text-right">{formData.village}, {formData.district}</span>
+            {/* Property Summary */}
+            <div>
+                <h3 className="text-lg font-sans font-normal text-black mb-2">Property Details</h3>
+                <div className="border-t border-dashed border-gray-300 mb-4"></div>
+
+                <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                    <div>
+                        <span className="text-gray-500">{surveyOrDoor === 'survey' ? 'Survey No' : 'Door No'}</span>
+                        <p className="font-medium text-black mt-0.5">
+                            {surveyOrDoor === 'survey' ? formData.surveyNumber || '-' : formData.doorNumber || '-'}
+                        </p>
+                    </div>
+                    <div>
+                        <span className="text-gray-500">Transaction Type</span>
+                        <p className="font-medium text-black mt-0.5 capitalize">{formData.transactionType || '-'}</p>
+                    </div>
+                    <div>
+                        <span className="text-gray-500">Village</span>
+                        <p className="font-medium text-black mt-0.5">{formData.village || '-'}</p>
+                    </div>
+                    <div>
+                        <span className="text-gray-500">District</span>
+                        <p className="font-medium text-black mt-0.5">{formData.district || '-'}</p>
+                    </div>
                 </div>
             </div>
+
+            <div className="border-t border-dashed border-gray-300"></div>
+
+            {/* Documents Summary */}
+            <div>
+                <h3 className="text-lg font-sans font-normal text-black mb-2">Uploaded Documents</h3>
+                <div className="border-t border-dashed border-gray-300 mb-4"></div>
+
+                <div className="flex flex-wrap gap-2">
+                    {documents?.saleDeed && (
+                        <button
+                            onClick={() => previewDocument?.('saleDeed', documents.saleDeed!)}
+                            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors"
+                            type="button"
+                        >
+                            <PreviewIcon className="w-4 h-4 text-gray-400" />
+                            Deed Doc
+                        </button>
+                    )}
+                    {documents?.ec && (
+                        <button
+                            onClick={() => previewDocument?.('ec', documents.ec!)}
+                            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors"
+                            type="button"
+                        >
+                            <PreviewIcon className="w-4 h-4 text-gray-400" />
+                            EC
+                        </button>
+                    )}
+                    {documents?.khata && (
+                        <button
+                            onClick={() => previewDocument?.('khata', documents.khata!)}
+                            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors"
+                            type="button"
+                        >
+                            <PreviewIcon className="w-4 h-4 text-gray-400" />
+                            Seller ID
+                        </button>
+                    )}
+                    {documents?.taxReceipt && (
+                        <button
+                            onClick={() => previewDocument?.('taxReceipt', documents.taxReceipt!)}
+                            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors"
+                            type="button"
+                        >
+                            <PreviewIcon className="w-4 h-4 text-gray-400" />
+                            Buyer ID
+                        </button>
+                    )}
+                    {propertyPhotos.length > 0 && (
+                        <button
+                            onClick={() => previewDocument?.('photos', propertyPhotos[0])}
+                            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors"
+                            type="button"
+                        >
+                            <PreviewIcon className="w-4 h-4 text-gray-400" />
+                            {propertyPhotos.length} Photo{propertyPhotos.length > 1 ? 's' : ''}
+                        </button>
+                    )}
+                    {!documents?.saleDeed && !documents?.ec && !documents?.khata && !documents?.taxReceipt && propertyPhotos.length === 0 && (
+                        <p className="text-sm text-gray-400">No documents uploaded</p>
+                    )}
+                </div>
+            </div>
+
+            <div className="border-t border-dashed border-gray-300"></div>
 
             {/* Fee Breakdown */}
-            <div className="space-y-2 text-sm mb-4 pb-3 border-b border-dashed border-gray-300">
-                <div className="flex justify-between">
-                    <span className="text-gray-500">Government Value:</span>
-                    <span className="font-medium text-black">₹{considerationAmount.toLocaleString('en-IN') || '0'}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-gray-500">Est. Market Value:</span>
-                    <span className="font-medium text-black">₹{(considerationAmount * 1.1).toLocaleString('en-IN', { maximumFractionDigits: 0 }) || '0'}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-gray-500">Stamp Duty (5.5%):</span>
-                    <span className="font-medium text-black">₹{stampDuty.toLocaleString('en-IN') || '0'}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-gray-500">Registration Fee (0.5%):</span>
-                    <span className="font-medium text-black">₹{registrationFee.toLocaleString('en-IN') || '0'}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-gray-500">Deed Doc Fee:</span>
-                    <span className="font-medium text-black">
-                        ₹{deedDocFee.toLocaleString('en-IN')}
-                    </span>
+            <div>
+                <h3 className="text-lg font-sans font-normal text-black mb-2">Fee Breakdown</h3>
+                <div className="border-t border-dashed border-gray-300 mb-4"></div>
+
+                <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Government Value</span>
+                        <span className="font-medium text-black">₹{considerationAmount.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Est. Market Value</span>
+                        <span className="font-medium text-black">₹{(considerationAmount * 1.1).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Stamp Duty (5.5%)</span>
+                        <span className="font-medium text-black">₹{stampDuty.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Registration Fee (0.5%)</span>
+                        <span className="font-medium text-black">₹{registrationFee.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Deed Doc Fee</span>
+                        <span className="font-medium text-black">₹{deedDocFee.toLocaleString('en-IN')}</span>
+                    </div>
+
+                    <div className="border-t border-dashed border-gray-300 pt-3 mt-3">
+                        <div className="flex justify-between items-center">
+                            <span className="text-base font-medium text-black">Total Payable</span>
+                            <span className="text-xl font-semibold text-black">₹{totalPayable.toLocaleString('en-IN')}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Total */}
-            <div className="flex justify-between items-center pt-2 mb-6">
-                <span className="text-base font-semibold text-gray-800">Total Payable:</span>
-                <span className="text-xl font-bold text-black">
-                    ₹{totalPayable.toLocaleString('en-IN')}
-                </span>
-            </div>
+            <div className="border-t border-dashed border-gray-300"></div>
 
-            <div className="border-b border-dashed border-gray-300 mb-6"></div>
+            {/* Payment Verification */}
+            <div>
+                <h3 className="text-lg font-sans font-normal text-black mb-2">Payment Verification</h3>
+                <div className="border-t border-dashed border-gray-300 mb-4"></div>
 
-            {/* Payment ID Input */}
-            <div className="mb-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
-                    <label className="text-sm font-medium text-gray-700">Enter Payment ID</label>
-                    <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <label className="text-sm text-gray-500 shrink-0">Payment ID</label>
+                    <div className="flex items-center gap-2 flex-1">
                         <input
                             type="text"
                             inputMode="numeric"
                             pattern="[0-9]*"
                             maxLength={7}
-                            value={paymentId}
+                            value={paymentId || ''}
                             onChange={handlePaymentIdChange}
-                            disabled={paymentVerified === 'valid'}
-                            placeholder="7 digits"
-                            className={`w-32 px-4 py-2 text-sm border rounded-lg transition-all duration-200 outline-none
+                            disabled={paymentVerified === 'valid' || paymentVerified === 'verifying'}
+                            placeholder="Enter 7 digits"
+                            className={`flex-1 max-w-[160px] px-3 py-2 text-sm border rounded-lg transition-all outline-none
                                 ${paymentVerified === 'valid'
-                                    ? 'bg-green-50 border-green-200 text-green-800 font-medium cursor-not-allowed'
-                                    : 'bg-white border-gray-200 text-black hover:border-gray-300 focus:border-black focus:ring-4 focus:ring-gray-100'
+                                    ? 'bg-green-50 border-green-300 text-green-800 font-medium'
+                                    : paymentVerified === 'invalid'
+                                        ? 'bg-red-50 border-red-300 text-red-800'
+                                        : 'bg-white border-gray-200 hover:border-gray-300 focus:border-black'
                                 }`}
+                            aria-label="Payment ID"
                         />
+
                         {paymentVerified === 'valid' ? (
-                            <div className="flex items-center gap-1.5 bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-lg">
-                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                                <span className="text-sm font-medium">Verified</span>
+                            <div className="flex items-center gap-2">
+                                <span className="flex items-center gap-1 text-green-600 text-sm font-medium">
+                                    <Check size={16} />
+                                    <span className="hidden sm:inline">Verified</span>
+                                </span>
+                                <button
+                                    onClick={copyPaymentId}
+                                    className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
+                                    type="button"
+                                    title="Copy Payment ID"
+                                >
+                                    {copiedPaymentId ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                </button>
                             </div>
                         ) : (
                             <button
                                 onClick={verifyPayment}
-                                disabled={!paymentId}
-                                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors border ${paymentId
-                                    ? 'bg-black text-white border-black hover:bg-gray-800'
-                                    : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                                disabled={!paymentId || paymentVerified === 'verifying'}
+                                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${paymentId && paymentVerified !== 'verifying'
+                                    ? 'bg-black text-white hover:bg-gray-800'
+                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                     }`}
                                 type="button"
                             >
-                                Verify
+                                {paymentVerified === 'verifying' ? (
+                                    <Loader2 size={14} className="animate-spin" />
+                                ) : null}
+                                {paymentVerified === 'verifying' ? 'Verifying...' : 'Verify'}
                             </button>
                         )}
                     </div>
                 </div>
+
                 {paymentVerified === 'invalid' && (
-                    <p className="text-red-500 text-xs text-right flex items-center justify-end gap-1 font-medium">
-                        <AlertCircle size={14} />
-                        Invalid Payment ID
+                    <p className="mt-2 text-xs text-red-500 flex items-center gap-1" role="alert">
+                        <AlertCircle size={12} />
+                        Invalid Payment ID. Please check and try again.
                     </p>
                 )}
             </div>
 
-            <div className="border-b border-dashed border-black mb-4"></div>
+            <div className="border-t border-dashed border-gray-300"></div>
 
-            {/* Declaration Form */}
-            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                <label className="flex items-start gap-3 cursor-pointer">
+            {/* Declaration */}
+            <div>
+                <h3 className="text-lg font-sans font-normal text-black mb-2">Declaration</h3>
+                <div className="border-t border-dashed border-gray-300 mb-4"></div>
+
+                <label className="flex items-start gap-3 cursor-pointer p-4 bg-green-50 border border-green-200 rounded-lg hover:border-green-300 transition-colors">
                     <input
                         type="checkbox"
                         {...register('declarationChecked')}
-                        className="w-5 h-5 mt-0.5 accent-green-600 rounded border-green-300 focus:ring-green-500 cursor-pointer"
+                        className="w-5 h-5 mt-0.5 accent-green-600 rounded cursor-pointer shrink-0"
                     />
-                    <span className="text-sm text-green-800">
-                        I hereby declare that the information and documents provided are true, accurate, and compliant with the Registration Act, 1908 and the New Registration Bill, 2025. I strictly consent to the use of my Aadhaar and biometric data for identity verification purposes. I acknowledge that the stamp duty and registration fees paid are non-refundable and any false representation is punishable by law.
+                    <span className="text-sm text-green-800 leading-relaxed">
+                        I hereby declare that the information and documents provided are true, accurate, and compliant with the Registration Act, 1908 and the New Registration Bill, 2025. I consent to the use of my Aadhaar and biometric data for identity verification. I acknowledge that fees paid are non-refundable.
                     </span>
                 </label>
                 {errors.declarationChecked && (
-                    <p className="mt-1 text-sm text-red-500">{errors.declarationChecked.message}</p>
+                    <p className="mt-2 text-xs text-red-500 flex items-center gap-1" role="alert">
+                        <AlertCircle size={12} />
+                        {errors.declarationChecked.message}
+                    </p>
                 )}
             </div>
 
-            <div className="border-b border-dashed border-gray-300 mt-4"></div>
+            <div className="border-t border-dashed border-gray-300 my-4"></div>
+
+            {/* Step Indicator */}
+            <div className="flex justify-center items-center">
+                <span className="text-gray-500 text-sm font-sans">3</span>
+            </div>
         </div>
     );
 };

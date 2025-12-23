@@ -40,31 +40,28 @@ export const Step2_Documents: React.FC<Step2Props> = ({
     const [uploadSuccess, setUploadSuccess] = React.useState<Record<string, boolean>>({});
     const [fileErrors, setFileErrors] = React.useState<Record<string, string>>({});
 
-    // Memoized object URLs for property photos (prevents re-creation on every render)
+    // Memoized object URLs
     const photoUrls = useMemo(() => {
         return propertyPhotos.map(photo => URL.createObjectURL(photo));
     }, [propertyPhotos]);
 
-    // Memory cleanup: revoke object URLs on unmount or when photos change
+    // Memory cleanup
     useEffect(() => {
         return () => {
             photoUrls.forEach(url => URL.revokeObjectURL(url));
         };
     }, [photoUrls]);
 
-    // Validate file type
     const validateFileType = useCallback((file: File, allowedTypes: string[]): boolean => {
         return allowedTypes.includes(file.type);
     }, []);
 
-    // Check for duplicate files
     const isDuplicatePhoto = useCallback((file: File): boolean => {
         return propertyPhotos.some(
             photo => photo.name === file.name && photo.size === file.size
         );
     }, [propertyPhotos]);
 
-    // Show success checkmark briefly
     const showSuccessAnimation = useCallback((key: string) => {
         setUploadSuccess(prev => ({ ...prev, [key]: true }));
         setTimeout(() => {
@@ -72,7 +69,6 @@ export const Step2_Documents: React.FC<Step2Props> = ({
         }, 1500);
     }, []);
 
-    // Clear file error
     const clearFileError = useCallback((key: string) => {
         setFileErrors(prev => {
             const newErrors = { ...prev };
@@ -91,7 +87,6 @@ export const Step2_Documents: React.FC<Step2Props> = ({
             return;
         }
 
-        // Validate file type
         if (!validateFileType(file, ALLOWED_DOC_TYPES)) {
             setFileErrors(prev => ({ ...prev, [key]: 'Only PDF, JPG, and PNG files are allowed' }));
             return;
@@ -116,12 +111,10 @@ export const Step2_Documents: React.FC<Step2Props> = ({
         const errors: string[] = [];
 
         Array.from(files).forEach(file => {
-            // Validate file type
             if (!validateFileType(file, ALLOWED_IMAGE_TYPES)) {
                 errors.push(`${file.name}: Unsupported format`);
                 return;
             }
-            // Check for duplicates
             if (isDuplicatePhoto(file)) {
                 errors.push(`${file.name}: Already uploaded`);
                 return;
@@ -152,7 +145,6 @@ export const Step2_Documents: React.FC<Step2Props> = ({
         await savePhotos(updatedPhotos);
     };
 
-    // Drag & Drop Handlers
     const handleDrag = (e: React.DragEvent, key: string) => {
         e.preventDefault();
         e.stopPropagation();
@@ -176,363 +168,252 @@ export const Step2_Documents: React.FC<Step2Props> = ({
         }
     };
 
-    // Render upload status icon
     const renderStatusIcon = (key: string, hasFile: boolean) => {
         if (uploading[key]) {
-            return <Loader2 className="w-5 h-5 animate-spin text-black" />;
+            return <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin text-black" />;
         }
         if (uploadSuccess[key]) {
-            return <Check className="w-5 h-5 text-green-500" />;
+            return <Check className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />;
         }
         if (!hasFile) {
-            return <CustomFolderIcon className="w-5 h-5 text-gray-400" />;
+            return <CustomFolderIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />;
         }
         return null;
     };
 
+    // Document rows: [Row 1: Deed Doc, EC], [Row 2: Seller ID, Buyer ID]
+    const documentRows = [
+        [
+            { key: 'saleDeed', label: 'Deed Document', accept: '.pdf,.jpg,.jpeg,.png', required: true },
+            { key: 'ec', label: 'EC (Encumbrance Certificate)', accept: '.pdf,.jpg,.jpeg,.png', required: true },
+        ],
+        [
+            { key: 'khata', label: 'Seller Aadhar ID', accept: '.pdf,.jpg,.jpeg,.png', required: true },
+            { key: 'taxReceipt', label: 'Buyer Aadhar ID', accept: '.pdf,.jpg,.jpeg,.png', required: true },
+        ],
+    ];
+
+    const renderDocumentUpload = (key: string, label: string, accept: string, required: boolean) => {
+        const file = documents?.[key as keyof RegistrationFormSchema['documents']];
+        const hasError = errors.documents?.[key as keyof RegistrationFormSchema['documents']] || fileErrors[key];
+
+        return (
+            <div key={key}>
+                <div
+                    className="relative"
+                    onDragEnter={(e) => handleDrag(e, key)}
+                    onDragLeave={(e) => handleDrag(e, key)}
+                    onDragOver={(e) => handleDrag(e, key)}
+                    onDrop={(e) => handleDrop(e, key)}
+                >
+                    <input
+                        type="file"
+                        accept={accept}
+                        onChange={(e) => handleFileChange(key as keyof RegistrationFormSchema['documents'], e.target.files?.[0] || null)}
+                        className="hidden"
+                        id={`file-${key}`}
+                        disabled={uploading[key]}
+                        aria-label={`Upload ${label}`}
+                    />
+                    <label
+                        htmlFor={`file-${key}`}
+                        className={`flex items-center gap-3 px-4 py-3 border rounded-lg cursor-pointer transition-all w-full
+                            ${dragActive === key ? 'border-black ring-1 ring-black' : 'border-gray-200'}
+                            ${file ? 'bg-white hover:border-black' : 'bg-white hover:border-black hover:bg-gray-50'}
+                            ${hasError ? 'border-red-300 bg-red-50' : ''}`}
+                    >
+                        <div className="shrink-0 text-gray-400">
+                            {renderStatusIcon(key, !!file)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-500">{label}</span>
+                                {required && <span className="text-red-400 text-xs">*</span>}
+                            </div>
+                            {file && (
+                                <p className="text-sm font-medium text-black truncate mt-0.5">{file.name}</p>
+                            )}
+                            {!file && !uploading[key] && (
+                                <p className="text-xs text-gray-400 mt-0.5">Click to upload or drag & drop</p>
+                            )}
+                            {uploading[key] && (
+                                <p className="text-xs text-gray-500 mt-0.5">Uploading...</p>
+                            )}
+                        </div>
+                        {file && !uploading[key] && (
+                            <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        previewDocument(key, file);
+                                    }}
+                                    className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
+                                    type="button"
+                                    aria-label={`Preview ${label}`}
+                                >
+                                    <PreviewIcon className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        handleFileChange(key as keyof RegistrationFormSchema['documents'], null);
+                                    }}
+                                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                    type="button"
+                                    aria-label={`Remove ${label}`}
+                                >
+                                    <CloseIcon className="w-4 h-4" />
+                                </button>
+                            </div>
+                        )}
+                    </label>
+                </div>
+                {fileErrors[key] && (
+                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1" role="alert">
+                        <AlertCircle size={12} />
+                        {fileErrors[key]}
+                    </p>
+                )}
+                {errors.documents?.[key as keyof RegistrationFormSchema['documents']] && (
+                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1" role="alert">
+                        <AlertCircle size={12} />
+                        {errors.documents[key as keyof RegistrationFormSchema['documents']]?.message}
+                    </p>
+                )}
+            </div>
+        );
+    };
+
     return (
         <div className="space-y-4 sm:space-y-6">
+            {/* Header */}
             <div className="flex items-center justify-between">
-                <h2 className="text-xl sm:text-2xl font-sans font-normal text-black">Upload documents & photos</h2>
+                <h2 className="text-xl sm:text-2xl font-sans font-normal text-black">Upload Documents</h2>
                 <ResetButton size="sm" onReset={onReset} mobileIconOnly={true} />
             </div>
-            <div className="border-t border-dashed border-gray-300 mb-2"></div>
+            <div className="border-t border-dashed border-gray-300"></div>
 
-            <div className="space-y-4 sm:space-y-6">
-                <div>
-                    <h3 className="text-lg font-sans font-normal text-black mb-2">Docs and ID Photos</h3>
-                    <div className="border-t border-dashed border-gray-300 mb-6"></div>
+            {/* Required Documents Section */}
+            <div>
+                <h3 className="text-lg font-sans font-normal text-black mb-2">Required Documents</h3>
+                <div className="border-t border-dashed border-gray-300 mb-4"></div>
 
-                    <div className="flex flex-col md:flex-row gap-4 items-stretch w-full justify-between overflow-hidden">
-                        {/* Deed Doc */}
-                        {[{ key: 'saleDeed', label: 'Deed Doc *', accept: '.pdf,.jpg,.jpeg,.png' }].map(({ key, label, accept }) => (
-                            <React.Fragment key={key}>
-                                <div className="space-y-2 w-full md:flex-1 md:min-w-0">
-                                    <label
-                                        className="block text-sm font-sans font-medium text-gray-700 mb-2 truncate"
-                                        id={`label-${key}`}
-                                    >
-                                        {label}
-                                    </label>
-                                    <div
-                                        className="relative group"
-                                        onDragEnter={(e) => handleDrag(e, key)}
-                                        onDragLeave={(e) => handleDrag(e, key)}
-                                        onDragOver={(e) => handleDrag(e, key)}
-                                        onDrop={(e) => handleDrop(e, key)}
-                                    >
-                                        <input
-                                            type="file"
-                                            accept={accept}
-                                            onChange={(e) => handleFileChange(key as keyof RegistrationFormSchema['documents'], e.target.files?.[0] || null)}
-                                            className="hidden"
-                                            id={`file-${key}`}
-                                            disabled={uploading[key]}
-                                            aria-labelledby={`label-${key}`}
-                                            aria-describedby={fileErrors[key] ? `error-${key}` : undefined}
-                                        />
-                                        <label
-                                            htmlFor={`file-${key}`}
-                                            className={`flex flex-row items-center gap-3 px-4 py-3 border rounded-lg cursor-pointer transition-all duration-200 w-full h-14 relative
-                                                ${dragActive === key ? 'border-black ring-1 ring-black' : ''}
-                                                ${documents?.[key as keyof RegistrationFormSchema['documents']]
-                                                    ? 'bg-white border-gray-200 shadow-sm hover:border-black pr-24'
-                                                    : 'bg-white border-gray-200 hover:border-black hover:bg-gray-50'
-                                                } 
-                                                ${(errors.documents?.[key as keyof RegistrationFormSchema['documents']] || fileErrors[key]) ? 'border-red-300 bg-red-50' : ''}`
-                                            }
-                                            role="button"
-                                            aria-label={`Upload ${label}`}
-                                            tabIndex={0}
-                                        >
-                                            <div className="shrink-0 flex items-center justify-center text-gray-400">
-                                                {renderStatusIcon(key, !!documents?.[key as keyof RegistrationFormSchema['documents']])}
-                                            </div>
-                                            <div className="flex-1 min-w-0 text-left">
-                                                <span className={`block text-sm truncate ${documents?.[key as keyof RegistrationFormSchema['documents']] ? 'text-gray-900 font-medium' : 'text-gray-500 font-sans'}`}>
-                                                    {(() => {
-                                                        const file = documents?.[key as keyof RegistrationFormSchema['documents']];
-                                                        if (uploading[key]) return 'Uploading...';
-                                                        if (!file) return 'Click to upload';
-                                                        return file.name;
-                                                    })()}
-                                                </span>
-                                            </div>
-                                        </label>
-                                        {documents?.[key as keyof RegistrationFormSchema['documents']] && !uploading[key] && (
-                                            <div className="absolute top-1/2 right-3 -translate-y-1/2 flex items-center gap-1">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        e.preventDefault();
-                                                        const file = documents[key as keyof RegistrationFormSchema['documents']];
-                                                        if (file) previewDocument(key, file);
-                                                    }}
-                                                    className="p-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
-                                                    title="Preview"
-                                                    type="button"
-                                                    aria-label={`Preview ${label}`}
-                                                >
-                                                    <PreviewIcon className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        e.preventDefault();
-                                                        handleFileChange(key as keyof RegistrationFormSchema['documents'], null);
-                                                    }}
-                                                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Remove"
-                                                    type="button"
-                                                    aria-label={`Remove ${label}`}
-                                                >
-                                                    <CloseIcon className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                    {/* File type error */}
-                                    {fileErrors[key] && (
-                                        <p className="text-xs text-red-500 flex items-center gap-1" id={`error-${key}`} role="alert">
-                                            <AlertCircle size={12} />
-                                            {fileErrors[key]}
-                                        </p>
-                                    )}
-                                    {/* Validation error */}
-                                    {errors.documents?.[key as keyof RegistrationFormSchema['documents']] && (
-                                        <p className="text-xs text-red-500 flex items-center gap-1" role="alert">
-                                            <AlertCircle size={12} />
-                                            {errors.documents[key as keyof RegistrationFormSchema['documents']]?.message}
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="hidden md:block w-px border-r border-dashed border-gray-300 h-16 self-center"></div>
-                            </React.Fragment>
-                        ))}
-
-                        {/* Seller and Buyer */}
-                        <div className="flex flex-col md:flex-row gap-4 w-full md:flex-1 md:contents">
-                            {[
-                                { key: 'khata', label: 'Seller Aadhar ID *', accept: '.pdf,.jpg,.jpeg,.png' },
-                                { key: 'taxReceipt', label: 'Buyer Aadhar ID *', accept: '.pdf,.jpg,.jpeg,.png' },
-                            ].map(({ key, label, accept }, index) => (
-                                <React.Fragment key={key}>
-                                    <div className="space-y-2 w-full md:flex-1 md:min-w-0">
-                                        <label
-                                            className="block text-sm font-sans font-medium text-gray-700 mb-2 truncate"
-                                            id={`label-${key}`}
-                                        >
-                                            {label}
-                                        </label>
-                                        <div
-                                            className="relative group"
-                                            onDragEnter={(e) => handleDrag(e, key)}
-                                            onDragLeave={(e) => handleDrag(e, key)}
-                                            onDragOver={(e) => handleDrag(e, key)}
-                                            onDrop={(e) => handleDrop(e, key)}
-                                        >
-                                            <input
-                                                type="file"
-                                                accept={accept}
-                                                onChange={(e) => handleFileChange(key as keyof RegistrationFormSchema['documents'], e.target.files?.[0] || null)}
-                                                className="hidden"
-                                                id={`file-${key}`}
-                                                disabled={uploading[key]}
-                                                aria-labelledby={`label-${key}`}
-                                                aria-describedby={fileErrors[key] ? `error-${key}` : undefined}
-                                            />
-                                            <label
-                                                htmlFor={`file-${key}`}
-                                                className={`flex flex-row items-center gap-3 px-4 py-3 border rounded-lg cursor-pointer transition-all duration-200 w-full h-14 relative
-                                                    ${dragActive === key ? 'border-black ring-1 ring-black' : ''}
-                                                    ${documents?.[key as keyof RegistrationFormSchema['documents']]
-                                                        ? 'bg-white border-gray-200 shadow-sm hover:border-black pr-24'
-                                                        : 'bg-white border-gray-200 hover:border-black hover:bg-gray-50'
-                                                    } 
-                                                    ${(errors.documents?.[key as keyof RegistrationFormSchema['documents']] || fileErrors[key]) ? 'border-red-300 bg-red-50' : ''}`
-                                                }
-                                                role="button"
-                                                aria-label={`Upload ${label}`}
-                                                tabIndex={0}
-                                            >
-                                                <div className="shrink-0 flex items-center justify-center text-gray-400">
-                                                    {renderStatusIcon(key, !!documents?.[key as keyof RegistrationFormSchema['documents']])}
-                                                </div>
-                                                <div className="flex-1 min-w-0 text-left">
-                                                    <span className={`block text-sm truncate ${documents?.[key as keyof RegistrationFormSchema['documents']] ? 'text-gray-900 font-medium' : 'text-gray-500 font-sans'}`}>
-                                                        {(() => {
-                                                            const file = documents?.[key as keyof RegistrationFormSchema['documents']];
-                                                            if (uploading[key]) return 'Uploading...';
-                                                            if (!file) return 'Click to upload';
-                                                            return file.name;
-                                                        })()}
-                                                    </span>
-                                                </div>
-                                            </label>
-                                            {documents?.[key as keyof RegistrationFormSchema['documents']] && !uploading[key] && (
-                                                <div className="absolute top-1/2 right-3 -translate-y-1/2 flex items-center gap-1">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            e.preventDefault();
-                                                            const file = documents[key as keyof RegistrationFormSchema['documents']];
-                                                            if (file) previewDocument(key, file);
-                                                        }}
-                                                        className="p-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
-                                                        title="Preview"
-                                                        type="button"
-                                                        aria-label={`Preview ${label}`}
-                                                    >
-                                                        <PreviewIcon className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            e.preventDefault();
-                                                            handleFileChange(key as keyof RegistrationFormSchema['documents'], null);
-                                                        }}
-                                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                        title="Remove"
-                                                        type="button"
-                                                        aria-label={`Remove ${label}`}
-                                                    >
-                                                        <CloseIcon className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                        {/* File type error */}
-                                        {fileErrors[key] && (
-                                            <p className="text-xs text-red-500 flex items-center gap-1" id={`error-${key}`} role="alert">
-                                                <AlertCircle size={12} />
-                                                {fileErrors[key]}
-                                            </p>
-                                        )}
-                                        {/* Validation error */}
-                                        {errors.documents?.[key as keyof RegistrationFormSchema['documents']] && (
-                                            <p className="text-xs text-red-500 flex items-center gap-1" role="alert">
-                                                <AlertCircle size={12} />
-                                                {errors.documents[key as keyof RegistrationFormSchema['documents']]?.message}
-                                            </p>
-                                        )}
-                                    </div>
-                                    {index === 0 && (
-                                        <div className="hidden md:block w-px border-r border-dashed border-gray-300 h-16 self-center"></div>
-                                    )}
-                                </React.Fragment>
-                            ))}
+                <div className="space-y-3">
+                    {documentRows.map((row, rowIndex) => (
+                        <div key={rowIndex} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {row.map(({ key, label, accept, required }) =>
+                                renderDocumentUpload(key, label, accept, required)
+                            )}
                         </div>
-                    </div>
+                    ))}
                 </div>
+            </div>
 
-                <div className="border-t border-dashed border-gray-300 mt-4 sm:mt-6 mb-2"></div>
+            <div className="border-t border-dashed border-gray-300"></div>
 
-                <div>
-                    <h3 className="text-lg font-sans font-normal text-black mb-2">Property photos</h3>
-                    <div className="border-t border-dashed border-gray-300 mb-6"></div>
-                    <p className="text-sm font-sans font-medium text-gray-700 mb-2">
-                        Upload up to 6 photos of the property <span className="text-gray-500 font-normal">(Optional)</span>
-                    </p>
+            {/* Property Photos Section */}
+            <div>
+                <h3 className="text-lg font-sans font-normal text-black mb-2">Property Photos</h3>
+                <div className="border-t border-dashed border-gray-300 mb-4"></div>
 
-                    <div
-                        className="mb-4"
-                        onDragEnter={(e) => handleDrag(e, 'photos')}
-                        onDragLeave={(e) => handleDrag(e, 'photos')}
-                        onDragOver={(e) => handleDrag(e, 'photos')}
-                        onDrop={(e) => handleDrop(e, 'photos')}
+                <p className="text-sm text-gray-500 mb-4">
+                    Upload up to 6 photos of the property <span className="text-gray-400">(Optional)</span>
+                </p>
+
+                {/* Upload Area */}
+                <div
+                    onDragEnter={(e) => handleDrag(e, 'photos')}
+                    onDragLeave={(e) => handleDrag(e, 'photos')}
+                    onDragOver={(e) => handleDrag(e, 'photos')}
+                    onDrop={(e) => handleDrop(e, 'photos')}
+                >
+                    <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => handlePhotoUpload(e.target.files)}
+                        className="hidden"
+                        id="property-photos"
+                        disabled={uploading.photos || propertyPhotos.length >= 6}
+                        aria-label="Upload property photos"
+                    />
+                    <label
+                        htmlFor="property-photos"
+                        className={`flex items-center justify-center gap-3 px-4 py-4 sm:py-5 border border-dashed rounded-lg cursor-pointer transition-all
+                            ${dragActive === 'photos' ? 'border-black bg-gray-50' : 'border-gray-300'}
+                            ${propertyPhotos.length >= 6 ? 'opacity-50 cursor-not-allowed' : 'hover:border-black hover:bg-gray-50'}`}
                     >
-                        <input
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            onChange={(e) => handlePhotoUpload(e.target.files)}
-                            className="hidden"
-                            id="property-photos"
-                            disabled={uploading.photos || propertyPhotos.length >= 6}
-                            aria-label="Upload property photos"
-                            aria-describedby={fileErrors.photos ? 'error-photos' : undefined}
-                        />
-                        <label
-                            htmlFor="property-photos"
-                            className={`flex items-center justify-center gap-2 p-3 bg-white border rounded-lg cursor-pointer hover:border-black hover:bg-gray-50 transition-all text-center w-full max-w-lg mx-auto h-14
-                                ${dragActive === 'photos' ? 'border-black ring-1 ring-black' : 'border-gray-200'}
-                                ${propertyPhotos.length >= 6 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            role="button"
-                            aria-label="Upload property photos"
-                            tabIndex={0}
-                        >
+                        <div className="flex items-center gap-3">
                             <div className="shrink-0 text-gray-400">
                                 {renderStatusIcon('photos', false)}
                             </div>
-                            <div className="text-left">
-                                <span className="block text-sm font-sans text-gray-500">
-                                    {uploading.photos ? 'Processing...' : propertyPhotos.length >= 6 ? 'Maximum 6 photos reached' : 'Click to upload'}
-                                </span>
+                            <div>
+                                <p className="text-sm text-gray-600">
+                                    {uploading.photos ? 'Uploading...' : propertyPhotos.length >= 6 ? 'Maximum 6 photos' : 'Click to upload photos'}
+                                </p>
+                                <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, GIF up to 10MB each</p>
                             </div>
-                        </label>
-                        {/* File type/duplicate error */}
-                        {fileErrors.photos && (
-                            <p className="text-xs text-red-500 mt-2 flex items-center gap-1 justify-center" id="error-photos" role="alert">
-                                <AlertCircle size={12} />
-                                {fileErrors.photos}
-                            </p>
-                        )}
-                        {errors.propertyPhotos && (
-                            <p className="text-xs text-red-500 mt-2 flex items-center gap-1 justify-center" role="alert">
-                                <AlertCircle size={12} />
-                                {errors.propertyPhotos.message}
-                            </p>
-                        )}
-                    </div>
-
-                    {propertyPhotos.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-                            {propertyPhotos.map((photo, index) => {
-                                const name = photo.name;
-                                const lastDot = name.lastIndexOf('.');
-                                const ext = lastDot !== -1 ? name.substring(lastDot) : '';
-                                const base = lastDot !== -1 ? name.substring(0, lastDot) : name;
-                                const displayName = base.length > 12 ? base.substring(0, 12) + '...' + ext : name;
-
-                                return (
-                                    <div key={index} className="relative group">
-                                        <div className="flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 shadow-sm rounded-lg pr-20 transition-all hover:border-black h-14">
-                                            <span className="text-sm text-gray-900 font-medium truncate flex-1" title={name}>
-                                                {displayName}
-                                            </span>
-                                        </div>
-                                        <div className="absolute top-1/2 right-2 -translate-y-1/2 flex items-center gap-1">
-                                            <button
-                                                onClick={() => previewDocument(`photo_${index}`, photo)}
-                                                className="p-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
-                                                title="Preview"
-                                                type="button"
-                                                aria-label={`Preview photo ${index + 1}`}
-                                            >
-                                                <PreviewIcon className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => removePhoto(index)}
-                                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="Remove"
-                                                type="button"
-                                                aria-label={`Remove photo ${index + 1}`}
-                                            >
-                                                <CloseIcon className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                );
-                            })}
                         </div>
-                    )}
+                    </label>
                 </div>
+
+                {fileErrors.photos && (
+                    <p className="mt-2 text-xs text-red-500 flex items-center gap-1" role="alert">
+                        <AlertCircle size={12} />
+                        {fileErrors.photos}
+                    </p>
+                )}
+
+                {/* Photo Grid */}
+                {propertyPhotos.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
+                        {propertyPhotos.map((photo, index) => {
+                            const name = photo.name;
+                            const lastDot = name.lastIndexOf('.');
+                            const ext = lastDot !== -1 ? name.substring(lastDot) : '';
+                            const base = lastDot !== -1 ? name.substring(0, lastDot) : name;
+                            const displayName = base.length > 10 ? base.substring(0, 10) + '...' + ext : name;
+
+                            return (
+                                <div
+                                    key={index}
+                                    className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-black transition-colors group"
+                                >
+                                    <span className="text-sm text-gray-700 truncate flex-1" title={name}>
+                                        {displayName}
+                                    </span>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        <button
+                                            onClick={() => previewDocument(`photo_${index}`, photo)}
+                                            className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded transition-colors"
+                                            type="button"
+                                            aria-label={`Preview photo ${index + 1}`}
+                                        >
+                                            <PreviewIcon className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                            onClick={() => removePhoto(index)}
+                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                            type="button"
+                                            aria-label={`Remove photo ${index + 1}`}
+                                        >
+                                            <CloseIcon className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
-            <div className="border-t border-dashed border-gray-300 my-4 sm:my-6"></div>
+            <div className="border-t border-dashed border-gray-300 my-4"></div>
 
+            {/* Step Indicator */}
             <div className="flex justify-center items-center">
-                <span className="text-gray-700 text-sm font-sans">2</span>
+                <span className="text-gray-500 text-sm font-sans">2</span>
             </div>
         </div>
     );

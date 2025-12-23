@@ -236,7 +236,7 @@ export default function RegistrationPage() {
         'transactionType', 'sellerAadhar', 'sellerPhone', 'buyerAadhar', 'buyerPhone'
       ];
     } else if (currentStep === 2) {
-      fieldsToValidate = ['documents.saleDeed', 'documents.khata', 'documents.taxReceipt', 'propertyPhotos'];
+      fieldsToValidate = ['documents.saleDeed', 'documents.ec', 'documents.khata', 'documents.taxReceipt', 'propertyPhotos'];
     }
 
     // Trigger validation
@@ -283,6 +283,12 @@ export default function RegistrationPage() {
         const f = data.documents.saleDeed;
         documentUploadPromises.push(uploadFileToIPFS(f, f.name).then(res => {
           if (res?.hash) documentsIPFS['saleDeed'] = { name: f.name, ipfsHash: res.hash, mimeType: f.type };
+        }));
+      }
+      if (data.documents.ec) {
+        const f = data.documents.ec;
+        documentUploadPromises.push(uploadFileToIPFS(f, f.name).then(res => {
+          if (res?.hash) documentsIPFS['ec'] = { name: f.name, ipfsHash: res.hash, mimeType: f.type };
         }));
       }
       if (data.documents.khata) {
@@ -398,9 +404,10 @@ export default function RegistrationPage() {
         return (
           <Step3_ReviewPayment
             form={form}
-            surveyOrDoor={surveyOrDoor} // Passing from location hook in page
+            surveyOrDoor={surveyOrDoor}
             downloadSummary={() => downloadSummary(getValues(), registrationId)}
             onReset={resetFormFull}
+            previewDocument={previewDocument}
           />
         );
       default:
@@ -492,7 +499,7 @@ export default function RegistrationPage() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
-            className={`relative ${currentStep === 3 ? '' : 'bg-white border border-gray-300 rounded-lg p-3 sm:p-6'} mb-6 mx-4 sm:mx-8`}
+            className={`relative bg-white border border-gray-300 rounded-lg p-3 sm:p-6 mb-6 mx-4 sm:mx-8`}
           >
             {renderStepContent()}
           </motion.div>
@@ -530,7 +537,7 @@ export default function RegistrationPage() {
                 {isSubmitting ? (
                   <> <Loader2 size={18} className="animate-spin" /> Submitting... </>
                 ) : (
-                  <> <CheckCircle size={20} /> Submit </>
+                  <>Submit</>
                 )}
               </button>
             )}
