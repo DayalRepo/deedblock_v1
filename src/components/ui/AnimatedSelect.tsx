@@ -109,10 +109,10 @@ export function AnimatedSelect({ value, onChange, options, placeholder = 'Select
                                                 setIsOpen(false);
                                                 setSearchQuery('');
                                             }}
-                                            className={`w-full text-left px-4 py-3 text-black hover:bg-gray-100 transition-colors ${value === option.value ? 'bg-gray-100' : ''
+                                            className={`w-full text-left px-4 py-3 text-black hover:bg-gray-100 transition-colors truncate ${value === option.value ? 'bg-gray-100' : ''
                                                 }`}
                                         >
-                                            {option.label}
+                                            <span className="block truncate">{option.label}</span>
                                         </button>
                                         {index < filteredOptions.length - 1 && (
                                             <div className="mx-4 border-t border-dashed border-gray-300" />

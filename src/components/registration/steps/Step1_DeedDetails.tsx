@@ -451,7 +451,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                 <span className="text-xs font-medium">Aadhar Verified</span>
                             </div>
                         ) : (
-                            <div className="flex flex-row items-center gap-2">
+                            <div className="flex flex-col md:flex-row md:items-center gap-2">
                                 {/* OTP Section */}
                                 <div className="flex items-stretch gap-2">
                                     <input
@@ -469,8 +469,8 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     )}
                                 </div>
 
-                                {/* "&" Separator - bold and grey */}
-                                <span className="text-gray-400 font-bold text-sm mx-2">&</span>
+                                {/* "&" Separator - hidden on mobile, visible on desktop */}
+                                <span className="text-gray-400 font-bold text-sm mx-2 hidden md:inline">&</span>
 
                                 {/* Fingerprint Section */}
                                 <div className="flex items-center">
@@ -513,6 +513,8 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
 
                 {/* Seller Phone */}
                 <div>
+                    {/* Dashed line above phone - mobile only */}
+                    <div className="block md:hidden border-t border-dashed border-gray-300 mb-3 mt-1"></div>
                     <label className="block text-sm font-sans font-normal text-gray-700 mb-2">Phone number *</label>
                     <div className="relative">
                         <input
@@ -618,7 +620,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                 <span className="text-xs font-medium">Aadhar Verified</span>
                             </div>
                         ) : (
-                            <div className="flex flex-row items-center gap-2">
+                            <div className="flex flex-col md:flex-row md:items-center gap-2">
                                 {/* OTP Section */}
                                 <div className="flex items-stretch gap-2">
                                     <input
@@ -636,8 +638,8 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     )}
                                 </div>
 
-                                {/* "&" Separator - bold and grey */}
-                                <span className="text-gray-400 font-bold text-sm mx-2">&</span>
+                                {/* "&" Separator - hidden on mobile, visible on desktop */}
+                                <span className="text-gray-400 font-bold text-sm mx-2 hidden md:inline">&</span>
 
                                 {/* Fingerprint Section */}
                                 <div className="flex items-center">
@@ -680,6 +682,8 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
 
                 {/* Buyer Phone */}
                 <div>
+                    {/* Dashed line above phone - mobile only */}
+                    <div className="block md:hidden border-t border-dashed border-gray-300 mb-3 mt-1"></div>
                     <label className="block text-sm font-sans font-normal text-gray-700 mb-2">Phone number *</label>
                     <div className="relative">
                         <input
