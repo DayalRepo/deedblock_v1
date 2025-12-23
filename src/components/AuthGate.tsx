@@ -30,11 +30,16 @@ export default function AuthGate({ children }: AuthGateProps) {
         return () => subscription.unsubscribe();
     }, []);
 
+    const getRedirectUrl = () => {
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || window.location.origin;
+        return `${siteUrl}${window.location.pathname}${window.location.search}`;
+    };
+
     const handleGoogleSignIn = async () => {
         await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: window.location.href,
+                redirectTo: getRedirectUrl(),
             },
         });
     };
@@ -43,7 +48,7 @@ export default function AuthGate({ children }: AuthGateProps) {
         await supabase.auth.signInWithOAuth({
             provider: 'github',
             options: {
-                redirectTo: window.location.href,
+                redirectTo: getRedirectUrl(),
             },
         });
     };
