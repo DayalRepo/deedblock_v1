@@ -190,12 +190,33 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                                 // Show PDF iframe if: File is PDF OR (hydrated and URL is PDF)
                                 if (isFilePdf || (isHydratedPreview && isUrlPdf)) {
                                     return (
-                                        <div className="w-full max-w-3xl h-[65vh] sm:h-[72vh] bg-white rounded-lg border border-gray-200 overflow-hidden">
+                                        <div className="w-full max-w-3xl h-[65vh] sm:h-[72vh] bg-white rounded-lg border border-gray-200 overflow-hidden relative">
+                                            {/* Desktop: standard iframe */}
                                             <iframe
                                                 src={currentUrl}
                                                 title="PDF Preview"
-                                                className="w-full h-full"
+                                                className="hidden sm:block w-full h-full"
                                             />
+                                            
+                                            {/* Mobile: Special handling */}
+                                            <div className="sm:hidden w-full h-full">
+                                                {!currentUrl.startsWith('blob:') ? (
+                                                    // Remote URL (hydrated): Use Google Docs Viewer for better mobile inline support
+                                                    <iframe 
+                                                        src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(currentUrl)}`}
+                                                        className="w-full h-full" 
+                                                        title="PDF Preview (Mobile)"
+                                                        frameBorder="0"
+                                                    />
+                                                ) : (
+                                                    // Fresh upload (blob): Fallback to standard iframe (best browser support for local blobs)
+                                                    <iframe
+                                                        src={currentUrl}
+                                                        className="w-full h-full"
+                                                        title="PDF Preview"
+                                                    />
+                                                )}
+                                            </div>
                                         </div>
                                     );
                                 }

@@ -872,7 +872,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
 
             {/* Step Indicator */}
             <div className="flex justify-center items-center">
-                <span className="text-gray-500 text-sm font-sans">1</span>
+                <span className="text-gray-500 text-sm font-sans">Step 1 of 3</span>
             </div>
         </div>
     );

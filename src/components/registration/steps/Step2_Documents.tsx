@@ -357,7 +357,7 @@ export const Step2_Documents: React.FC<Step2Props> = ({
         };
 
         return (
-            <div key={key} className="w-[80%] sm:w-[88%] mx-left">
+            <div key={key} className="w-full">
                 <div
                     className="relative"
                     onDragEnter={(e) => handleDrag(e, key)}
@@ -549,7 +549,7 @@ export const Step2_Documents: React.FC<Step2Props> = ({
                             validFilePhotos.map((photo, index) => (
                                 <div
                                     key={index}
-                                    className="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-lg bg-white hover:border-black transition-all w-[80%] sm:w-[88%] mx-left"
+                                    className="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-lg bg-white hover:border-black transition-all w-full"
                                 >
                                     <div className="shrink-0 text-gray-400">
                                         <CustomFolderIcon className="w-4 h-4 sm:w-6 sm:h-6" />
@@ -585,7 +585,7 @@ export const Step2_Documents: React.FC<Step2Props> = ({
                             draftPhotoUrls.map((photoData, index) => (
                                 <div
                                     key={index}
-                                    className="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-lg bg-white hover:border-black transition-all w-[80%] sm:w-[88%] mx-left"
+                                    className="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-lg bg-white hover:border-black transition-all w-full"
                                 >
                                     <div className="shrink-0 text-gray-400">
                                         <CustomFolderIcon className="w-4 h-4 sm:w-6 sm:h-6" />
