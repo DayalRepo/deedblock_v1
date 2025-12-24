@@ -13,21 +13,25 @@
                             "surveyNumbers": [
                                 {
                                     "number": "10/A",
-                                    "govtValue": 5000000
+                                    "govtValue": 5000000,
+                                    "ownerAadhar": "1000 0000 0001"
                                 },
                                 {
                                     "number": "10/B",
-                                    "govtValue": 5500000
+                                    "govtValue": 5500000,
+                                    "ownerAadhar": "1000 0000 0002"
                                 }
                             ],
                             "doorNumbers": [
                                 {
                                     "number": "1-101",
-                                    "govtValue": 5200000
+                                    "govtValue": 5200000,
+                                    "ownerAadhar": "1000 0000 0003"
                                 },
                                 {
                                     "number": "1-102",
-                                    "govtValue": 5800000
+                                    "govtValue": 5800000,
+                                    "ownerAadhar": "1000 0000 0004"
                                 }
                             ]
                         }
@@ -41,21 +45,25 @@
                             "surveyNumbers": [
                                 {
                                     "number": "45/1",
-                                    "govtValue": 4000000
+                                    "govtValue": 4000000,
+                                    "ownerAadhar": "1000 0000 0005"
                                 },
                                 {
                                     "number": "45/2",
-                                    "govtValue": 4200000
+                                    "govtValue": 4200000,
+                                    "ownerAadhar": "1000 0000 0006"
                                 }
                             ],
                             "doorNumbers": [
                                 {
                                     "number": "2-201",
-                                    "govtValue": 4100000
+                                    "govtValue": 4100000,
+                                    "ownerAadhar": "1000 0000 0007"
                                 },
                                 {
                                     "number": "2-202",
-                                    "govtValue": 4300000
+                                    "govtValue": 4300000,
+                                    "ownerAadhar": "1000 0000 0008"
                                 }
                             ]
                         }
@@ -74,21 +82,25 @@
                             "surveyNumbers": [
                                 {
                                     "number": "12/X",
-                                    "govtValue": 7500000
+                                    "govtValue": 7500000,
+                                    "ownerAadhar": "1000 0000 0009"
                                 },
                                 {
                                     "number": "13/Y",
-                                    "govtValue": 8000000
+                                    "govtValue": 8000000,
+                                    "ownerAadhar": "1000 0000 0010"
                                 }
                             ],
                             "doorNumbers": [
                                 {
                                     "number": "3-301",
-                                    "govtValue": 7800000
+                                    "govtValue": 7800000,
+                                    "ownerAadhar": "1000 0000 0011"
                                 },
                                 {
                                     "number": "3-302",
-                                    "govtValue": 8200000
+                                    "govtValue": 8200000,
+                                    "ownerAadhar": "1000 0000 0012"
                                 }
                             ]
                         }

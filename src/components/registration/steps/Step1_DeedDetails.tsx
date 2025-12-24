@@ -54,10 +54,14 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
     const buyerFingerprintVerified = watch('buyerFingerprintVerified');
     const sellerAadharOtpVerified = watch('sellerAadharOtpVerified');
     const buyerAadharOtpVerified = watch('buyerAadharOtpVerified');
-    const isSellerAadharVerified = sellerFingerprintVerified || sellerAadharOtpVerified;
-    const isBuyerAadharVerified = buyerFingerprintVerified || buyerAadharOtpVerified;
+    const isSellerAadharVerified = sellerFingerprintVerified && sellerAadharOtpVerified;
+    const isBuyerAadharVerified = buyerFingerprintVerified && buyerAadharOtpVerified;
 
     // Watch location fields
+    const sellerAadhar = watch('sellerAadhar');
+    const buyerAadhar = watch('buyerAadhar');
+    const sellerPhone = watch('sellerPhone');
+    const buyerPhone = watch('buyerPhone');
     const state = watch('state');
     const district = watch('district');
     const taluka = watch('taluka');
@@ -74,6 +78,14 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
         }
     };
 
+    // Auto-populate Seller Aadhar based on property selection
+    React.useEffect(() => {
+        const ownerAadhar = selectedSurvey?.ownerAadhar || selectedDoor?.ownerAadhar;
+        if (ownerAadhar) {
+            form.setValue('sellerAadhar', ownerAadhar);
+        }
+    }, [selectedSurvey, selectedDoor, form]);
+
     return (
         <div className="space-y-4 sm:space-y-6">
             {/* Header */}
@@ -88,100 +100,116 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                 <h3 className="text-lg font-sans font-normal text-black mb-2">Location</h3>
                 <div className="border-t border-dashed border-gray-300 mb-4"></div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                    {/* State */}
-                    <div>
-                        <label className="block text-sm text-gray-500 mb-1.5">State <span className="text-red-400">*</span></label>
-                        <Controller
-                            control={control}
-                            name="state"
-                            render={({ field }) => (
-                                <AnimatedSelect
-                                    value={field.value}
-                                    onChange={(val) => handleLocationChange('state', val)}
-                                    placeholder="Select"
-                                    options={indianStates.map(s => ({ value: s, label: s }))}
-                                    searchable={true}
-                                />
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-2">
+                    {/* Row 1: State & District */}
+                    <div className="flex items-end gap-2 w-full sm:contents">
+                        {/* State */}
+                        <div className="flex-1 sm:flex-1">
+                            <label className="block text-sm text-gray-500 mb-1.5">State <span className="text-red-400">*</span></label>
+                            <Controller
+                                control={control}
+                                name="state"
+                                render={({ field }) => (
+                                    <AnimatedSelect
+                                        value={field.value}
+                                        onChange={(val) => handleLocationChange('state', val)}
+                                        placeholder="Select"
+                                        options={indianStates.map(s => ({ value: s, label: s }))}
+                                        searchable={true}
+                                        className="text-sm"
+                                    />
+                                )}
+                            />
+                            {errors.state && (
+                                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                                    <AlertCircle size={12} />{errors.state.message}
+                                </p>
                             )}
-                        />
-                        {errors.state && (
-                            <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                                <AlertCircle size={12} />{errors.state.message}
-                            </p>
-                        )}
+                        </div>
+
+                        <div className="w-px border-l border-dashed border-gray-300 h-10 self-end mb-1.5"></div>
+
+                        {/* District */}
+                        <div className="flex-1 sm:flex-1">
+                            <label className="block text-sm text-gray-500 mb-1.5">District <span className="text-red-400">*</span></label>
+                            <Controller
+                                control={control}
+                                name="district"
+                                render={({ field }) => (
+                                    <AnimatedSelect
+                                        value={field.value}
+                                        onChange={(val) => handleLocationChange('district', val)}
+                                        placeholder="Select"
+                                        options={districts.map(d => ({ value: d, label: d }))}
+                                        searchable={true}
+                                        disabled={!state}
+                                        className="text-sm"
+                                    />
+                                )}
+                            />
+                            {errors.district && (
+                                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                                    <AlertCircle size={12} />{errors.district.message}
+                                </p>
+                            )}
+                        </div>
                     </div>
 
-                    {/* District */}
-                    <div>
-                        <label className="block text-sm text-gray-500 mb-1.5">District <span className="text-red-400">*</span></label>
-                        <Controller
-                            control={control}
-                            name="district"
-                            render={({ field }) => (
-                                <AnimatedSelect
-                                    value={field.value}
-                                    onChange={(val) => handleLocationChange('district', val)}
-                                    placeholder="Select"
-                                    options={districts.map(d => ({ value: d, label: d }))}
-                                    searchable={true}
-                                    disabled={!state}
-                                />
-                            )}
-                        />
-                        {errors.district && (
-                            <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                                <AlertCircle size={12} />{errors.district.message}
-                            </p>
-                        )}
-                    </div>
+                    <div className="hidden sm:block w-px border-l border-dashed border-gray-300 h-10 self-end mb-1.5"></div>
 
-                    {/* Mandal */}
-                    <div>
-                        <label className="block text-sm text-gray-500 mb-1.5">Mandal <span className="text-red-400">*</span></label>
-                        <Controller
-                            control={control}
-                            name="taluka"
-                            render={({ field }) => (
-                                <AnimatedSelect
-                                    value={field.value}
-                                    onChange={(val) => handleLocationChange('taluka', val)}
-                                    placeholder="Select"
-                                    options={talukas.map(t => ({ value: t, label: t }))}
-                                    searchable={true}
-                                    disabled={!district}
-                                />
+                    {/* Row 2: Mandal & Village */}
+                    <div className="flex items-end gap-2 w-full sm:contents">
+                        {/* Mandal */}
+                        <div className="flex-1 sm:flex-1">
+                            <label className="block text-sm text-gray-500 mb-1.5">Mandal <span className="text-red-400">*</span></label>
+                            <Controller
+                                control={control}
+                                name="taluka"
+                                render={({ field }) => (
+                                    <AnimatedSelect
+                                        value={field.value}
+                                        onChange={(val) => handleLocationChange('taluka', val)}
+                                        placeholder="Select"
+                                        options={talukas.map(t => ({ value: t, label: t }))}
+                                        searchable={true}
+                                        disabled={!district}
+                                        className="text-sm"
+                                    />
+                                )}
+                            />
+                            {errors.taluka && (
+                                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                                    <AlertCircle size={12} />{errors.taluka.message}
+                                </p>
                             )}
-                        />
-                        {errors.taluka && (
-                            <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                                <AlertCircle size={12} />{errors.taluka.message}
-                            </p>
-                        )}
-                    </div>
+                        </div>
 
-                    {/* Village */}
-                    <div>
-                        <label className="block text-sm text-gray-500 mb-1.5">Village <span className="text-red-400">*</span></label>
-                        <Controller
-                            control={control}
-                            name="village"
-                            render={({ field }) => (
-                                <AnimatedSelect
-                                    value={field.value}
-                                    onChange={(val) => handleLocationChange('village', val)}
-                                    placeholder="Select"
-                                    options={villages.map(v => ({ value: v, label: v }))}
-                                    searchable={true}
-                                    disabled={!taluka}
-                                />
+                        <div className="w-px border-l border-dashed border-gray-300 h-10 self-end mb-1.5"></div>
+
+                        {/* Village */}
+                        <div className="flex-1 sm:flex-1">
+                            <label className="block text-sm text-gray-500 mb-1.5">Village <span className="text-red-400">*</span></label>
+                            <Controller
+                                control={control}
+                                name="village"
+                                render={({ field }) => (
+                                    <AnimatedSelect
+                                        value={field.value}
+                                        onChange={(val) => handleLocationChange('village', val)}
+                                        placeholder="Select"
+                                        options={villages.map(v => ({ value: v, label: v }))}
+                                        searchable={true}
+                                        disabled={!taluka}
+                                        className="text-sm"
+                                    />
+                                )}
+                            />
+                            {errors.village && (
+                                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                                    <AlertCircle size={12} />{errors.village.message}
+                                </p>
                             )}
-                        />
-                        {errors.village && (
-                            <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                                <AlertCircle size={12} />{errors.village.message}
-                            </p>
-                        )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -193,9 +221,9 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                 <h3 className="text-lg font-sans font-normal text-black mb-2">Property Identification</h3>
                 <div className="border-t border-dashed border-gray-300 mb-4"></div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                     {/* Radio Toggle */}
-                    <div>
+                    <div className="w-full sm:flex-1 sm:flex sm:flex-col">
                         <label className="block text-sm text-gray-500 mb-2">Select Type</label>
                         <div className="flex items-center gap-4">
                             <label className="flex items-center gap-2 cursor-pointer">
@@ -220,7 +248,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                             </label>
                         </div>
 
-                        <div className="mt-3">
+                        <div className="mt-3 sm:mt-auto">
                             <label className="block text-sm text-gray-500 mb-1.5">
                                 {surveyOrDoor === 'survey' ? 'Survey Number' : 'Door Number'} <span className="text-red-400">*</span>
                             </label>
@@ -238,6 +266,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                         }
                                         searchable={true}
                                         disabled={!village}
+                                        className="w-[50%] sm:w-[90%]"
                                     />
                                 )}
                             />
@@ -250,9 +279,13 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                         </div>
                     </div>
 
+                    {/* Vertical Dashed Line */}
+                    {/* Vertical Dashed Line */}
+                    <div className="hidden sm:block w-px border-l border-dashed border-gray-300 mx-auto sm:h-auto sm:mx-auto sm:self-stretch"></div>
+
                     {/* Fee Preview */}
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        <h4 className="text-sm font-medium text-gray-700 mb-3">Estimated Fees</h4>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 w-full sm:flex-1">
+                        <h4 className="text-sm font-medium text-gray-700 mb-3 border-b border-dashed border-gray-300 pb-2">Estimated Fees</h4>
                         <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
                                 <span className="text-gray-500">Government Value</span>
@@ -280,9 +313,9 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                 <h3 className="text-lg font-sans font-normal text-black mb-2">Transaction Details</h3>
                 <div className="border-t border-dashed border-gray-300 mb-4"></div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 items-end">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-2">
                     {/* Transaction Type */}
-                    <div>
+                    <div className="w-full sm:flex-1">
                         <label className="block text-sm text-gray-500 mb-1.5">Type <span className="text-red-400">*</span></label>
                         <Controller
                             control={control}
@@ -300,6 +333,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                         { value: 'mortgage', label: 'Mortgage' },
                                         { value: 'exchange', label: 'Exchange' },
                                     ]}
+                                    className="w-[80%] sm:w-full text-sm"
                                 />
                             )}
                         />
@@ -310,37 +344,46 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                         )}
                     </div>
 
-                    {/* Deed Doc Fee */}
-                    <div>
-                        <label className="block text-sm text-gray-500 mb-1.5">Deed Fee</label>
-                        <input
-                            type="text"
-                            value={transactionType ? `₹${getDeedDocFee(transactionType)}` : '-'}
-                            readOnly
-                            className="w-full border border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-gray-600 text-sm cursor-not-allowed"
-                        />
+                    <div className="hidden sm:block w-px border-l border-dashed border-gray-300 h-10 self-end mb-1.5"></div>
+
+                    {/* Wrapper for Deed Fee & Stamp Duty */}
+                    <div className="flex items-end gap-2 w-full sm:contents">
+                        {/* Deed Doc Fee */}
+                        <div className="flex-1 sm:flex-1">
+                            <label className="block text-sm text-gray-500 mb-1.5">Deed Fee</label>
+                            <input
+                                type="text"
+                                value={transactionType ? `₹${getDeedDocFee(transactionType)}` : '-'}
+                                readOnly
+                                className="w-full border border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-gray-600 text-sm cursor-not-allowed"
+                            />
+                        </div>
+
+                        <div className="pb-4 text-gray-400 font-medium text-lg">+</div>
+
+                        {/* Stamp Duty */}
+                        <div className="flex-1 sm:flex-1">
+                            <label className="block text-sm text-gray-500 mb-1.5">Stamp Duty</label>
+                            <input
+                                type="text"
+                                {...register('stampDuty')}
+                                readOnly
+                                className="w-full border border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-gray-600 text-sm cursor-not-allowed"
+                                placeholder="-"
+                            />
+                        </div>
                     </div>
 
-                    {/* Stamp Duty */}
-                    <div>
-                        <label className="block text-sm text-gray-500 mb-1.5">Stamp Duty</label>
-                        <input
-                            type="text"
-                            {...register('stampDuty')}
-                            readOnly
-                            className="w-full border border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-gray-600 text-sm cursor-not-allowed"
-                            placeholder="-"
-                        />
-                    </div>
+                    <div className="hidden sm:block pb-4 text-gray-400 font-medium text-lg">=</div>
 
                     {/* Total Fee */}
-                    <div>
+                    <div className="w-full sm:flex-1">
                         <label className="block text-sm text-gray-500 mb-1.5">Total Fee</label>
                         <input
                             type="text"
                             value={`₹${estimatedFee.toLocaleString()}`}
                             readOnly
-                            className="w-full border border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-black font-medium text-sm cursor-not-allowed"
+                            className="w-[50%] sm:w-full border border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-black font-medium text-sm cursor-not-allowed"
                         />
                     </div>
                 </div>
@@ -357,11 +400,11 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                 <div className="mb-6">
                     <h4 className="text-sm font-medium text-gray-700 mb-3">Seller Details</h4>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col sm:flex-row sm:gap-4">
                         {/* Seller Aadhar */}
-                        <div>
+                        <div className="w-full sm:flex-1">
                             <label className="block text-sm text-gray-500 mb-1.5">Aadhar Number <span className="text-red-400">*</span></label>
-                            <div className="relative">
+                            <div className="relative w-[85%]">
                                 <Controller
                                     control={control}
                                     name="sellerAadhar"
@@ -374,21 +417,23 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                                 const formatted = val.replace(/(\d{4})(?=\d)/g, '$1 ');
                                                 field.onChange(formatted);
                                             }}
-                                            className={`w-full border rounded-lg px-3 py-2.5 pr-16 text-sm transition-all outline-none
+                                            className={`w-full border rounded-lg px-3 py-2.5 pr-20 text-sm transition-all outline-none
                                                 ${isSellerAadharVerified
                                                     ? 'bg-green-50 border-green-200 text-green-800'
                                                     : errors.sellerAadhar
                                                         ? 'border-red-300 bg-red-50'
                                                         : 'border-gray-200 focus:border-black'
-                                                }`}
+                                                }
+                                                ${(selectedSurvey?.ownerAadhar || selectedDoor?.ownerAadhar) ? 'bg-gray-100 cursor-not-allowed' : ''}
+                                                `}
                                             placeholder="0000 0000 0000"
                                             maxLength={14}
-                                            disabled={isSellerAadharVerified}
+                                            disabled={isSellerAadharVerified || !!(selectedSurvey?.ownerAadhar || selectedDoor?.ownerAadhar)}
                                         />
                                     )}
                                 />
                                 {isSellerAadharVerified && (
-                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs">
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs font-medium">
                                         <Check size={14} />Verified
                                     </span>
                                 )}
@@ -400,50 +445,88 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                             )}
 
                             {/* Aadhar Verification */}
-                            <div className="mt-2">
-                                {isSellerAadharVerified ? (
+                            <div className="mt-2 flex flex-wrap items-center gap-3">
+                                {/* OTP Section */}
+                                {sellerAadharOtpVerified ? (
                                     <span className="inline-flex items-center gap-1.5 text-xs text-green-600 font-medium">
-                                        <Check size={12} />Aadhar Verified
+                                        <Check size={12} />OTP Verified
                                     </span>
                                 ) : (
-                                    <div className="flex flex-wrap items-center gap-2">
+                                    <div className="flex items-center gap-2">
                                         <input
                                             type="text"
                                             value={sellerAadharOtp}
                                             onChange={(e) => setSellerAadharOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                            className="w-16 border border-gray-200 rounded px-2 py-1 text-xs focus:border-black outline-none"
+                                            className={`w-16 border rounded px-2 py-1 text-xs outline-none
+                                                ${!sellerAadhar || sellerAadhar.replace(/\D/g, '').length !== 12
+                                                    ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+                                                    : 'bg-white border-gray-200 focus:border-black text-black'
+                                                }`}
                                             placeholder="OTP"
                                             maxLength={6}
+                                            disabled={!sellerAadhar || sellerAadhar.replace(/\D/g, '').length !== 12}
                                         />
                                         {!sellerAadharOtpSent ? (
-                                            <button type="button" onClick={handleSendSellerAadharOtp} className="bg-black text-white px-2.5 py-1 rounded text-xs hover:bg-gray-800">Send OTP</button>
+                                            <button
+                                                type="button"
+                                                onClick={handleSendSellerAadharOtp}
+                                                disabled={!sellerAadhar || sellerAadhar.replace(/\D/g, '').length !== 12}
+                                                className="bg-black text-white px-2.5 py-1 rounded text-xs hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                Send OTP
+                                            </button>
                                         ) : (
                                             <button type="button" onClick={handleVerifySellerAadharOtp} disabled={sellerAadharOtp.length !== 6} className="bg-black text-white px-2.5 py-1 rounded text-xs hover:bg-gray-800 disabled:opacity-50">Verify</button>
                                         )}
-                                        <span className="text-gray-400 text-xs hidden sm:inline">or</span>
+                                    </div>
+                                )}
+
+                                {/* Fingersprint Section */}
+                                {sellerFingerprintVerified ? (
+                                    <span className="inline-flex items-center gap-1.5 text-xs text-green-600 font-medium">
+                                        <Check size={12} />Biometric Verified
+                                    </span>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-400 text-xs hidden sm:inline">&</span>
                                         {isSellerScanning ? (
                                             <span className="inline-flex items-center gap-1 text-xs text-gray-500"><Loader2 size={12} className="animate-spin" />Scanning...</span>
                                         ) : (
-                                            <button type="button" onClick={handleSellerFingerprintScan} className="inline-flex items-center gap-1 bg-black text-white px-2.5 py-1 rounded text-xs hover:bg-gray-800">
-                                                <FingerprintIcon className="w-3 h-3" />Fingerprint
+                                            <button
+                                                type="button"
+                                                onClick={handleSellerFingerprintScan}
+                                                disabled={!sellerAadhar || sellerAadhar.replace(/\D/g, '').length !== 12}
+                                                className="inline-flex items-center gap-1 bg-black text-white px-2.5 sm:px-2 py-1 rounded text-xs hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                <FingerprintIcon className="w-3 h-3 sm:w-4 sm:h-4" />Fingerprint
                                             </button>
                                         )}
                                     </div>
                                 )}
-                                {sellerAadharOtpSent && sellerAadharOtpTimer > 0 && (
-                                    <p className="text-xs text-gray-400 mt-1 flex items-center gap-1"><Clock size={10} />Resend in {sellerAadharOtpTimer}s</p>
+                            </div>
+
+                            {/* Messages */}
+                            <div className="space-y-1 mt-1">
+                                {sellerAadharOtpSent && !sellerAadharOtpVerified && sellerAadharOtpTimer > 0 && (
+                                    <p className="text-xs text-gray-400 flex items-center gap-1"><Clock size={10} />Resend in {sellerAadharOtpTimer}s</p>
                                 )}
-                                {sellerAadharMockOtp && <p className="text-xs text-gray-400 mt-1">Mock: {sellerAadharMockOtp}</p>}
-                                {sellerAadharOtpError && <p className="text-xs text-red-500 mt-1">{sellerAadharOtpError}</p>}
-                                {sellerAadharError && <p className="text-xs text-red-500 mt-1">{sellerAadharError}</p>}
+                                {sellerAadharMockOtp && !sellerAadharOtpVerified && <p className="text-xs text-gray-400">Mock: {sellerAadharMockOtp}</p>}
+                                {sellerAadharOtpError && <p className="text-xs text-red-500">{sellerAadharOtpError}</p>}
+                                {sellerAadharError && <p className="text-xs text-red-500">{sellerAadharError}</p>}
                             </div>
                         </div>
 
+                        {/* Vertical Separator */}
+                        <div className="hidden sm:block w-px border-l border-dashed border-gray-300 mx-4 self-stretch"></div>
+
                         {/* Seller Phone */}
-                        <div>
+                        <div className="w-full mt-4 sm:mt-0 sm:flex-1 sm:pl-6">
                             <label className="block text-sm text-gray-500 mb-1.5">Phone Number <span className="text-red-400">*</span></label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">+91</span>
+                            <div className="relative w-[85%]">
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center">
+                                    <span className="text-gray-400 text-sm">+91</span>
+                                    <div className="h-4 w-px border-l border-dashed border-gray-300 ml-2"></div>
+                                </div>
                                 <Controller
                                     control={control}
                                     name="sellerPhone"
@@ -453,9 +536,10 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                             value={field.value || ''}
                                             onChange={(e) => {
                                                 const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                                                field.onChange(val);
+                                                const formatted = val.replace(/(\d{5})(?=\d)/g, '$1 ');
+                                                field.onChange(formatted);
                                             }}
-                                            className={`w-full border rounded-lg py-2.5 pl-12 pr-16 text-sm transition-all outline-none
+                                            className={`w-full border rounded-lg py-2.5 pl-16 pr-20 text-sm transition-all outline-none
                                                 ${sellerOtpVerified
                                                     ? 'bg-green-50 border-green-200 text-green-800'
                                                     : errors.sellerPhone
@@ -463,13 +547,13 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                                         : 'border-gray-200 focus:border-black'
                                                 }`}
                                             placeholder="98765 43210"
-                                            maxLength={10}
+                                            maxLength={11}
                                             disabled={sellerOtpVerified}
                                         />
                                     )}
                                 />
                                 {sellerOtpVerified && (
-                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs">
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs font-medium">
                                         <Check size={14} />Verified
                                     </span>
                                 )}
@@ -481,18 +565,32 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                             )}
 
                             {/* Phone OTP */}
-                            {!sellerOtpVerified && (
+                            {sellerOtpVerified ? (
+                                <div className="mt-2">
+                                    <span className="inline-flex items-center gap-1.5 text-xs text-green-600 font-medium">
+                                        <Check size={12} />Phone Verified
+                                    </span>
+                                </div>
+                            ) : (
                                 <div className="mt-2 flex flex-wrap items-center gap-2">
                                     <input
                                         type="text"
                                         value={sellerOtp}
                                         onChange={(e) => setSellerOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                        className="w-16 border border-gray-200 rounded px-2 py-1 text-xs focus:border-black outline-none"
+                                        className="w-16 border border-gray-200 rounded px-2 py-1 text-xs focus:border-black outline-none disabled:opacity-50 disabled:bg-gray-100"
                                         placeholder="OTP"
                                         maxLength={6}
+                                        disabled={!sellerPhone || sellerPhone.replace(/\D/g, '').length !== 10}
                                     />
                                     {!sellerOtpSent ? (
-                                        <button type="button" onClick={handleSendSellerOtp} className="bg-black text-white px-2.5 py-1 rounded text-xs hover:bg-gray-800">Send OTP</button>
+                                        <button
+                                            type="button"
+                                            onClick={handleSendSellerOtp}
+                                            disabled={!sellerPhone || sellerPhone.replace(/\D/g, '').length !== 10}
+                                            className="bg-black text-white px-2.5 py-1 rounded text-xs hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Send OTP
+                                        </button>
                                     ) : (
                                         <button type="button" onClick={handleVerifySellerOtp} disabled={sellerOtp.length !== 6} className="bg-black text-white px-2.5 py-1 rounded text-xs hover:bg-gray-800 disabled:opacity-50">Verify</button>
                                     )}
@@ -500,9 +598,9 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                         <span className="text-xs text-gray-400 flex items-center gap-1"><Clock size={10} />{sellerOtpTimer}s</span>
                                     )}
                                     {sellerMockOtp && <span className="text-xs text-gray-400">Mock: {sellerMockOtp}</span>}
+                                    {sellerOtpError && <p className="text-xs text-red-500 w-full">{sellerOtpError}</p>}
                                 </div>
                             )}
-                            {sellerOtpError && <p className="text-xs text-red-500 mt-1">{sellerOtpError}</p>}
                         </div>
                     </div>
                 </div>
@@ -511,13 +609,13 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
 
                 {/* Buyer Details */}
                 <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-3">Buyer Details</h4>
+                    <h4 className="font-medium text-gray-700 mb-4">Buyer Details</h4>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col sm:flex-row sm:gap-4">
                         {/* Buyer Aadhar */}
-                        <div>
+                        <div className="w-full sm:flex-1">
                             <label className="block text-sm text-gray-500 mb-1.5">Aadhar Number <span className="text-red-400">*</span></label>
-                            <div className="relative">
+                            <div className="relative w-[85%]">
                                 <Controller
                                     control={control}
                                     name="buyerAadhar"
@@ -530,7 +628,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                                 const formatted = val.replace(/(\d{4})(?=\d)/g, '$1 ');
                                                 field.onChange(formatted);
                                             }}
-                                            className={`w-full border rounded-lg px-3 py-2.5 pr-16 text-sm transition-all outline-none
+                                            className={`w-full border rounded-lg px-3 py-2.5 pr-20 text-sm transition-all outline-none
                                                 ${isBuyerAadharVerified
                                                     ? 'bg-green-50 border-green-200 text-green-800'
                                                     : errors.buyerAadhar
@@ -544,7 +642,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     )}
                                 />
                                 {isBuyerAadharVerified && (
-                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs">
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs font-medium">
                                         <Check size={14} />Verified
                                     </span>
                                 )}
@@ -556,50 +654,87 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                             )}
 
                             {/* Aadhar Verification */}
-                            <div className="mt-2">
-                                {isBuyerAadharVerified ? (
+                            <div className="mt-2 flex flex-wrap items-center gap-3">
+                                {/* OTP Section */}
+                                {buyerAadharOtpVerified ? (
                                     <span className="inline-flex items-center gap-1.5 text-xs text-green-600 font-medium">
-                                        <Check size={12} />Aadhar Verified
+                                        <Check size={12} />OTP Verified
                                     </span>
                                 ) : (
-                                    <div className="flex flex-wrap items-center gap-2">
+                                    <div className="flex items-center gap-2">
                                         <input
                                             type="text"
                                             value={buyerAadharOtp}
                                             onChange={(e) => setBuyerAadharOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                            className="w-16 border border-gray-200 rounded px-2 py-1 text-xs focus:border-black outline-none"
+                                            className={`w-16 border rounded px-2 py-1 text-xs outline-none
+                                                ${!buyerAadhar || buyerAadhar.replace(/\D/g, '').length !== 12
+                                                    ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+                                                    : 'bg-white border-gray-200 focus:border-black text-black'
+                                                }`}
                                             placeholder="OTP"
                                             maxLength={6}
+                                            disabled={!buyerAadhar || buyerAadhar.replace(/\D/g, '').length !== 12}
                                         />
                                         {!buyerAadharOtpSent ? (
-                                            <button type="button" onClick={handleSendBuyerAadharOtp} className="bg-black text-white px-2.5 py-1 rounded text-xs hover:bg-gray-800">Send OTP</button>
+                                            <button
+                                                type="button"
+                                                onClick={handleSendBuyerAadharOtp}
+                                                disabled={!buyerAadhar || buyerAadhar.replace(/\D/g, '').length !== 12}
+                                                className="bg-black text-white px-2.5 py-1 rounded text-xs hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                Send OTP
+                                            </button>
                                         ) : (
                                             <button type="button" onClick={handleVerifyBuyerAadharOtp} disabled={buyerAadharOtp.length !== 6} className="bg-black text-white px-2.5 py-1 rounded text-xs hover:bg-gray-800 disabled:opacity-50">Verify</button>
                                         )}
-                                        <span className="text-gray-400 text-xs hidden sm:inline">or</span>
+                                    </div>
+                                )}
+
+                                {/* Fingerprint Section */}
+                                {buyerFingerprintVerified ? (
+                                    <span className="inline-flex items-center gap-1.5 text-xs text-green-600 font-medium">
+                                        <Check size={12} />Biometric Verified
+                                    </span>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-400 text-xs hidden sm:inline">&</span>
                                         {isBuyerScanning ? (
                                             <span className="inline-flex items-center gap-1 text-xs text-gray-500"><Loader2 size={12} className="animate-spin" />Scanning...</span>
                                         ) : (
-                                            <button type="button" onClick={handleBuyerFingerprintScan} className="inline-flex items-center gap-1 bg-black text-white px-2.5 py-1 rounded text-xs hover:bg-gray-800">
-                                                <FingerprintIcon className="w-3 h-3" />Fingerprint
+                                            <button
+                                                type="button"
+                                                onClick={handleBuyerFingerprintScan}
+                                                disabled={!buyerAadhar || buyerAadhar.replace(/\D/g, '').length !== 12}
+                                                className="inline-flex items-center gap-1 bg-black text-white px-2.5 sm:px-2 py-1 rounded text-xs hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                <FingerprintIcon className="w-3 h-3 sm:w-4 sm:h-4" />Fingerprint
                                             </button>
                                         )}
                                     </div>
                                 )}
-                                {buyerAadharOtpSent && buyerAadharOtpTimer > 0 && (
-                                    <p className="text-xs text-gray-400 mt-1 flex items-center gap-1"><Clock size={10} />Resend in {buyerAadharOtpTimer}s</p>
+                            </div>
+
+                            {/* Messages */}
+                            <div className="space-y-1 mt-1">
+                                {buyerAadharOtpSent && !buyerAadharOtpVerified && buyerAadharOtpTimer > 0 && (
+                                    <p className="text-xs text-gray-400 flex items-center gap-1"><Clock size={10} />Resend in {buyerAadharOtpTimer}s</p>
                                 )}
-                                {buyerAadharMockOtp && <p className="text-xs text-gray-400 mt-1">Mock: {buyerAadharMockOtp}</p>}
-                                {buyerAadharOtpError && <p className="text-xs text-red-500 mt-1">{buyerAadharOtpError}</p>}
+                                {buyerAadharMockOtp && !buyerAadharOtpVerified && <p className="text-xs text-gray-400">Mock: {buyerAadharMockOtp}</p>}
                                 {buyerAadharError && <p className="text-xs text-red-500 mt-1">{buyerAadharError}</p>}
                             </div>
                         </div>
 
+                        {/* Vertical Separator */}
+                        <div className="hidden sm:block w-px border-l border-dashed border-gray-300 mx-4 self-stretch"></div>
+
                         {/* Buyer Phone */}
-                        <div>
+                        <div className="w-full mt-4 sm:mt-0 sm:flex-1 sm:pl-6">
                             <label className="block text-sm text-gray-500 mb-1.5">Phone Number <span className="text-red-400">*</span></label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">+91</span>
+                            <div className="relative w-[85%]">
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center">
+                                    <span className="text-gray-400 text-sm">+91</span>
+                                    <div className="h-4 w-px border-l border-dashed border-gray-300 ml-2"></div>
+                                </div>
                                 <Controller
                                     control={control}
                                     name="buyerPhone"
@@ -609,9 +744,10 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                             value={field.value || ''}
                                             onChange={(e) => {
                                                 const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                                                field.onChange(val);
+                                                const formatted = val.replace(/(\d{5})(?=\d)/g, '$1 ');
+                                                field.onChange(formatted);
                                             }}
-                                            className={`w-full border rounded-lg py-2.5 pl-12 pr-16 text-sm transition-all outline-none
+                                            className={`w-full border rounded-lg py-2.5 pl-16 pr-20 text-sm transition-all outline-none
                                                 ${buyerOtpVerified
                                                     ? 'bg-green-50 border-green-200 text-green-800'
                                                     : errors.buyerPhone
@@ -619,13 +755,13 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                                         : 'border-gray-200 focus:border-black'
                                                 }`}
                                             placeholder="98765 43210"
-                                            maxLength={10}
+                                            maxLength={11}
                                             disabled={buyerOtpVerified}
                                         />
                                     )}
                                 />
                                 {buyerOtpVerified && (
-                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs">
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs font-medium">
                                         <Check size={14} />Verified
                                     </span>
                                 )}
@@ -637,18 +773,32 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                             )}
 
                             {/* Phone OTP */}
-                            {!buyerOtpVerified && (
+                            {buyerOtpVerified ? (
+                                <div className="mt-2">
+                                    <span className="inline-flex items-center gap-1.5 text-xs text-green-600 font-medium">
+                                        <Check size={12} />Phone Verified
+                                    </span>
+                                </div>
+                            ) : (
                                 <div className="mt-2 flex flex-wrap items-center gap-2">
                                     <input
                                         type="text"
                                         value={buyerOtp}
                                         onChange={(e) => setBuyerOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                        className="w-16 border border-gray-200 rounded px-2 py-1 text-xs focus:border-black outline-none"
+                                        className="w-16 border border-gray-200 rounded px-2 py-1 text-xs focus:border-black outline-none disabled:opacity-50 disabled:bg-gray-100"
                                         placeholder="OTP"
                                         maxLength={6}
+                                        disabled={!buyerPhone || buyerPhone.replace(/\D/g, '').length !== 10}
                                     />
                                     {!buyerOtpSent ? (
-                                        <button type="button" onClick={handleSendBuyerOtp} className="bg-black text-white px-2.5 py-1 rounded text-xs hover:bg-gray-800">Send OTP</button>
+                                        <button
+                                            type="button"
+                                            onClick={handleSendBuyerOtp}
+                                            disabled={!buyerPhone || buyerPhone.replace(/\D/g, '').length !== 10}
+                                            className="bg-black text-white px-2.5 py-1 rounded text-xs hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Send OTP
+                                        </button>
                                     ) : (
                                         <button type="button" onClick={handleVerifyBuyerOtp} disabled={buyerOtp.length !== 6} className="bg-black text-white px-2.5 py-1 rounded text-xs hover:bg-gray-800 disabled:opacity-50">Verify</button>
                                     )}
@@ -656,9 +806,9 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                         <span className="text-xs text-gray-400 flex items-center gap-1"><Clock size={10} />{buyerOtpTimer}s</span>
                                     )}
                                     {buyerMockOtp && <span className="text-xs text-gray-400">Mock: {buyerMockOtp}</span>}
+                                    {buyerOtpError && <p className="text-xs text-red-500 w-full">{buyerOtpError}</p>}
                                 </div>
                             )}
-                            {buyerOtpError && <p className="text-xs text-red-500 mt-1">{buyerOtpError}</p>}
                         </div>
                     </div>
                 </div>

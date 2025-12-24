@@ -13,21 +13,25 @@
                             "surveyNumbers": [
                                 {
                                     "number": "33/A",
-                                    "govtValue": 8000000
+                                    "govtValue": 8000000,
+                                    "ownerAadhar": "9999 9999 9998"
                                 },
                                 {
                                     "number": "33/B",
-                                    "govtValue": 8500000
+                                    "govtValue": 8500000,
+                                    "ownerAadhar": "9999 9999 9999"
                                 }
                             ],
                             "doorNumbers": [
                                 {
                                     "number": "1-10",
-                                    "govtValue": 8200000
+                                    "govtValue": 8200000,
+                                    "ownerAadhar": "9999 9999 9997"
                                 },
                                 {
                                     "number": "1-11",
-                                    "govtValue": 8600000
+                                    "govtValue": 8600000,
+                                    "ownerAadhar": "9999 9999 9996"
                                 }
                             ]
                         }
@@ -41,21 +45,25 @@
                             "surveyNumbers": [
                                 {
                                     "number": "20/X",
-                                    "govtValue": 7500000
+                                    "govtValue": 7500000,
+                                    "ownerAadhar": "9999 9999 9995"
                                 },
                                 {
                                     "number": "21/Y",
-                                    "govtValue": 7800000
+                                    "govtValue": 7800000,
+                                    "ownerAadhar": "9999 9999 9994"
                                 }
                             ],
                             "doorNumbers": [
                                 {
                                     "number": "2-20",
-                                    "govtValue": 7600000
+                                    "govtValue": 7600000,
+                                    "ownerAadhar": "9999 9999 9993"
                                 },
                                 {
                                     "number": "2-21",
-                                    "govtValue": 8100000
+                                    "govtValue": 8100000,
+                                    "ownerAadhar": "9999 9999 9992"
                                 }
                             ]
                         }
@@ -74,21 +82,25 @@
                             "surveyNumbers": [
                                 {
                                     "number": "77/G",
-                                    "govtValue": 5500000
+                                    "govtValue": 5500000,
+                                    "ownerAadhar": "9999 9999 9991"
                                 },
                                 {
                                     "number": "78/H",
-                                    "govtValue": 6000000
+                                    "govtValue": 6000000,
+                                    "ownerAadhar": "9999 9999 9990"
                                 }
                             ],
                             "doorNumbers": [
                                 {
                                     "number": "3-30",
-                                    "govtValue": 5600000
+                                    "govtValue": 5600000,
+                                    "ownerAadhar": "9999 9999 9989"
                                 },
                                 {
                                     "number": "3-31",
-                                    "govtValue": 6200000
+                                    "govtValue": 6200000,
+                                    "ownerAadhar": "9999 9999 9988"
                                 }
                             ]
                         }

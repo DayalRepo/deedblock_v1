@@ -74,7 +74,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex flex-col bg-black/95"
+                className="fixed inset-0 z-50 flex flex-col bg-white"
                 onClick={onClose}
             >
                 {/* Top Bar */}
@@ -82,12 +82,12 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                     className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="flex items-center gap-3 text-white min-w-0">
+                    <div className="flex items-center gap-3 text-black min-w-0">
                         <div className="min-w-0">
                             <p className="text-sm sm:text-base font-medium truncate">
                                 {currentFile?.name || 'Preview'}
                             </p>
-                            <p className="text-xs text-white/60">
+                            <p className="text-xs text-gray-500">
                                 {currentFile ? formatFileSize(currentFile.size) : ''}
                                 {showPropertyPhotos && totalPhotos > 1 && (
                                     <span className="ml-2">• {currentIndex + 1} / {totalPhotos}</span>
@@ -97,7 +97,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                        className="p-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-full transition-colors"
                     >
                         <X size={22} />
                     </button>
@@ -112,7 +112,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                     {showPropertyPhotos && totalPhotos > 1 && (
                         <button
                             onClick={goToPrevious}
-                            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 text-white/60 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 text-gray-500 hover:text-black hover:bg-gray-100 rounded-full transition-all"
                         >
                             <ChevronLeft size={24} className="sm:w-8 sm:h-8" />
                         </button>
@@ -146,13 +146,13 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                                         />
                                     </div>
                                 ) : (
-                                    <div className="text-center text-white/70 py-12">
+                                    <div className="text-center text-gray-400 py-12">
                                         <FileText size={48} className="mx-auto mb-4 opacity-50" />
                                         <p className="text-sm">Preview not available</p>
                                     </div>
                                 )
                             ) : (
-                                <p className="text-white/50 text-sm">No file to preview</p>
+                                <p className="text-gray-400 text-sm">No file to preview</p>
                             )}
                         </motion.div>
                     </AnimatePresence>
@@ -161,7 +161,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                     {showPropertyPhotos && totalPhotos > 1 && (
                         <button
                             onClick={goToNext}
-                            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 text-white/60 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 text-gray-500 hover:text-black hover:bg-gray-100 rounded-full transition-all"
                         >
                             <ChevronRight size={24} className="sm:w-8 sm:h-8" />
                         </button>
@@ -180,8 +180,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                                     key={i}
                                     onClick={() => setCurrentIndex(i)}
                                     className={`relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded overflow-hidden transition-all ${i === currentIndex
-                                            ? 'ring-2 ring-white ring-offset-2 ring-offset-black opacity-100'
-                                            : 'opacity-40 hover:opacity-70'
+                                        ? 'ring-2 ring-black ring-offset-2 ring-offset-white opacity-100'
+                                        : 'opacity-40 hover:opacity-70'
                                         }`}
                                 >
                                     <img

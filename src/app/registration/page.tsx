@@ -22,6 +22,7 @@ import { Step3_ReviewPayment } from '@/components/registration/steps/Step3_Revie
 import { useRegistrationForm, INITIAL_FORM_DATA } from '@/hooks/registration/useRegistrationForm';
 import { useLocationData } from '@/hooks/registration/useLocationData';
 import { useOTPVerification } from '@/hooks/registration/useOTPVerification';
+import { useRegistrationPersistence } from '@/hooks/registration/useRegistrationPersistence';
 import { clearUserFilesFromIndexedDB, deleteFormDataFromIndexedDB } from '@/utils/indexedDB';
 import { RegistrationFormSchema } from '@/lib/validations/registrationSchema'; // Type
 
@@ -68,6 +69,7 @@ export default function RegistrationPage() {
   const [showPropertyPhotos, setShowPropertyPhotos] = useState(false);
   const [showDocuments, setShowDocuments] = useState(false);
   const [registrationId, setRegistrationId] = useState<string>('');
+  const [userId, setUserId] = useState<string | undefined>(undefined);
   const [copiedId, setCopiedId] = useState(false);
   const [showCopyOverlay, setShowCopyOverlay] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -110,7 +112,17 @@ export default function RegistrationPage() {
 
   const [propertyPhotoUrls, setPropertyPhotoUrls] = useState<Map<number, string>>(new Map());
 
+  // IndexedDB Persistence Hook
+  const { clearPersistedData } = useRegistrationPersistence(form, userId);
+
   // --- Effects ---
+
+  // Get User ID
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id);
+    });
+  }, []);
 
   // Cleanup property photo URLs on unmount
   useEffect(() => {
@@ -205,6 +217,35 @@ export default function RegistrationPage() {
     setRegistrationId('');
     setSubmitSuccess(false);
   };
+
+  const resetStep1Only = async () => {
+    // Reset specific fields for Step 1
+    const fieldsToReset: (keyof RegistrationFormSchema)[] = [
+      'surveyNumber', 'doorNumber', 'village', 'taluka', 'district', 'state',
+      'transactionType', 'considerationAmount', 'stampDuty', 'registrationFee',
+      'sellerAadhar', 'sellerPhone',
+      'buyerAadhar', 'buyerPhone',
+      'sellerOtpVerified', 'buyerOtpVerified',
+      'sellerFingerprintVerified', 'buyerFingerprintVerified'
+      // Note: Add other fields if missing from schema types
+    ];
+
+    // Reset form values to default/empty for these keys
+    fieldsToReset.forEach((field) => {
+      setValue(field, INITIAL_FORM_DATA[field] as any);
+    });
+
+    // Reset OTP hook
+    otpVerification.resetOtpState();
+
+    // Clear IndexedDB draft
+    await clearPersistedData();
+
+    toast.info("Step 1 details have been reset.");
+  };
+
+
+
 
 
   const handleSuccessClose = useCallback(() => {
@@ -338,23 +379,18 @@ export default function RegistrationPage() {
         taluka: data.taluka,
         district: data.district,
         state: data.state,
-        area: '0',
-        area_unit: 'sqft',
         transaction_type: data.transactionType,
         consideration_amount: data.considerationAmount,
         stamp_duty: data.stampDuty || '0',
         registration_fee: data.registrationFee || '0',
-        seller_name: '',
         seller_aadhar: data.sellerAadhar ? data.sellerAadhar.replace(/\s/g, '') : '',
         seller_phone: data.sellerPhone ? data.sellerPhone.replace(/\s/g, '') : '',
-        seller_email: data.sellerEmail,
-        buyer_name: '',
+        seller_otp_verified: data.sellerOtpVerified,
+        seller_biometric_verified: data.sellerFingerprintVerified,
         buyer_aadhar: data.buyerAadhar ? data.buyerAadhar.replace(/\s/g, '') : '',
         buyer_phone: data.buyerPhone ? data.buyerPhone.replace(/\s/g, '') : '',
-        buyer_email: data.buyerEmail,
-        property_type: 'land',
-        plot_number: '',
-        pincode: '',
+        buyer_otp_verified: data.buyerOtpVerified,
+        buyer_biometric_verified: data.buyerFingerprintVerified,
         documents: Object.keys(documentsIPFS).length > 0 ? documentsIPFS : undefined,
         property_photos: photosIPFS.length > 0 ? photosIPFS : undefined,
       };
@@ -384,7 +420,7 @@ export default function RegistrationPage() {
             form={form}
             locationDataHook={locationDataHook}
             otpVerification={otpVerification}
-            onReset={resetFormFull}
+            onReset={resetStep1Only}
           />
         );
       case 2:

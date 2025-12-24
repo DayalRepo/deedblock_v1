@@ -13,21 +13,25 @@
                             "surveyNumbers": [
                                 {
                                     "number": "1/A",
-                                    "govtValue": 15000000
+                                    "govtValue": 15000000,
+                                    "ownerAadhar": "1111 2222 3331"
                                 },
                                 {
                                     "number": "1/B",
-                                    "govtValue": 16000000
+                                    "govtValue": 16000000,
+                                    "ownerAadhar": "1111 2222 3332"
                                 }
                             ],
                             "doorNumbers": [
                                 {
                                     "number": "1-100",
-                                    "govtValue": 15500000
+                                    "govtValue": 15500000,
+                                    "ownerAadhar": "1111 2222 3333"
                                 },
                                 {
                                     "number": "1-101",
-                                    "govtValue": 16500000
+                                    "govtValue": 16500000,
+                                    "ownerAadhar": "1111 2222 3334"
                                 }
                             ]
                         }
@@ -41,21 +45,25 @@
                             "surveyNumbers": [
                                 {
                                     "number": "10/X",
-                                    "govtValue": 25000000
+                                    "govtValue": 25000000,
+                                    "ownerAadhar": "1111 2222 3335"
                                 },
                                 {
                                     "number": "11/Y",
-                                    "govtValue": 28000000
+                                    "govtValue": 28000000,
+                                    "ownerAadhar": "1111 2222 3336"
                                 }
                             ],
                             "doorNumbers": [
                                 {
                                     "number": "2-200",
-                                    "govtValue": 26000000
+                                    "govtValue": 26000000,
+                                    "ownerAadhar": "1111 2222 3337"
                                 },
                                 {
                                     "number": "2-201",
-                                    "govtValue": 29000000
+                                    "govtValue": 29000000,
+                                    "ownerAadhar": "1111 2222 3338"
                                 }
                             ]
                         }
@@ -74,21 +82,25 @@
                             "surveyNumbers": [
                                 {
                                     "number": "44/K",
-                                    "govtValue": 7000000
+                                    "govtValue": 7000000,
+                                    "ownerAadhar": "1111 2222 3339"
                                 },
                                 {
                                     "number": "45/L",
-                                    "govtValue": 7500000
+                                    "govtValue": 7500000,
+                                    "ownerAadhar": "1111 2222 3340"
                                 }
                             ],
                             "doorNumbers": [
                                 {
                                     "number": "3-300",
-                                    "govtValue": 7200000
+                                    "govtValue": 7200000,
+                                    "ownerAadhar": "1111 2222 3341"
                                 },
                                 {
                                     "number": "3-301",
-                                    "govtValue": 7800000
+                                    "govtValue": 7800000,
+                                    "ownerAadhar": "1111 2222 3342"
                                 }
                             ]
                         },
@@ -97,21 +109,25 @@
                             "surveyNumbers": [
                                 {
                                     "number": "22/B",
-                                    "govtValue": 6500000
+                                    "govtValue": 6500000,
+                                    "ownerAadhar": "1111 2222 3343"
                                 },
                                 {
                                     "number": "23/C",
-                                    "govtValue": 6800000
+                                    "govtValue": 6800000,
+                                    "ownerAadhar": "1111 2222 3344"
                                 }
                             ],
                             "doorNumbers": [
                                 {
                                     "number": "4-400",
-                                    "govtValue": 6600000
+                                    "govtValue": 6600000,
+                                    "ownerAadhar": "1111 2222 3345"
                                 },
                                 {
                                     "number": "4-401",
-                                    "govtValue": 7000000
+                                    "govtValue": 7000000,
+                                    "ownerAadhar": "1111 2222 3346"
                                 }
                             ]
                         }

@@ -18,7 +18,7 @@ export default function LayoutContent({
   const dmSansClassName = useMemo(() => dmSans.className, []);
 
   return (
-    <div className="min-h-screen bg-black relative">
+    <div className="min-h-screen bg-white relative">
       <Header />
       {children}
     </div>

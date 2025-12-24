@@ -2,7 +2,7 @@
 
 
 :root {
-  --background: #FAF9F6;
+  --background: #ffffff;
   --foreground: #000000;
 }
 
@@ -14,7 +14,7 @@
 }
 
 html {
-  background: #FAF9F6;
+  background: #ffffff;
 }
 
 body {

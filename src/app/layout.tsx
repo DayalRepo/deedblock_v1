@@ -58,7 +58,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${dmSans.variable} ${dmMono.variable} antialiased bg-black text-white transition-colors font-sans`}
+        className={`${dmSans.variable} ${dmMono.variable} antialiased bg-white text-black transition-colors font-sans`}
         suppressHydrationWarning
       >
         <ClientProviders>

@@ -65,7 +65,7 @@ export function useOTPVerification({ setValue, watch }: UseOTPVerificationProps)
 
     // --- Seller OTP ---
     const handleSendSellerOtp = () => {
-        if (!sellerPhone || sellerPhone.length !== 10) {
+        if (!sellerPhone || sellerPhone.replace(/\D/g, '').length !== 10) {
             setSellerOtpError('Enter valid 10-digit number');
             return;
         }
@@ -88,7 +88,7 @@ export function useOTPVerification({ setValue, watch }: UseOTPVerificationProps)
 
     // --- Buyer OTP ---
     const handleSendBuyerOtp = () => {
-        if (!buyerPhone || buyerPhone.length !== 10) {
+        if (!buyerPhone || buyerPhone.replace(/\D/g, '').length !== 10) {
             setBuyerOtpError('Enter valid 10-digit number');
             return;
         }
@@ -183,7 +183,7 @@ export function useOTPVerification({ setValue, watch }: UseOTPVerificationProps)
     };
 
     const handleSellerFingerprintScan = async () => {
-        if (!sellerAadhar || sellerAadhar.length !== 12) {
+        if (!sellerAadhar || sellerAadhar.replace(/\D/g, '').length !== 12) {
             setBiometricSellerError("Enter valid 12-digit Aadhar ID first");
             return;
         }
@@ -197,7 +197,7 @@ export function useOTPVerification({ setValue, watch }: UseOTPVerificationProps)
     };
 
     const handleBuyerFingerprintScan = async () => {
-        if (!buyerAadhar || buyerAadhar.length !== 12) {
+        if (!buyerAadhar || buyerAadhar.replace(/\D/g, '').length !== 12) {
             setBiometricBuyerError("Enter valid 12-digit Aadhar ID first");
             return;
         }

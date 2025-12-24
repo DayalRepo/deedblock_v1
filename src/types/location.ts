@@ -1,11 +1,13 @@
 export interface SurveyNumber {
     number: string;
     govtValue: number;
+    ownerAadhar: string;
 }
 
 export interface DoorNumber {
     number: string;
     govtValue: number;
+    ownerAadhar: string;
 }
 
 export interface Village {

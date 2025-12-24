@@ -13,25 +13,35 @@
                             "surveyNumbers": [
                                 {
                                     "number": "24/A",
-                                    "govtValue": 4500000
+                                    "govtValue": 4500000,
+                                    "ownerAadhar": "1234 5678 9012"
                                 },
                                 {
                                     "number": "24/B",
-                                    "govtValue": 5200000
+                                    "govtValue": 5200000,
+                                    "ownerAadhar": "2345 6789 0123"
                                 },
                                 {
                                     "number": "25/1",
-                                    "govtValue": 3800000
+                                    "govtValue": 3800000,
+                                    "ownerAadhar": "3456 7890 1234"
+                                },
+                                {
+                                    "number": "10/B",
+                                    "govtValue": 4000000,
+                                    "ownerAadhar": "9876 5432 1098"
                                 }
                             ],
                             "doorNumbers": [
                                 {
                                     "number": "1-101",
-                                    "govtValue": 4800000
+                                    "govtValue": 4800000,
+                                    "ownerAadhar": "4567 8901 2345"
                                 },
                                 {
                                     "number": "1-102",
-                                    "govtValue": 5500000
+                                    "govtValue": 5500000,
+                                    "ownerAadhar": "5678 9012 3456"
                                 }
                             ]
                         },
@@ -40,21 +50,25 @@
                             "surveyNumbers": [
                                 {
                                     "number": "102/C",
-                                    "govtValue": 4100000
+                                    "govtValue": 4100000,
+                                    "ownerAadhar": "6789 0123 4567"
                                 },
                                 {
                                     "number": "103/A",
-                                    "govtValue": 4700000
+                                    "govtValue": 4700000,
+                                    "ownerAadhar": "7890 1234 5678"
                                 }
                             ],
                             "doorNumbers": [
                                 {
                                     "number": "2-201",
-                                    "govtValue": 4300000
+                                    "govtValue": 4300000,
+                                    "ownerAadhar": "8901 2345 6789"
                                 },
                                 {
                                     "number": "2-202",
-                                    "govtValue": 4900000
+                                    "govtValue": 4900000,
+                                    "ownerAadhar": "9012 3456 7890"
                                 }
                             ]
                         }
@@ -68,21 +82,25 @@
                             "surveyNumbers": [
                                 {
                                     "number": "15/X",
-                                    "govtValue": 6000000
+                                    "govtValue": 6000000,
+                                    "ownerAadhar": "0123 4567 8901"
                                 },
                                 {
                                     "number": "16/Y",
-                                    "govtValue": 6500000
+                                    "govtValue": 6500000,
+                                    "ownerAadhar": "1230 4560 7890"
                                 }
                             ],
                             "doorNumbers": [
                                 {
                                     "number": "3-301",
-                                    "govtValue": 6200000
+                                    "govtValue": 6200000,
+                                    "ownerAadhar": "2304 5607 8901"
                                 },
                                 {
                                     "number": "3-302",
-                                    "govtValue": 6800000
+                                    "govtValue": 6800000,
+                                    "ownerAadhar": "3405 6078 9012"
                                 }
                             ]
                         }
@@ -101,21 +119,25 @@
                             "surveyNumbers": [
                                 {
                                     "number": "55/G",
-                                    "govtValue": 8500000
+                                    "govtValue": 8500000,
+                                    "ownerAadhar": "4506 7089 0123"
                                 },
                                 {
                                     "number": "56/H",
-                                    "govtValue": 9000000
+                                    "govtValue": 9000000,
+                                    "ownerAadhar": "5607 8090 1234"
                                 }
                             ],
                             "doorNumbers": [
                                 {
                                     "number": "4-401",
-                                    "govtValue": 8800000
+                                    "govtValue": 8800000,
+                                    "ownerAadhar": "6708 9001 2345"
                                 },
                                 {
                                     "number": "4-402",
-                                    "govtValue": 9200000
+                                    "govtValue": 9200000,
+                                    "ownerAadhar": "7809 0112 3456"
                                 }
                             ]
                         },
@@ -124,21 +146,25 @@
                             "surveyNumbers": [
                                 {
                                     "number": "88/M",
-                                    "govtValue": 9500000
+                                    "govtValue": 9500000,
+                                    "ownerAadhar": "8900 1223 4567"
                                 },
                                 {
                                     "number": "89/N",
-                                    "govtValue": 10500000
+                                    "govtValue": 10500000,
+                                    "ownerAadhar": "9011 2334 5678"
                                 }
                             ],
                             "doorNumbers": [
                                 {
                                     "number": "5-501",
-                                    "govtValue": 9800000
+                                    "govtValue": 9800000,
+                                    "ownerAadhar": "0122 3445 6789"
                                 },
                                 {
                                     "number": "5-502",
-                                    "govtValue": 10800000
+                                    "govtValue": 10800000,
+                                    "ownerAadhar": "1233 4556 7890"
                                 }
                             ]
                         }

@@ -21,46 +21,29 @@ CREATE TABLE registrations (
   village TEXT NOT NULL,
   survey_number TEXT,
   door_number TEXT, -- Supports Door Number selection
-  property_type TEXT,
-  plot_number TEXT, -- Optional, if distinct from door/survey
-  area TEXT,
-  area_unit TEXT,
-  property_description TEXT,
-  pincode TEXT,
 
   -- Transaction Financials
   transaction_type TEXT NOT NULL,
-  consideration_amount NUMERIC, -- Stored as numeric for calculations
+  consideration_amount NUMERIC,
   stamp_duty NUMERIC,
   registration_fee NUMERIC,
-  total_fee NUMERIC, -- Total Amount (Stamp Duty + Reg Fee)
-  payment_id TEXT, -- Payment Transaction ID (e.g., Solana Tx Hash)
+  total_fee NUMERIC,
+  payment_id TEXT,
 
   -- Seller Information
-  seller_name TEXT,
-  seller_pan TEXT,
   seller_aadhar TEXT,
   seller_phone TEXT,
-  seller_email TEXT,
   seller_otp_verified BOOLEAN DEFAULT FALSE,
   seller_biometric_verified BOOLEAN DEFAULT FALSE,
-  seller_biometric_hash TEXT, -- Placeholder for actual biometric hash
 
   -- Buyer Information
-  buyer_name TEXT,
-  buyer_pan TEXT,
   buyer_aadhar TEXT,
   buyer_phone TEXT,
-  buyer_email TEXT,
   buyer_otp_verified BOOLEAN DEFAULT FALSE,
   buyer_biometric_verified BOOLEAN DEFAULT FALSE,
-  buyer_biometric_hash TEXT, -- Placeholder for actual biometric hash
 
   -- Documents & Assets (Stored as JSONB)
-  -- Structure: { "saleDeed": { "name": "...", "ipfsHash": "...", "mimeType": "..." }, ... }
   documents JSONB, 
-  
-  -- Structure: [ { "name": "...", "ipfsHash": "...", "mimeType": "..." }, ... ]
   property_photos JSONB, 
 
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

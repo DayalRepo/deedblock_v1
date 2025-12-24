@@ -9,18 +9,12 @@ export interface RegistrationData {
   status: 'active' | 'pending' | 'verified';
 
   // Property Details
-  property_type: string;
   survey_number: string;
   door_number: string;
-  plot_number: string;
   village: string;
   taluka: string;
   district: string;
   state: string;
-  pincode: string;
-  area: string;
-  area_unit: string;
-  property_description?: string;
 
   // Transaction Details
   transaction_type: string;
@@ -28,36 +22,17 @@ export interface RegistrationData {
   stamp_duty: string;
   registration_fee: string;
 
-  // Legacy / Additional Fields (used in Search or other components)
-  sale_agreement_date?: string;
-
   // Seller Information
-  seller_name: string;
-  seller_father_name?: string;
-  seller_age?: string;
-  seller_address?: string;
-  seller_pan?: string;
   seller_aadhar?: string;
   seller_phone?: string;
-  seller_email?: string;
+  seller_otp_verified?: boolean;
+  seller_biometric_verified?: boolean;
 
   // Buyer Information
-  buyer_name: string;
-  buyer_father_name?: string;
-  buyer_age?: string;
-  buyer_address?: string;
-  buyer_pan?: string;
   buyer_aadhar?: string;
   buyer_phone?: string;
-  buyer_email?: string;
-
-  // Witnesses
-  witnesses?: Array<{
-    name: string;
-    address: string;
-    phone: string;
-    aadhar: string;
-  }>;
+  buyer_otp_verified?: boolean;
+  buyer_biometric_verified?: boolean;
 
   // Documents (JSON object) - Now stores IPFS hashes
   documents?: Record<string, {
