@@ -84,7 +84,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
         const currentAadhar = form.getValues('sellerAadhar');
         // Only update if value is different to avoid triggering change events or dirtying form unnecessarily
         if (ownerAadhar && ownerAadhar !== currentAadhar) {
-            form.setValue('sellerAadhar', ownerAadhar);
+            form.setValue('sellerAadhar', ownerAadhar, { shouldValidate: true, shouldDirty: true });
         }
     }, [selectedSurvey, selectedDoor, form]);
 

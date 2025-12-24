@@ -173,8 +173,8 @@ export function useLocationData({ setValue, watch }: UseLocationDataProps) {
             setEstimatedFee(stampDuty + registrationFee + deedDocFee);
 
             // Sync with RHF
-            setValue('stampDuty', stampDuty.toFixed(2));
-            setValue('registrationFee', registrationFee > 0 ? registrationFee.toFixed(2) : '');
+            setValue('stampDuty', stampDuty.toFixed(2), { shouldValidate: true, shouldDirty: true });
+            setValue('registrationFee', registrationFee > 0 ? registrationFee.toFixed(2) : '', { shouldValidate: true, shouldDirty: true });
 
         } else {
             setEstimatedFee(0);
@@ -187,7 +187,7 @@ export function useLocationData({ setValue, watch }: UseLocationDataProps) {
         // Prevent clearing if value is same (avoids reset loops)
         if (watch(field) === value) return;
 
-        setValue(field, value, { shouldValidate: true });
+        setValue(field, value, { shouldValidate: true, shouldDirty: true });
 
         if (field === 'state') {
             setValue('district', '');
@@ -210,13 +210,13 @@ export function useLocationData({ setValue, watch }: UseLocationDataProps) {
         } else if (field === 'surveyNumber') {
             const survey = surveyNumbers.find(s => s.number === value);
             if (survey) {
-                setValue('considerationAmount', survey.govtValue.toString());
+                setValue('considerationAmount', survey.govtValue.toString(), { shouldValidate: true, shouldDirty: true });
                 // Calculations handled by useEffect now
             }
         } else if (field === 'doorNumber') {
             const door = doorNumbers.find(d => d.number === value);
             if (door) {
-                setValue('considerationAmount', door.govtValue.toString());
+                setValue('considerationAmount', door.govtValue.toString(), { shouldValidate: true, shouldDirty: true });
                 // Calculations handled by useEffect now
             }
         }
