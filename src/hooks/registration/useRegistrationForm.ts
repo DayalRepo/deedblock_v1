@@ -28,6 +28,14 @@ export const INITIAL_FORM_DATA = {
         taxReceipt: null as File | null,
     },
     propertyPhotos: [] as File[],
+    // Draft file storage - Supabase Storage URLs and paths
+    draftDocumentUrls: {
+        saleDeed: null,
+        ec: null,
+        khata: null,
+        taxReceipt: null,
+    },
+    draftPhotoUrls: [] as Array<{ url: string; path: string; name: string }>,
     sellerOtpVerified: false,
     buyerOtpVerified: false,
     sellerFingerprintVerified: false,

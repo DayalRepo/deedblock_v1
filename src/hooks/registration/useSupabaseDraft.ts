@@ -3,11 +3,12 @@ import { UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase/client';
 import { RegistrationFormSchema } from '@/lib/validations/registrationSchema';
+import { refreshDraftPhotoUrls, refreshDraftDocumentUrls } from '@/lib/supabase/supabaseStorage';
 
 const TABLE_NAME = 'registration_drafts';
 
 export function useSupabaseDraft(form: UseFormReturn<RegistrationFormSchema>) {
-    const { watch, reset, getValues, formState: { isDirty } } = form;
+    const { watch, reset, getValues, setValue, formState: { isDirty } } = form;
     const formData = watch(); // Watch all fields
 
     const [isLoaded, setIsLoaded] = useState(false);
@@ -68,17 +69,43 @@ export function useSupabaseDraft(form: UseFormReturn<RegistrationFormSchema>) {
                         const parsedData = data.draft_data;
                         reset(parsedData);
                         lastSavedData.current = JSON.stringify(parsedData);
+
+                        // Refresh signed URLs for Supabase Storage files
+                        // These URLs expire after 7 days, so we regenerate them on load
+                        try {
+                            if (parsedData.draftPhotoUrls && parsedData.draftPhotoUrls.length > 0) {
+                                console.log('[Draft] Refreshing photo URLs...');
+                                const refreshedPhotos = await refreshDraftPhotoUrls(parsedData.draftPhotoUrls);
+                                setValue('draftPhotoUrls', refreshedPhotos, { shouldDirty: false });
+                                console.log('[Draft] Photo URLs refreshed:', refreshedPhotos);
+                            }
+
+                            if (parsedData.draftDocumentUrls) {
+                                console.log('[Draft] Refreshing document URLs...');
+                                const refreshedDocs = await refreshDraftDocumentUrls(parsedData.draftDocumentUrls);
+                                // Only set if we got a valid object back
+                                if (refreshedDocs && typeof refreshedDocs === 'object') {
+                                    setValue('draftDocumentUrls', refreshedDocs as typeof parsedData.draftDocumentUrls, { shouldDirty: false });
+                                    console.log('[Draft] Document URLs refreshed:', refreshedDocs);
+                                }
+                            }
+                        } catch (refreshErr) {
+                            console.error('[Draft] URL refresh error:', refreshErr);
+                            // Don't fail the load, just log the error
+                        }
                     }
                     setIsLoaded(true);
                 }
             } catch (err) {
                 console.error('[Draft] Unexpected fetch error:', err);
                 toast.error("Connection error. Auto-save is disabled.");
+                // Still set isLoaded to true to allow the app to function
+                setIsLoaded(true);
             }
         };
 
         fetchDraft();
-    }, [userId, reset]);
+    }, [userId, reset, setValue, getValues]);
 
     // Save Draft Debounced
     useEffect(() => {

@@ -4,6 +4,7 @@ import { UseFormReturn } from 'react-hook-form';
 import { RegistrationFormSchema } from '@/lib/validations/registrationSchema';
 import { PreviewIcon, CloseIcon } from '@/components/registration/icons/RegistrationIcons';
 import { ResetButton } from '../ResetButton';
+import { uploadDraftFile, deleteDraftFile } from '@/lib/supabase/supabaseStorage';
 
 // Allowed file types
 const ALLOWED_DOC_TYPES = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
@@ -12,29 +13,41 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const CustomFolderIcon = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor" className={className}>
-        <path d="M160-160q-33 0-56.5-23.5T80-240v-400q0-33 23.5-56.5T160-720h240l80-80h320q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm73-280h207v-207L233-440Zm-73-40 160-160H160v160Zm0 120v120h640v-480H520v280q0 33-23.5 56.5T440-360H160Zm280-160Z" />
+        <path d="M440-200h80v-167l64 64 56-57-160-160-160 160 57 56 63-63v167ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z" />
     </svg>
 );
 
 interface Step2Props {
     form: UseFormReturn<RegistrationFormSchema>;
+    userId: string | undefined;
     saveDocument: (key: string, file: File | null) => Promise<void>;
     savePhotos: (photos: File[]) => Promise<void>;
     previewDocument: (type: string, file: File) => void;
+    onPreviewDocumentUrl?: (type: string, url: string, name: string) => void;
+    onPreviewPhotos?: () => void;
     onReset: () => void;
 }
 
 export const Step2_Documents: React.FC<Step2Props> = ({
     form,
+    userId,
     saveDocument,
     savePhotos,
     previewDocument,
+    onPreviewDocumentUrl,
+    onPreviewPhotos,
     onReset
 }) => {
     const { watch, setValue, formState: { errors } } = form;
 
     const documents = watch('documents');
     const propertyPhotos = watch('propertyPhotos') || [];
+    const draftDocumentUrls = watch('draftDocumentUrls');
+    const draftPhotoUrls = watch('draftPhotoUrls') || [];
+
+    // Filter valid File objects and count from draftPhotoUrls for hydrated state
+    const validFilePhotos = propertyPhotos.filter(p => p instanceof File);
+    const displayPhotoCount = validFilePhotos.length || draftPhotoUrls.length;
 
     const [uploading, setUploading] = React.useState<Record<string, boolean>>({});
     const [dragActive, setDragActive] = React.useState<string | null>(null);
@@ -43,7 +56,9 @@ export const Step2_Documents: React.FC<Step2Props> = ({
 
     // Memoized object URLs
     const photoUrls = useMemo(() => {
-        return propertyPhotos.map(photo => URL.createObjectURL(photo));
+        return propertyPhotos
+            .filter(photo => photo instanceof File)
+            .map(photo => URL.createObjectURL(photo));
     }, [propertyPhotos]);
 
     // Memory cleanup
@@ -86,30 +101,62 @@ export const Step2_Documents: React.FC<Step2Props> = ({
         });
     }, []);
 
+    // Show error message and auto-clear after 6 seconds
+    const showFileError = useCallback((key: string, message: string) => {
+        setFileErrors(prev => ({ ...prev, [key]: message }));
+        setTimeout(() => {
+            clearFileError(key);
+        }, 6000); // 6 seconds
+    }, [clearFileError]);
+
     const handleFileChange = async (key: keyof RegistrationFormSchema['documents'], file: File | null) => {
         clearFileError(key);
 
         if (!file) {
+            // Delete from Supabase Storage if exists
+            const existingUrl = draftDocumentUrls?.[key];
+            if (existingUrl?.path) {
+                try {
+                    await deleteDraftFile(existingUrl.path);
+                } catch (err) {
+                    console.error('[Storage] Delete error:', err);
+                }
+            }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             setValue(`documents.${key}` as any, null, { shouldValidate: true });
+            setValue(`draftDocumentUrls.${key}` as any, null, { shouldDirty: true });
             await saveDocument(key, null);
             return;
         }
 
         if (!validateFileType(file, ALLOWED_DOC_TYPES)) {
-            setFileErrors(prev => ({ ...prev, [key]: 'Only PDF, JPG, and PNG files are allowed' }));
+            showFileError(key, 'Only PDF, JPG, and PNG files are allowed');
             return;
         }
 
         if (!validateFileSize(file)) {
-            setFileErrors(prev => ({ ...prev, [key]: `File size (${formatFileSize(file.size)}) exceeds 5MB limit` }));
+            showFileError(key, `File size (${formatFileSize(file.size)}) exceeds 5MB limit`);
             return;
         }
 
         setUploading(prev => ({ ...prev, [key]: true }));
         try {
+            // Set file locally for immediate use
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             setValue(`documents.${key}` as any, file, { shouldValidate: true });
+
+            // Upload to Supabase Storage for draft persistence
+            if (userId) {
+                try {
+                    const { url, path } = await uploadDraftFile(file, userId, 'documents', key);
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    setValue(`draftDocumentUrls.${key}` as any, { url, path }, { shouldDirty: true });
+                } catch (err) {
+                    console.error('[Storage] Upload error:', err);
+                    // Continue anyway - file is set locally
+                }
+            }
+
             await saveDocument(key, file);
             showSuccessAnimation(key);
         } finally {
@@ -121,10 +168,32 @@ export const Step2_Documents: React.FC<Step2Props> = ({
         if (!files) return;
         clearFileError('photos');
 
+        // Check if adding these photos would exceed the 6 photo limit
+        // Use Math.max because propertyPhotos (File objects) and draftPhotoUrls represent the SAME photos
+        // - Fresh upload: propertyPhotos has Files, draftPhotoUrls has URLs for same photos
+        // - After refresh: propertyPhotos has empty {}, draftPhotoUrls has URLs
+        const validFileCount = propertyPhotos.filter(p => p instanceof File).length;
+        const draftUrlCount = draftPhotoUrls?.length || 0;
+        const currentPhotoCount = Math.max(validFileCount, draftUrlCount);
+        const remainingSlots = 6 - currentPhotoCount;
+
+        if (remainingSlots <= 0) {
+            showFileError('photos', 'Maximum 6 photos allowed. Remove some photos to add new ones.');
+            return;
+        }
+
         const newPhotos: File[] = [];
         const errors: string[] = [];
 
-        Array.from(files).forEach(file => {
+        // Only process files up to remaining slots
+        const filesToProcess = Array.from(files).slice(0, remainingSlots);
+        const excessFiles = files.length - remainingSlots;
+
+        if (excessFiles > 0) {
+            errors.push(`Maximum 6 photos allowed. ${excessFiles} photo(s) were not added.`);
+        }
+
+        filesToProcess.forEach(file => {
             if (!validateFileType(file, ALLOWED_IMAGE_TYPES)) {
                 errors.push(`${file.name}: Unsupported format`);
                 return;
@@ -141,7 +210,7 @@ export const Step2_Documents: React.FC<Step2Props> = ({
         });
 
         if (errors.length > 0) {
-            setFileErrors(prev => ({ ...prev, photos: errors.join(', ') }));
+            showFileError('photos', errors.join(', '));
         }
 
         if (newPhotos.length === 0) return;
@@ -150,6 +219,25 @@ export const Step2_Documents: React.FC<Step2Props> = ({
         try {
             const updatedPhotos = [...propertyPhotos, ...newPhotos].slice(0, 6);
             setValue('propertyPhotos', updatedPhotos, { shouldValidate: true });
+
+            // Upload new photos to Supabase Storage
+            if (userId) {
+                const currentUrls = watch('draftPhotoUrls') || [];
+                const newUrls = [...currentUrls];
+
+                for (let i = 0; i < newPhotos.length && currentUrls.length + i < 6; i++) {
+                    const photo = newPhotos[i];
+                    try {
+                        const { url, path } = await uploadDraftFile(photo, userId, 'photos', `photo_${Date.now()}_${i}`);
+                        newUrls.push({ url, path, name: photo.name });
+                    } catch (err) {
+                        console.error('[Storage] Photo upload error:', err);
+                    }
+                }
+
+                setValue('draftPhotoUrls', newUrls, { shouldDirty: true });
+            }
+
             await savePhotos(updatedPhotos);
             showSuccessAnimation('photos');
         } finally {
@@ -158,8 +246,22 @@ export const Step2_Documents: React.FC<Step2Props> = ({
     };
 
     const removePhoto = async (index: number) => {
+        // Delete from Supabase Storage
+        const currentUrls = watch('draftPhotoUrls') || [];
+        if (currentUrls[index]?.path) {
+            try {
+                await deleteDraftFile(currentUrls[index].path);
+            } catch (err) {
+                console.error('[Storage] Photo delete error:', err);
+            }
+        }
+
+        // Update form state
         const updatedPhotos = propertyPhotos.filter((_, i) => i !== index);
+        const updatedUrls = currentUrls.filter((_, i) => i !== index);
+
         setValue('propertyPhotos', updatedPhotos, { shouldValidate: true });
+        setValue('draftPhotoUrls', updatedUrls, { shouldDirty: true });
         await savePhotos(updatedPhotos);
     };
 
@@ -186,18 +288,41 @@ export const Step2_Documents: React.FC<Step2Props> = ({
         }
     };
 
-    const renderStatusIcon = (key: string, hasFile: boolean) => {
+    const renderStatusIcon = (key: string, hasFile: boolean, iconClass: string = "w-4 h-4 sm:w-6 sm:h-6") => {
         if (uploading[key]) {
-            return <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin text-black" />;
+            return <Loader2 className={`${iconClass} animate-spin text-black`} />;
         }
         if (uploadSuccess[key]) {
-            return <Check className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />;
+            return <Check className={`${iconClass} text-green-500`} />;
         }
         if (!hasFile) {
-            return <CustomFolderIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />;
+            return <CustomFolderIcon className={`${iconClass} text-gray-400`} />;
         }
         return null;
     };
+
+    // ... (lines 201-359 omitted) ...
+
+    <label
+        htmlFor="property-photos"
+        className={`flex items-center justify-center gap-3 px-4 py-8 border border-dashed rounded-lg cursor-pointer transition-all
+                            ${dragActive === 'photos' ? 'border-black bg-gray-50 ring-1 ring-black' : 'border-gray-300'}
+                            ${propertyPhotos.length >= 6 ? 'opacity-50 cursor-not-allowed' : 'hover:border-black hover:bg-gray-50'}`}
+    >
+        <div className="flex items-center gap-4">
+            <div className="text-gray-400">
+                {renderStatusIcon('photos', false, "w-8 h-8 sm:w-10 sm:h-10")}
+            </div>
+            <div className="text-left">
+                <p className="text-sm font-normal text-gray-500 mb-0.5">
+                    Property Photos
+                </p>
+                <p className="text-sm font-medium text-gray-700">
+                    {uploading.photos ? 'Uploading...' : propertyPhotos.length >= 6 ? 'Maximum 6 photos' : 'JPG, PNG up to 5MB each'}
+                </p>
+            </div>
+        </div>
+    </label>
 
     // Document rows: [Row 1: Deed Doc, EC], [Row 2: Seller ID, Buyer ID]
     const documentRows = [
@@ -213,10 +338,26 @@ export const Step2_Documents: React.FC<Step2Props> = ({
 
     const renderDocumentUpload = (key: string, label: string, accept: string, required: boolean) => {
         const file = documents?.[key as keyof RegistrationFormSchema['documents']];
+        const isValidFile = file instanceof File;
+        const draftUrl = draftDocumentUrls?.[key as keyof typeof draftDocumentUrls];
+        const hasDocument = isValidFile || !!draftUrl?.url;
         const hasError = errors.documents?.[key as keyof RegistrationFormSchema['documents']] || fileErrors[key];
 
+        // Extract filename from draft path if available
+        const getDocumentName = () => {
+            if (isValidFile) return file.name;
+            if (draftUrl?.path) {
+                // Path format: userId/documents/key_timestamp_filename
+                const pathParts = draftUrl.path.split('_');
+                if (pathParts.length >= 3) {
+                    return pathParts.slice(2).join('_');
+                }
+            }
+            return 'Document uploaded';
+        };
+
         return (
-            <div key={key}>
+            <div key={key} className="w-[80%] sm:w-[88%] mx-left">
                 <div
                     className="relative"
                     onDragEnter={(e) => handleDrag(e, key)}
@@ -227,7 +368,11 @@ export const Step2_Documents: React.FC<Step2Props> = ({
                     <input
                         type="file"
                         accept={accept}
-                        onChange={(e) => handleFileChange(key as keyof RegistrationFormSchema['documents'], e.target.files?.[0] || null)}
+                        onChange={(e) => {
+                            handleFileChange(key as keyof RegistrationFormSchema['documents'], e.target.files?.[0] || null);
+                            // Reset input value to allow re-selecting the same file
+                            e.target.value = '';
+                        }}
                         className="hidden"
                         id={`file-${key}`}
                         disabled={uploading[key]}
@@ -237,34 +382,39 @@ export const Step2_Documents: React.FC<Step2Props> = ({
                         htmlFor={`file-${key}`}
                         className={`flex items-center gap-3 px-4 py-3 border rounded-lg cursor-pointer transition-all w-full
                             ${dragActive === key ? 'border-black ring-1 ring-black' : 'border-gray-200'}
-                            ${file ? 'bg-white hover:border-black' : 'bg-white hover:border-black hover:bg-gray-50'}
+                            ${hasDocument ? 'bg-white hover:border-black' : 'bg-white hover:border-black hover:bg-gray-50'}
                             ${hasError ? 'border-red-300 bg-red-50' : ''}`}
                     >
                         <div className="shrink-0 text-gray-400">
-                            {renderStatusIcon(key, !!file)}
+                            {renderStatusIcon(key, hasDocument, "w-4 h-4 sm:w-6 sm:h-6")}
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-500">{label}</span>
-                                {required && <span className="text-red-400 text-xs">*</span>}
+                                <span className="text-xs sm:text-sm text-gray-500 truncate max-w-[140px] sm:max-w-none">{label}</span>
+                                {required && <span className="text-red-400 text-[10px] sm:text-xs shrink-0">*</span>}
                             </div>
-                            {file && (
-                                <p className="text-sm font-medium text-black truncate mt-0.5">{file.name}</p>
+                            {hasDocument && (
+                                <p className="text-xs sm:text-sm font-medium text-black truncate mt-0.5">{getDocumentName()}</p>
                             )}
-                            {!file && !uploading[key] && (
-                                <p className="text-xs text-gray-400 mt-0.5">Click to upload or drag & drop</p>
+                            {!hasDocument && !uploading[key] && (
+                                <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">PDF, JPG, PNG up to 5MB each</p>
                             )}
                             {uploading[key] && (
-                                <p className="text-xs text-gray-500 mt-0.5">Uploading...</p>
+                                <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5">Uploading...</p>
                             )}
                         </div>
-                        {file && !uploading[key] && (
+                        {hasDocument && !uploading[key] && (
                             <div className="flex items-center gap-1 shrink-0">
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         e.preventDefault();
-                                        previewDocument(key, file);
+                                        if (isValidFile) {
+                                            previewDocument(key, file);
+                                        } else if (draftUrl?.url && onPreviewDocumentUrl) {
+                                            // Open in preview modal for hydrated documents
+                                            onPreviewDocumentUrl(key, draftUrl.url, getDocumentName());
+                                        }
                                     }}
                                     className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
                                     type="button"
@@ -287,20 +437,24 @@ export const Step2_Documents: React.FC<Step2Props> = ({
                             </div>
                         )}
                     </label>
-                </div>
-                {fileErrors[key] && (
-                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1" role="alert">
-                        <AlertCircle size={12} />
-                        {fileErrors[key]}
-                    </p>
-                )}
-                {errors.documents?.[key as keyof RegistrationFormSchema['documents']] && (
-                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1" role="alert">
-                        <AlertCircle size={12} />
-                        {errors.documents[key as keyof RegistrationFormSchema['documents']]?.message}
-                    </p>
-                )}
-            </div>
+                </div >
+                {
+                    fileErrors[key] && (
+                        <p className="mt-2 text-[10px] sm:text-xs text-red-500 flex items-start gap-1.5 bg-red-50 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg animate-pulse" role="alert">
+                            <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                            <span className="break-words">{fileErrors[key]}</span>
+                        </p>
+                    )
+                }
+                {
+                    errors.documents?.[key as keyof RegistrationFormSchema['documents']] && (
+                        <p className="mt-1 text-xs text-red-500 flex items-center gap-1" role="alert">
+                            <AlertCircle size={12} />
+                            {(errors.documents[key as keyof RegistrationFormSchema['documents']] as { message?: string })?.message || 'File is required'}
+                        </p>
+                    )
+                }
+            </div >
         );
     };
 
@@ -315,15 +469,13 @@ export const Step2_Documents: React.FC<Step2Props> = ({
 
             {/* Required Documents Section */}
             <div>
-                <h3 className="text-lg font-sans font-normal text-black mb-2">Required Documents</h3>
-                <div className="border-t border-dashed border-gray-300 mb-4"></div>
+                <h3 className="text-lg font-sans font-normal text-black mb-4">Required Documents</h3>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                     {documentRows.map((row, rowIndex) => (
-                        <div key={rowIndex} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {row.map(({ key, label, accept, required }) =>
-                                renderDocumentUpload(key, label, accept, required)
-                            )}
+                        <div key={rowIndex} className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                            {renderDocumentUpload(row[0].key, row[0].label, row[0].accept, row[0].required)}
+                            {renderDocumentUpload(row[1].key, row[1].label, row[1].accept, row[1].required)}
                         </div>
                     ))}
                 </div>
@@ -333,8 +485,7 @@ export const Step2_Documents: React.FC<Step2Props> = ({
 
             {/* Property Photos Section */}
             <div>
-                <h3 className="text-lg font-sans font-normal text-black mb-2">Property Photos</h3>
-                <div className="border-t border-dashed border-gray-300 mb-4"></div>
+                <h3 className="text-lg font-sans font-normal text-black mb-4">Property Photos</h3>
 
                 <p className="text-sm text-gray-500 mb-4">
                     Upload up to 6 photos of the property <span className="text-gray-400">(Optional)</span>
@@ -351,7 +502,11 @@ export const Step2_Documents: React.FC<Step2Props> = ({
                         type="file"
                         accept="image/*"
                         multiple
-                        onChange={(e) => handlePhotoUpload(e.target.files)}
+                        onChange={(e) => {
+                            handlePhotoUpload(e.target.files);
+                            // Reset input value to allow re-selecting the same file
+                            e.target.value = '';
+                        }}
                         className="hidden"
                         id="property-photos"
                         disabled={uploading.photos || propertyPhotos.length >= 6}
@@ -360,79 +515,121 @@ export const Step2_Documents: React.FC<Step2Props> = ({
                     <label
                         htmlFor="property-photos"
                         className={`flex items-center justify-center gap-3 px-4 py-4 sm:py-5 border border-dashed rounded-lg cursor-pointer transition-all
-                            ${dragActive === 'photos' ? 'border-black bg-gray-50' : 'border-gray-300'}
+                            ${dragActive === 'photos' ? 'border-black bg-gray-50 ring-1 ring-black' : 'border-gray-300'}
                             ${propertyPhotos.length >= 6 ? 'opacity-50 cursor-not-allowed' : 'hover:border-black hover:bg-gray-50'}`}
                     >
-                        <div className="flex items-center gap-3">
-                            <div className="shrink-0 text-gray-400">
-                                {renderStatusIcon('photos', false)}
+                        <div className="flex items-center gap-4">
+                            <div className="text-gray-400">
+                                {renderStatusIcon('photos', false, "w-4 h-4 sm:w-6 sm:h-6")}
                             </div>
-                            <div>
-                                <p className="text-sm text-gray-600">
-                                    {uploading.photos ? 'Uploading...' : propertyPhotos.length >= 6 ? 'Maximum 6 photos' : 'Click to upload photos'}
+                            <div className="text-left">
+                                <p className="text-xs sm:text-sm font-normal text-gray-500 mb-0.5">
+                                    Property Photos
                                 </p>
-                                <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, GIF up to 10MB each</p>
+                                <p className="text-xs sm:text-sm font-medium text-gray-400">
+                                    {uploading.photos ? 'Uploading...' : propertyPhotos.length >= 6 ? 'Maximum 6 photos' : 'JPG, PNG up to 5MB each'}
+                                </p>
                             </div>
                         </div>
                     </label>
                 </div>
 
                 {fileErrors.photos && (
-                    <p className="mt-2 text-xs text-red-500 flex items-center gap-1" role="alert">
-                        <AlertCircle size={12} />
-                        {fileErrors.photos}
+                    <p className="mt-2 text-[10px] sm:text-xs text-red-500 flex items-start gap-1.5 bg-red-50 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg animate-pulse" role="alert">
+                        <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                        <span className="break-words">{fileErrors.photos}</span>
                     </p>
                 )}
 
-                {/* Photo Grid */}
-                {propertyPhotos.length > 0 && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
-                        {propertyPhotos.map((photo, index) => {
-                            const name = photo.name;
-                            const lastDot = name.lastIndexOf('.');
-                            const ext = lastDot !== -1 ? name.substring(lastDot) : '';
-                            const base = lastDot !== -1 ? name.substring(0, lastDot) : name;
-                            const displayName = base.length > 10 ? base.substring(0, 10) + '...' + ext : name;
-
-                            return (
+                {/* Photo List - Document Style */}
+                {displayPhotoCount > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                        {/* Show from File objects if available */}
+                        {validFilePhotos.length > 0 ? (
+                            validFilePhotos.map((photo, index) => (
                                 <div
                                     key={index}
-                                    className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-black transition-colors group"
+                                    className="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-lg bg-white hover:border-black transition-all w-[80%] sm:w-[88%] mx-left"
                                 >
-                                    <span className="text-sm text-gray-700 truncate flex-1" title={name}>
-                                        {displayName}
-                                    </span>
+                                    <div className="shrink-0 text-gray-400">
+                                        <CustomFolderIcon className="w-4 h-4 sm:w-6 sm:h-6" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <span className="text-xs sm:text-sm text-gray-500 truncate max-w-[140px] sm:max-w-none block">
+                                            Photo {index + 1}
+                                        </span>
+                                        <p className="text-xs sm:text-sm font-medium text-black truncate mt-0.5">{photo.name}</p>
+                                    </div>
                                     <div className="flex items-center gap-1 shrink-0">
                                         <button
                                             onClick={() => previewDocument(`photo_${index}`, photo)}
-                                            className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded transition-colors"
+                                            className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
                                             type="button"
                                             aria-label={`Preview photo ${index + 1}`}
                                         >
-                                            <PreviewIcon className="w-3.5 h-3.5" />
+                                            <PreviewIcon className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => removePhoto(index)}
-                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                             type="button"
                                             aria-label={`Remove photo ${index + 1}`}
                                         >
-                                            <CloseIcon className="w-3.5 h-3.5" />
+                                            <CloseIcon className="w-4 h-4" />
                                         </button>
                                     </div>
                                 </div>
-                            );
-                        })}
+                            ))
+                        ) : (
+                            /* Show from draftPhotoUrls (after refresh/hydration) */
+                            draftPhotoUrls.map((photoData, index) => (
+                                <div
+                                    key={index}
+                                    className="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-lg bg-white hover:border-black transition-all w-[80%] sm:w-[88%] mx-left"
+                                >
+                                    <div className="shrink-0 text-gray-400">
+                                        <CustomFolderIcon className="w-4 h-4 sm:w-6 sm:h-6" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <span className="text-xs sm:text-sm text-gray-500 truncate max-w-[140px] sm:max-w-none block">
+                                            Photo {index + 1}
+                                        </span>
+                                        <p className="text-xs sm:text-sm font-medium text-black truncate mt-0.5">{photoData.name}</p>
+                                    </div>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        <button
+                                            onClick={() => {
+                                                // Open preview with URL from Supabase Storage
+                                                onPreviewPhotos?.();
+                                            }}
+                                            className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
+                                            type="button"
+                                            aria-label={`Preview photo ${index + 1}`}
+                                        >
+                                            <PreviewIcon className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => removePhoto(index)}
+                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                            type="button"
+                                            aria-label={`Remove photo ${index + 1}`}
+                                        >
+                                            <CloseIcon className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 )}
             </div>
 
-            <div className="border-t border-dashed border-gray-300 my-4"></div>
+            <div className="border-t border-dashed border-gray-300"></div>
 
             {/* Step Indicator */}
-            <div className="flex justify-center items-center">
-                <span className="text-gray-500 text-sm font-sans">2</span>
+            <div className="flex justify-center items-center py-2">
+                <span className="text-gray-400 text-sm font-sans">Step 2 of 3</span>
             </div>
-        </div>
+        </div >
     );
 };

@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, X, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+
+// Custom close icon matching project design
+const CloseIcon = ({ className }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor" className={className}>
+        <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
+    </svg>
+);
 
 interface DocumentPreviewModalProps {
     file: File | null;
     fileUrl: string | null;
+    fileName?: string | null;
     showPropertyPhotos: boolean;
     propertyPhotos: File[];
     propertyPhotoUrls: Map<number, string>;
+    draftPhotoUrls?: Array<{ url: string; path: string; name: string }>;
     onClose: () => void;
 }
 
@@ -22,9 +31,11 @@ const formatFileSize = (bytes: number) => {
 export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     file,
     fileUrl,
+    fileName,
     showPropertyPhotos,
     propertyPhotos,
     propertyPhotoUrls,
+    draftPhotoUrls = [],
     onClose
 }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -41,12 +52,29 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     }, [showPropertyPhotos]);
 
     const currentPhoto = showPropertyPhotos ? propertyPhotos[currentIndex] : null;
-    const totalPhotos = propertyPhotos.length;
+    // Use draftPhotoUrls length if propertyPhotos are empty objects (hydrated from draft)
+    const totalPhotos = propertyPhotos.filter(p => p instanceof File).length || draftPhotoUrls.length;
 
     const currentFile = showPropertyPhotos ? currentPhoto : file;
-    const currentUrl = showPropertyPhotos
-        ? (propertyPhotoUrls.get(currentIndex) || (currentPhoto ? URL.createObjectURL(currentPhoto) : null))
-        : fileUrl;
+
+    // Build current URL with fallback chain: propertyPhotoUrls -> draftPhotoUrls -> createObjectURL
+    const getCurrentPhotoUrl = () => {
+        if (!showPropertyPhotos) return fileUrl;
+
+        // Try propertyPhotoUrls first (from parent state)
+        const mapUrl = propertyPhotoUrls.get(currentIndex);
+        if (mapUrl) return mapUrl;
+
+        // Try draftPhotoUrls (from Supabase Storage)
+        if (draftPhotoUrls[currentIndex]?.url) return draftPhotoUrls[currentIndex].url;
+
+        // Try creating from File object
+        if (currentPhoto instanceof File) return URL.createObjectURL(currentPhoto);
+
+        return null;
+    };
+
+    const currentUrl = getCurrentPhotoUrl();
 
     const goToPrevious = () => {
         setCurrentIndex((prev) => (prev > 0 ? prev - 1 : totalPhotos - 1));
@@ -77,44 +105,48 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 className="fixed inset-0 z-50 flex flex-col bg-white"
                 onClick={onClose}
             >
-                {/* Top Bar */}
+                {/* Header */}
                 <div
-                    className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4"
+                    className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-dashed border-gray-300"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="flex items-center gap-3 text-black min-w-0">
+                    <div className="flex items-center gap-3 min-w-0">
                         <div className="min-w-0">
-                            <p className="text-sm sm:text-base font-medium truncate">
-                                {currentFile?.name || 'Preview'}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                                {currentFile ? formatFileSize(currentFile.size) : ''}
+                            <h2 className="text-sm sm:text-base font-sans font-normal text-black truncate">
+                                {currentFile?.name || fileName || draftPhotoUrls[currentIndex]?.name || 'Document Preview'}
+                            </h2>
+                            <p className="text-xs text-gray-400">
+                                {currentFile instanceof File ? formatFileSize(currentFile.size) : ''}
                                 {showPropertyPhotos && totalPhotos > 1 && (
-                                    <span className="ml-2">• {currentIndex + 1} / {totalPhotos}</span>
+                                    <span className={currentFile instanceof File ? "ml-2" : ""}>
+                                        {currentFile instanceof File ? '• ' : ''}Photo {currentIndex + 1} of {totalPhotos}
+                                    </span>
                                 )}
                             </p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-full transition-colors"
+                        className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
+                        aria-label="Close preview"
                     >
-                        <X size={22} />
+                        <CloseIcon className="w-5 h-5" />
                     </button>
                 </div>
 
                 {/* Main Content */}
                 <div
-                    className="flex-1 flex items-center justify-center relative overflow-hidden px-4 sm:px-12"
+                    className="flex-1 flex items-center justify-center relative overflow-hidden px-4 sm:px-12 py-4"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Navigation - Previous */}
                     {showPropertyPhotos && totalPhotos > 1 && (
                         <button
                             onClick={goToPrevious}
-                            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 text-gray-500 hover:text-black hover:bg-gray-100 rounded-full transition-all"
+                            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
+                            aria-label="Previous photo"
                         >
-                            <ChevronLeft size={24} className="sm:w-8 sm:h-8" />
+                            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
                         </button>
                     )}
 
@@ -128,31 +160,55 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                             transition={{ duration: 0.15 }}
                             className="w-full h-full flex items-center justify-center"
                         >
-                            {currentFile && currentUrl ? (
-                                currentFile.type.startsWith('image/') ? (
-                                    <img
-                                        src={currentUrl}
-                                        alt="Preview"
-                                        className={`max-w-full max-h-[70vh] sm:max-h-[75vh] object-contain transition-opacity duration-200 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
-                                        onLoad={() => setIsLoaded(true)}
-                                        style={{ borderRadius: '4px' }}
-                                    />
-                                ) : currentFile.type === 'application/pdf' ? (
-                                    <div className="w-full max-w-3xl h-[70vh] sm:h-[75vh] bg-white rounded">
-                                        <iframe
+                            {currentUrl ? (() => {
+                                // Determine if we should show as image
+                                const isFileImage = currentFile instanceof File && currentFile.type.startsWith('image/');
+                                const isFilePdf = currentFile instanceof File && currentFile.type === 'application/pdf';
+
+                                // Check if URL is an image (for hydrated documents/photos without File object)
+                                const urlLower = currentUrl.toLowerCase();
+                                const isUrlImage = urlLower.includes('.png') || urlLower.includes('.jpg') ||
+                                    urlLower.includes('.jpeg') || urlLower.includes('.gif') ||
+                                    urlLower.includes('.webp');
+                                const isUrlPdf = urlLower.includes('.pdf');
+
+                                // Has URL without valid File (hydrated from draft)
+                                const isHydratedPreview = !(currentFile instanceof File) && currentUrl;
+
+                                // Show image if: File is image OR (hydrated and URL is image)
+                                if (isFileImage || (isHydratedPreview && isUrlImage)) {
+                                    return (
+                                        <img
                                             src={currentUrl}
-                                            title="PDF Preview"
-                                            className="w-full h-full rounded"
+                                            alt="Preview"
+                                            className={`max-w-full max-h-[65vh] sm:max-h-[72vh] object-contain transition-opacity duration-200 rounded-lg border border-gray-200 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+                                            onLoad={() => setIsLoaded(true)}
                                         />
-                                    </div>
-                                ) : (
+                                    );
+                                }
+
+                                // Show PDF iframe if: File is PDF OR (hydrated and URL is PDF)
+                                if (isFilePdf || (isHydratedPreview && isUrlPdf)) {
+                                    return (
+                                        <div className="w-full max-w-3xl h-[65vh] sm:h-[72vh] bg-white rounded-lg border border-gray-200 overflow-hidden">
+                                            <iframe
+                                                src={currentUrl}
+                                                title="PDF Preview"
+                                                className="w-full h-full"
+                                            />
+                                        </div>
+                                    );
+                                }
+
+                                // Fallback: unknown file type
+                                return (
                                     <div className="text-center text-gray-400 py-12">
-                                        <FileText size={48} className="mx-auto mb-4 opacity-50" />
-                                        <p className="text-sm">Preview not available</p>
+                                        <FileText size={40} className="mx-auto mb-3 opacity-50" />
+                                        <p className="text-xs sm:text-sm">Preview not available for this file type</p>
                                     </div>
-                                )
-                            ) : (
-                                <p className="text-gray-400 text-sm">No file to preview</p>
+                                );
+                            })() : (
+                                <p className="text-gray-400 text-xs sm:text-sm">No file to preview</p>
                             )}
                         </motion.div>
                     </AnimatePresence>
@@ -161,51 +217,62 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                     {showPropertyPhotos && totalPhotos > 1 && (
                         <button
                             onClick={goToNext}
-                            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 text-gray-500 hover:text-black hover:bg-gray-100 rounded-full transition-all"
+                            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
+                            aria-label="Next photo"
                         >
-                            <ChevronRight size={24} className="sm:w-8 sm:h-8" />
+                            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
                         </button>
                     )}
                 </div>
 
-                {/* Bottom Bar - Thumbnail Strip for Multiple Photos */}
+                {/* Footer - Thumbnail Strip for Multiple Photos */}
                 {showPropertyPhotos && totalPhotos > 1 && (
                     <div
-                        className="px-4 py-3 sm:py-4 overflow-x-auto"
+                        className="px-4 py-3 sm:py-4 border-t border-dashed border-gray-300 overflow-x-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex gap-2 justify-center">
-                            {propertyPhotos.map((photo, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => setCurrentIndex(i)}
-                                    className={`relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded overflow-hidden transition-all ${i === currentIndex
-                                        ? 'ring-2 ring-black ring-offset-2 ring-offset-white opacity-100'
-                                        : 'opacity-40 hover:opacity-70'
-                                        }`}
-                                >
-                                    <img
-                                        src={propertyPhotoUrls.get(i) || URL.createObjectURL(photo)}
-                                        alt={`Thumbnail ${i + 1}`}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </button>
-                            ))}
+                            {Array.from({ length: totalPhotos }).map((_, i) => {
+                                // Get thumbnail URL with fallback
+                                const thumbUrl = propertyPhotoUrls.get(i)
+                                    || draftPhotoUrls[i]?.url
+                                    || (propertyPhotos[i] instanceof File ? URL.createObjectURL(propertyPhotos[i]) : null);
+
+                                if (!thumbUrl) return null;
+
+                                return (
+                                    <button
+                                        key={i}
+                                        onClick={() => setCurrentIndex(i)}
+                                        className={`relative shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden transition-all border
+                                            ${i === currentIndex
+                                                ? 'border-black ring-1 ring-black opacity-100'
+                                                : 'border-gray-200 opacity-50 hover:opacity-80 hover:border-gray-400'
+                                            }`}
+                                    >
+                                        <img
+                                            src={thumbUrl}
+                                            alt={`Thumbnail ${i + 1}`}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                 )}
 
-                {/* Bottom Bar - Single File */}
+                {/* Footer - Single File Close Button */}
                 {!showPropertyPhotos && (
                     <div
-                        className="px-4 py-3 sm:py-4 flex justify-center"
+                        className="px-4 py-3 sm:py-4 border-t border-dashed border-gray-300 flex justify-center"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
                             onClick={onClose}
-                            className="px-5 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+                            className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-xs sm:text-sm font-medium"
                         >
-                            Close
+                            Close Preview
                         </button>
                     </div>
                 )}

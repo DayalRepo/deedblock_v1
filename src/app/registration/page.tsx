@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { saveRegistration, type RegistrationData } from '@/lib/supabase/database';
 import { uploadFileToIPFS, uploadFilesToIPFS, uploadJSONToIPFS } from '@/lib/ipfs/pinata';
 import { supabase } from '@/lib/supabase/client';
+import { clearUserDraftFiles } from '@/lib/supabase/supabaseStorage';
 
 // Components
 import AuthGate from '@/components/AuthGate';
@@ -65,6 +66,7 @@ export default function RegistrationPage() {
   // Local UI State
   const [documentPreview, setDocumentPreview] = useState<{ type: string; file: File } | null>(null);
   const [documentPreviewUrl, setDocumentPreviewUrl] = useState<string | null>(null);
+  const [documentPreviewName, setDocumentPreviewName] = useState<string | null>(null);
   const [showPropertyPhotos, setShowPropertyPhotos] = useState(false);
   const [showDocuments, setShowDocuments] = useState(false);
   const [registrationId, setRegistrationId] = useState<string>('');
@@ -130,18 +132,17 @@ export default function RegistrationPage() {
     };
   }, [propertyPhotoUrls]);
 
-  // Document preview URL
+  // Document preview URL - only create object URL for File objects
+  // Don't clear the URL when documentPreview is null because we might be using URL-only preview
   useEffect(() => {
-    if (documentPreview?.file) {
+    if (documentPreview?.file && documentPreview.file instanceof File) {
       const url = URL.createObjectURL(documentPreview.file);
       setDocumentPreviewUrl(url);
       return () => {
         URL.revokeObjectURL(url);
-        setDocumentPreviewUrl(null);
       };
-    } else {
-      setDocumentPreviewUrl(null);
     }
+    // Don't set to null here - it would overwrite URLs set by previewDocumentUrl
   }, [documentPreview]);
 
   // Success Countdown
@@ -172,9 +173,10 @@ export default function RegistrationPage() {
     const oldUrls = new Map(propertyPhotoUrls);
 
     photosToProcess.forEach((file: File, index: number) => {
-      // Just create new URLs for simplicity as before, but now effect only runs when propertyPhotos actually changes reference from RHF
-      // RHF ensures reference stability for the same value usually.
-      newPropertyPhotoUrls.set(index, URL.createObjectURL(file));
+      // Only create URLs for valid File objects (not hydrated plain objects)
+      if (file instanceof File) {
+        newPropertyPhotoUrls.set(index, URL.createObjectURL(file));
+      }
     });
     // Clean old
     oldUrls.forEach(url => URL.revokeObjectURL(url));
@@ -191,11 +193,20 @@ export default function RegistrationPage() {
 
   const previewDocument = (type: string, file: File) => {
     setDocumentPreview({ type, file });
+    setDocumentPreviewName(null); // Clear URL name if previewing a File
     if (type.startsWith('photo_')) {
       setShowPropertyPhotos(true);
     } else {
       setShowDocuments(true);
     }
+  };
+
+  // Preview document from URL (for hydrated documents)
+  const previewDocumentUrl = (type: string, url: string, name: string) => {
+    setDocumentPreview(null); // Clear file preview
+    setDocumentPreviewUrl(url);
+    setDocumentPreviewName(name);
+    setShowDocuments(true);
   };
 
   const resetFormFull = async () => {
@@ -275,10 +286,46 @@ export default function RegistrationPage() {
       // Actually, if they are stuck on Step 1, they can't go to Step 3.
       // So ensuring validation here helps.
     } else if (currentStep === 2) {
-      fieldsToValidate = ['documents.saleDeed', 'documents.ec', 'documents.khata', 'documents.taxReceipt', 'propertyPhotos'];
+      // For step 2, we need custom validation that checks both File objects AND draftDocumentUrls
+      // because after refresh, File objects are empty {} but draftDocumentUrls contain valid URLs
+      const values = getValues();
+      const documents = values.documents;
+      const draftUrls = values.draftDocumentUrls;
+
+      const requiredDocs = ['saleDeed', 'ec', 'khata', 'taxReceipt'] as const;
+      let allDocsValid = true;
+
+      for (const key of requiredDocs) {
+        const file = documents?.[key];
+        const draftUrl = draftUrls?.[key];
+        const isValidFile = file instanceof File && file.size > 0;
+        const hasDraftUrl = !!draftUrl?.url && !!draftUrl?.path;
+
+        if (!isValidFile && !hasDraftUrl) {
+          allDocsValid = false;
+          // Set error for this field
+          form.setError(`documents.${key}` as any, {
+            type: 'manual',
+            message: 'File is required (upload or re-upload after refresh)'
+          });
+        }
+      }
+
+      // If documents validation failed, return false without triggering schema validation
+      if (!allDocsValid) {
+        return false;
+      }
+
+      // Clear any leftover document errors since validation passed
+      for (const key of requiredDocs) {
+        form.clearErrors(`documents.${key}` as any);
+      }
+
+      // propertyPhotos is optional, no validation needed
+      return true;
     }
 
-    // Trigger validation
+    // Trigger validation for non-step-2 fields
     const result = await trigger(fieldsToValidate);
     if (!result) {
       // Find first error and show toast?
@@ -399,6 +446,11 @@ export default function RegistrationPage() {
 
       await clearDraft();
 
+      // Clean up Supabase Storage files (now moved to permanent IPFS)
+      if (userId) {
+        await clearUserDraftFiles(userId);
+      }
+
       setSubmitSuccess(true);
       toast.success("Registration submitted successfully!");
 
@@ -426,9 +478,12 @@ export default function RegistrationPage() {
         return (
           <Step2_Documents
             form={form}
+            userId={userId}
             saveDocument={saveDocument}
             savePhotos={savePhotos}
             previewDocument={previewDocument}
+            onPreviewDocumentUrl={previewDocumentUrl}
+            onPreviewPhotos={() => setShowPropertyPhotos(true)}
             onReset={resetFormFull}
           />
         );
@@ -596,10 +651,17 @@ export default function RegistrationPage() {
               key="document-preview-modal"
               file={documentPreview?.file || null}
               fileUrl={documentPreviewUrl}
+              fileName={documentPreviewName}
               showPropertyPhotos={showPropertyPhotos}
               propertyPhotos={propertyPhotos}
               propertyPhotoUrls={propertyPhotoUrls}
-              onClose={() => { setShowDocuments(false); setShowPropertyPhotos(false); }}
+              draftPhotoUrls={form.watch('draftPhotoUrls') || []}
+              onClose={() => {
+                setShowDocuments(false);
+                setShowPropertyPhotos(false);
+                setDocumentPreviewUrl(null);
+                setDocumentPreviewName(null);
+              }}
             />
           )}
         </AnimatePresence>
