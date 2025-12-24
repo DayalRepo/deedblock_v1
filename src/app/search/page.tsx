@@ -200,38 +200,38 @@ export default function SearchPage() {
     return {
       registrationId: registration.registration_id,
       registrationDate: registration.registration_date,
-      propertyType: registration.property_type || '',
+      propertyType: '', // Not in DB
       surveyNumber: registration.survey_number || '',
-      plotNumber: registration.plot_number || '',
+      plotNumber: '', // Not in DB
       village: registration.village || '',
       taluka: registration.taluka || '',
       district: registration.district || '',
       state: registration.state || '',
-      pincode: registration.pincode || '',
-      area: registration.area || '',
-      areaUnit: registration.area_unit || 'sqft',
+      pincode: '', // Not in DB
+      area: '', // Not in DB
+      areaUnit: 'sqft',
       transactionType: registration.transaction_type || '',
       considerationAmount: registration.consideration_amount || '',
       stampDuty: registration.stamp_duty || '',
       registrationFee: registration.registration_fee || '',
-      saleAgreementDate: registration.sale_agreement_date || '',
-      sellerName: registration.seller_name || '',
-      sellerFatherName: registration.seller_father_name || '',
-      sellerAge: registration.seller_age || '',
-      sellerAddress: registration.seller_address || '',
+      saleAgreementDate: '', // Not in DB
+      sellerName: '', // Not in DB
+      sellerFatherName: '', // Not in DB
+      sellerAge: '',
+      sellerAddress: '',
       sellerPhone: registration.seller_phone || '',
-      sellerEmail: registration.seller_email || '',
+      sellerEmail: '',
       sellerAadhar: registration.seller_aadhar || '',
-      sellerPan: registration.seller_pan || '',
-      buyerName: registration.buyer_name || '',
-      buyerFatherName: registration.buyer_father_name || '',
-      buyerAge: registration.buyer_age || '',
-      buyerAddress: registration.buyer_address || '',
+      sellerPan: '',
+      buyerName: '', // Not in DB
+      buyerFatherName: '', // Not in DB
+      buyerAge: '',
+      buyerAddress: '',
       buyerPhone: registration.buyer_phone || '',
-      buyerEmail: registration.buyer_email || '',
+      buyerEmail: '',
       buyerAadhar: registration.buyer_aadhar || '',
-      buyerPan: registration.buyer_pan || '',
-      witnesses: registration.witnesses || [],
+      buyerPan: '',
+      witnesses: [], // Not in DB
       documents: documentList,
       propertyPhotos: photosList,
       status: (registration.status as 'active' | 'pending' | 'verified') || 'verified',
