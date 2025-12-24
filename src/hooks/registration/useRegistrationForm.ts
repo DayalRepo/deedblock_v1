@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { supabase } from '@/lib/supabase/client';
-import { saveFormDataToIndexedDB, getFormDataFromIndexedDB, saveFileToindexedDB, getFileFromIndexedDB, deleteFileFromIndexedDB } from '@/utils/indexedDB';
+
 import { registrationSchema, RegistrationFormSchema } from '@/lib/validations/registrationSchema';
 
 export const INITIAL_FORM_DATA = {
@@ -53,101 +52,6 @@ export function useRegistrationForm() {
     const [formStartTime, setFormStartTime] = useState<number>(Date.now());
     const [formTimeElapsed, setFormTimeElapsed] = useState<number>(0);
 
-    // Load from IndexedDB
-    useEffect(() => {
-        const loadSavedData = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            const userId = session?.user?.id;
-            if (!userId) return;
-
-            try {
-                const saved = await getFormDataFromIndexedDB(userId);
-
-                // Helper to load files
-                const loadFiles = async () => {
-                    const docsToRestore: any = {};
-                    const docKeys = ['saleDeed', 'ec', 'khata', 'taxReceipt'];
-                    for (const key of docKeys) {
-                        const file = await getFileFromIndexedDB(userId, `doc_${key}`);
-                        if (file) docsToRestore[key] = file;
-                    }
-
-                    const photosToRestore: File[] = [];
-                    for (let i = 0; i < 6; i++) {
-                        const file = await getFileFromIndexedDB(userId, `photo_${i}`);
-                        if (file) photosToRestore.push(file); else break;
-                    }
-
-                    return { docs: docsToRestore, photos: photosToRestore };
-                };
-
-                const files = await loadFiles();
-
-                if (saved || files.photos.length > 0 || Object.keys(files.docs).length > 0) {
-                    reset({
-                        ...INITIAL_FORM_DATA,
-                        ...saved,
-                        documents: { ...INITIAL_FORM_DATA.documents, ...files.docs },
-                        propertyPhotos: files.photos
-                    });
-                }
-
-                if (saved?.currentStep) setCurrentStep(saved.currentStep);
-
-            } catch (error) {
-                console.error("Failed to load saved data", error);
-            }
-        };
-        loadSavedData();
-    }, [reset]);
-
-    // Auto-Save Text Data
-    useEffect(() => {
-        const subscription = watch(async (value) => {
-            const { data: { session } } = await supabase.auth.getSession();
-            const userId = session?.user?.id;
-            if (!userId) return;
-
-            const { documents, propertyPhotos, ...textData } = value;
-            const payload = { ...textData, currentStep };
-
-            // Debounce save? relying on idb library or frequent overwrites
-            // For now, save directly (maybe debounce in real app)
-            saveFormDataToIndexedDB(userId, payload).catch(console.error);
-        });
-        return () => subscription.unsubscribe();
-    }, [watch, currentStep]);
-
-
-    // Handle File Saving
-    const saveDocument = useCallback(async (key: string, file: File | null) => {
-        const { data: { session } } = await supabase.auth.getSession();
-        const userId = session?.user?.id;
-        if (!userId) return;
-
-        if (file) {
-            await saveFileToindexedDB(userId, `doc_${key}`, file);
-        } else {
-            await deleteFileFromIndexedDB(userId, `doc_${key}`);
-        }
-    }, []);
-
-    const savePhotos = useCallback(async (photos: File[]) => {
-        const { data: { session } } = await supabase.auth.getSession();
-        const userId = session?.user?.id;
-        if (!userId) return;
-
-        // Overwrite strategy: save all current, delete excess
-        for (let i = 0; i < 6; i++) {
-            if (i < photos.length) {
-                await saveFileToindexedDB(userId, `photo_${i}`, photos[i]);
-            } else {
-                await deleteFileFromIndexedDB(userId, `photo_${i}`);
-            }
-        }
-    }, []);
-
-
     // Timer
     useEffect(() => {
         const timer = setInterval(() => setFormTimeElapsed(Date.now() - formStartTime), 1000);
@@ -158,6 +62,15 @@ export function useRegistrationForm() {
         setFormStartTime(Date.now());
         setFormTimeElapsed(0);
     };
+
+    // Placeholder functions for backward compatibility or if we implement Storage later
+    const saveDocument = useCallback(async (key: string, file: File | null) => {
+        // No-op: Files are not persisted in Supabase Draft JSON
+    }, []);
+
+    const savePhotos = useCallback(async (photos: File[]) => {
+        // No-op
+    }, []);
 
     return {
         form: form as UseFormReturn<RegistrationFormSchema>,

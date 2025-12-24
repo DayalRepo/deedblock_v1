@@ -22,8 +22,7 @@ import { Step3_ReviewPayment } from '@/components/registration/steps/Step3_Revie
 import { useRegistrationForm, INITIAL_FORM_DATA } from '@/hooks/registration/useRegistrationForm';
 import { useLocationData } from '@/hooks/registration/useLocationData';
 import { useOTPVerification } from '@/hooks/registration/useOTPVerification';
-import { useRegistrationPersistence } from '@/hooks/registration/useRegistrationPersistence';
-import { clearUserFilesFromIndexedDB, deleteFormDataFromIndexedDB } from '@/utils/indexedDB';
+import { useSupabaseDraft } from '@/hooks/registration/useSupabaseDraft';
 import { RegistrationFormSchema } from '@/lib/validations/registrationSchema'; // Type
 
 // Modals & Utils
@@ -112,8 +111,8 @@ export default function RegistrationPage() {
 
   const [propertyPhotoUrls, setPropertyPhotoUrls] = useState<Map<number, string>>(new Map());
 
-  // IndexedDB Persistence Hook
-  const { clearPersistedData } = useRegistrationPersistence(form, userId);
+  // Supabase Persistence Hook
+  const { clearDraft, isLoaded: isDraftLoaded } = useSupabaseDraft(form);
 
   // --- Effects ---
 
@@ -206,12 +205,9 @@ export default function RegistrationPage() {
     // Call reset on OTP hook
     otpVerification.resetOtpState();
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user?.id) {
-      // Clear IndexedDB
-      await clearUserFilesFromIndexedDB(session.user.id);
-      await deleteFormDataFromIndexedDB(session.user.id);
-    }
+    // Clear Supabase Draft
+    await clearDraft();
+
     setCurrentStep(1);
     resetTimer();
     setRegistrationId('');
@@ -226,7 +222,8 @@ export default function RegistrationPage() {
       'sellerAadhar', 'sellerPhone',
       'buyerAadhar', 'buyerPhone',
       'sellerOtpVerified', 'buyerOtpVerified',
-      'sellerFingerprintVerified', 'buyerFingerprintVerified'
+      'sellerFingerprintVerified', 'buyerFingerprintVerified',
+      'sellerAadharOtpVerified', 'buyerAadharOtpVerified'
       // Note: Add other fields if missing from schema types
     ];
 
@@ -238,10 +235,8 @@ export default function RegistrationPage() {
     // Reset OTP hook
     otpVerification.resetOtpState();
 
-    // Clear IndexedDB draft
-    await clearPersistedData();
-
-    toast.info("Step 1 details have been reset.");
+    // Clear Draft
+    await clearDraft();
   };
 
 
@@ -274,6 +269,11 @@ export default function RegistrationPage() {
         surveyOrDoor === 'survey' ? 'surveyNumber' : 'doorNumber',
         'transactionType', 'sellerAadhar', 'sellerPhone', 'buyerAadhar', 'buyerPhone'
       ];
+      // Note: RHF validation doesn't automatically check 'true' for custom boolean flags unless validation schema enforces it.
+      // We manually enforcing proceed logic for "Next" button?
+      // User requested "submit button" blocked. We will block Next too if needed, but let's stick to Submit first or strict check.
+      // Actually, if they are stuck on Step 1, they can't go to Step 3.
+      // So ensuring validation here helps.
     } else if (currentStep === 2) {
       fieldsToValidate = ['documents.saleDeed', 'documents.ec', 'documents.khata', 'documents.taxReceipt', 'propertyPhotos'];
     }
@@ -397,8 +397,7 @@ export default function RegistrationPage() {
 
       await saveRegistration(registrationData);
 
-      await clearUserFilesFromIndexedDB(userId);
-      await deleteFormDataFromIndexedDB(userId);
+      await clearDraft();
 
       setSubmitSuccess(true);
       toast.success("Registration submitted successfully!");

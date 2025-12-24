@@ -25,7 +25,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
     const {
         register,
         control,
-        formState: { errors },
+        formState: { errors, isDirty },
         watch
     } = form;
 
@@ -81,10 +81,64 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
     // Auto-populate Seller Aadhar based on property selection
     React.useEffect(() => {
         const ownerAadhar = selectedSurvey?.ownerAadhar || selectedDoor?.ownerAadhar;
-        if (ownerAadhar) {
+        const currentAadhar = form.getValues('sellerAadhar');
+        // Only update if value is different to avoid triggering change events or dirtying form unnecessarily
+        if (ownerAadhar && ownerAadhar !== currentAadhar) {
             form.setValue('sellerAadhar', ownerAadhar);
         }
     }, [selectedSurvey, selectedDoor, form]);
+
+    // Refs to track previous values for reset logic
+    const prevSellerAadhar = React.useRef(sellerAadhar);
+    const prevSellerPhone = React.useRef(sellerPhone);
+
+    // Reset Seller Verification on Aadhar Change
+    React.useEffect(() => {
+        // Only run reset logic if the form is dirty (user interaction), not on initial load/hydration
+        if (isDirty && sellerAadhar !== prevSellerAadhar.current) {
+            form.setValue('sellerFingerprintVerified', false);
+            form.setValue('sellerAadharOtpVerified', false);
+            prevSellerAadhar.current = sellerAadhar;
+        } else if (!isDirty) {
+            // Sync ref if not dirty (hydration case)
+            prevSellerAadhar.current = sellerAadhar;
+        }
+    }, [sellerAadhar, form, isDirty]);
+
+    // Reset Seller Phone Verification on Phone Change
+    React.useEffect(() => {
+        if (isDirty && sellerPhone !== prevSellerPhone.current) {
+            form.setValue('sellerOtpVerified', false);
+            prevSellerPhone.current = sellerPhone;
+        } else if (!isDirty) {
+            prevSellerPhone.current = sellerPhone;
+        }
+    }, [sellerPhone, form, isDirty]);
+
+    // Refs for Buyer reset logic
+    const prevBuyerAadhar = React.useRef(buyerAadhar);
+    const prevBuyerPhone = React.useRef(buyerPhone);
+
+    // Reset Buyer Verification on Aadhar Change
+    React.useEffect(() => {
+        if (isDirty && buyerAadhar !== prevBuyerAadhar.current) {
+            form.setValue('buyerFingerprintVerified', false);
+            form.setValue('buyerAadharOtpVerified', false);
+            prevBuyerAadhar.current = buyerAadhar;
+        } else if (!isDirty) {
+            prevBuyerAadhar.current = buyerAadhar;
+        }
+    }, [buyerAadhar, form, isDirty]);
+
+    // Reset Buyer Phone Verification on Phone Change
+    React.useEffect(() => {
+        if (isDirty && buyerPhone !== prevBuyerPhone.current) {
+            form.setValue('buyerOtpVerified', false);
+            prevBuyerPhone.current = buyerPhone;
+        } else if (!isDirty) {
+            prevBuyerPhone.current = buyerPhone;
+        }
+    }, [buyerPhone, form, isDirty]);
 
     return (
         <div className="space-y-4 sm:space-y-6">
@@ -452,7 +506,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                         <Check size={12} />OTP Verified
                                     </span>
                                 ) : (
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex flex-wrap items-center gap-2">
                                         <input
                                             type="text"
                                             value={sellerAadharOtp}
@@ -481,7 +535,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     </div>
                                 )}
 
-                                {/* Fingersprint Section */}
+                                {/* Fingerprint Section */}
                                 {sellerFingerprintVerified ? (
                                     <span className="inline-flex items-center gap-1.5 text-xs text-green-600 font-medium">
                                         <Check size={12} />Biometric Verified

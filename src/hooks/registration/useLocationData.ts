@@ -58,14 +58,12 @@ export function useLocationData({ setValue, watch }: UseLocationDataProps) {
             const data = locationData[state];
             setDistricts(data.districts.map(d => d.name));
             setStampDutyRate(data.stampDuty);
-        } else if (!state) {
+        } else {
             setDistricts([]);
             setTalukas([]);
             setVillages([]);
             setSurveyNumbers([]);
             setDoorNumbers([]);
-
-            // Clear selections and fees on state reset
             setGovtValue(null);
             setEstimatedFee(0);
             setStampDutyRate(0);
@@ -81,8 +79,10 @@ export function useLocationData({ setValue, watch }: UseLocationDataProps) {
             const distData = stateData?.districts.find(d => d.name === district);
             if (distData) {
                 setTalukas(distData.mandals.map(m => m.name));
+            } else {
+                setTalukas([]);
             }
-        } else if (!district) {
+        } else {
             setTalukas([]);
         }
     }, [state, district]);
@@ -95,8 +95,10 @@ export function useLocationData({ setValue, watch }: UseLocationDataProps) {
             const mandalData = distData?.mandals.find(m => m.name === taluka);
             if (mandalData) {
                 setVillages(mandalData.villages.map(v => v.name));
+            } else {
+                setVillages([]);
             }
-        } else if (!taluka) {
+        } else {
             setVillages([]);
         }
     }, [state, district, taluka]);
@@ -111,8 +113,11 @@ export function useLocationData({ setValue, watch }: UseLocationDataProps) {
             if (villageData) {
                 setSurveyNumbers(villageData.surveyNumbers);
                 setDoorNumbers(villageData.doorNumbers || []);
+            } else {
+                setSurveyNumbers([]);
+                setDoorNumbers([]);
             }
-        } else if (!village) {
+        } else {
             setSurveyNumbers([]);
             setDoorNumbers([]);
         }
@@ -179,6 +184,9 @@ export function useLocationData({ setValue, watch }: UseLocationDataProps) {
     }, [govtValue, stampDutyRate, transactionType, setValue]);
 
     const handleLocationChange = (field: keyof RegistrationFormSchema, value: string) => {
+        // Prevent clearing if value is same (avoids reset loops)
+        if (watch(field) === value) return;
+
         setValue(field, value, { shouldValidate: true });
 
         if (field === 'state') {
