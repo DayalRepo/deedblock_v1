@@ -1,8 +1,9 @@
 'use client';
+import { useRouter } from 'next/navigation';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Calendar, Loader2, AlertCircle, X, Copy, Check, Download, QrCode, ChevronDown, MapPin, Users, IndianRupee, Eye, Image as ImageIcon, Search, Shield, Clock, Filter, ChevronLeft, ChevronRight, Home, User } from 'lucide-react';
+import { FileText, Calendar, Loader2, AlertCircle, X, Copy, Check, Download, QrCode, ChevronDown, MapPin, Users, IndianRupee, Eye, Image as ImageIcon, Search, Shield, Clock, Filter, ChevronLeft, ChevronRight, Home, User, ArrowLeft } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { searchRegistrations, savePayment, saveSearchHistory, getSearchHistory, type RegistrationData } from '@/lib/supabase/database';
 import { getIPFSUrl } from '@/lib/ipfs/pinata';
@@ -108,6 +109,7 @@ type SortOption = 'date' | 'amount' | 'status' | 'name';
 type SortOrder = 'asc' | 'desc';
 
 export default function SearchPage() {
+  const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [searchForm, setSearchForm] = useState<SearchFormData>({
     searchType: 'registrationId',
@@ -359,21 +361,9 @@ export default function SearchPage() {
     setSelectedResult(pendingResult);
     setPendingResult(null);
 
-    // Automatically download all data after payment
-    setTimeout(() => {
-      downloadAllData(pendingResult);
-      // Download all documents
-      if (pendingResult.documents && pendingResult.documents.length > 0) {
-        pendingResult.documents.forEach((doc, index) => {
-          setTimeout(() => downloadDocument(doc), index * 300);
-        });
-      }
-      // Download all photos
-      if (pendingResult.propertyPhotos && pendingResult.propertyPhotos.length > 0) {
-        downloadAllPhotos(pendingResult.propertyPhotos);
-      }
-    }, 500);
+    // Automatically download removed as per user request
   };
+
 
   const resetSearch = () => {
     setSearchForm({
@@ -549,112 +539,7 @@ export default function SearchPage() {
     }, 100);
   };
 
-  // Download document
-  const downloadDocument = async (doc: { type: string; name: string; ipfsHash?: string; url?: string; data?: string; mimeType?: string }) => {
-    // Prefer IPFS URL over base64
-    if (doc.url) {
-      // Download from IPFS
-      try {
-        const response = await fetch(doc.url);
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = doc.name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        return;
-      } catch (error) {
-        console.error('Error downloading from IPFS:', error);
-      }
-    }
 
-    // Fallback to base64 if IPFS fails or not available
-    if (doc.data) {
-      // Convert base64 to blob
-      const base64Data = doc.data.includes(',') ? doc.data.split(',')[1] : doc.data;
-      const byteCharacters = atob(base64Data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: doc.mimeType || 'application/pdf' });
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = doc.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } else {
-      // Fallback to placeholder if no data
-      const blob = new Blob([`Document: ${doc.type}\nFile: ${doc.name}\n\nFile data not available.`], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = doc.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-  };
-
-  // Download photo
-  const downloadPhoto = async (photo: { name: string; ipfsHash?: string; url?: string; data?: string; mimeType: string }) => {
-    // Prefer IPFS URL over base64
-    if (photo.url) {
-      try {
-        const response = await fetch(photo.url);
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = photo.name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        return;
-      } catch (error) {
-        console.error('Error downloading from IPFS:', error);
-      }
-    }
-
-    // Fallback to base64 if IPFS fails or not available
-    if (photo.data) {
-      // Convert base64 to blob
-      const base64Data = photo.data.includes(',') ? photo.data.split(',')[1] : photo.data;
-      const byteCharacters = atob(base64Data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: photo.mimeType || 'image/jpeg' });
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = photo.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-  };
-
-  // Download all photos
-  const downloadAllPhotos = async (photos: Array<{ name: string; ipfsHash?: string; url?: string; data?: string; mimeType: string }>) => {
-    for (let i = 0; i < photos.length; i++) {
-      setTimeout(() => downloadPhoto(photos[i]), i * 300);
-    }
-  };
 
   // Download all data info
   const downloadAllData = async (result: SearchResult) => {
@@ -825,8 +710,26 @@ Generated on: ${new Date().toLocaleString()}
 
   return (
     <AuthGate>
-      <div className="min-h-screen bg-white text-black pt-20 sm:pt-24 lg:pt-28 px-4 sm:px-6 pb-20">
+      <div className="min-h-screen bg-white text-black pt-28 sm:pt-36 lg:pt-40 px-4 sm:px-6 pb-20">
         <div className="max-w-2xl w-full mx-auto space-y-4 sm:space-y-6">
+          {/* Navigation Header */}
+          <div className="flex justify-between items-center px-1">
+            <button
+              onClick={() => router.push('/')}
+              className="flex items-center gap-2 text-gray-600 hover:text-black transition-colors"
+            >
+              <ArrowLeft size={24} />
+              <span className="hidden sm:inline font-medium text-lg">Back</span>
+            </button>
+
+            <button
+              onClick={() => router.push('/')}
+              className="text-gray-600 hover:text-black transition-colors"
+            >
+              <X size={24} />
+            </button>
+          </div>
+
           {/* Search Form */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -879,7 +782,7 @@ Generated on: ${new Date().toLocaleString()}
                       value={searchForm.registrationId}
                       onChange={(e) => handleInputChange('registrationId', e.target.value)}
                       placeholder="Enter Registration ID (e.g., DB-12345678)"
-                      className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-black placeholder-gray-400 focus:outline-none focus:border-black focus:ring-4 focus:ring-gray-100 transition-all text-sm"
+                      className="w-full max-w-sm bg-white border border-gray-200 rounded-lg px-4 py-3 text-black placeholder-gray-400 focus:outline-none focus:border-black focus:ring-4 focus:ring-gray-100 transition-all text-sm"
                     />
                   </motion.div>
                 )}
@@ -898,7 +801,7 @@ Generated on: ${new Date().toLocaleString()}
                       value={searchForm.surveyNumber}
                       onChange={(e) => handleInputChange('surveyNumber', e.target.value)}
                       placeholder="Enter Survey Number"
-                      className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-black placeholder-gray-400 focus:outline-none focus:border-black focus:ring-4 focus:ring-gray-100 transition-all text-sm"
+                      className="w-full max-w-sm bg-white border border-gray-200 rounded-lg px-4 py-3 text-black placeholder-gray-400 focus:outline-none focus:border-black focus:ring-4 focus:ring-gray-100 transition-all text-sm"
                     />
                   </motion.div>
                 )}
@@ -920,7 +823,7 @@ Generated on: ${new Date().toLocaleString()}
             <div className="border-t border-dashed border-gray-300 mb-4"></div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-row items-center gap-3">
               <button
                 onClick={handleSearch}
                 disabled={isSearching}
@@ -1079,7 +982,7 @@ Generated on: ${new Date().toLocaleString()}
                             e.stopPropagation();
                             handleViewDetails(result);
                           }}
-                          className="px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition-colors shrink-0"
+                          className="px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition-colors shrink-0 self-start"
                         >
                           View Details
                         </button>
@@ -1210,23 +1113,23 @@ Generated on: ${new Date().toLocaleString()}
                   </button>
                 </div>
 
-                <div className="overflow-y-auto p-6 space-y-8">
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
                   {/* Registration Status Section */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-sm text-gray-500">Registration ID</span>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-gray-50 p-4 rounded-lg border border-gray-100">
+                    <div>
+                      <span className="text-sm text-gray-500 block mb-1">Registration ID</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl font-mono font-medium text-black">{selectedResult.registrationId}</span>
                         <button
                           onClick={() => copyRegistrationId(selectedResult.registrationId)}
-                          className="text-gray-400 hover:text-gray-600"
+                          className="text-gray-400 hover:text-gray-600 transition-colors"
                         >
-                          {copiedId ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                          {copiedId ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
                         </button>
                       </div>
-                      <div className="font-mono text-lg font-medium text-gray-900">{selectedResult.registrationId}</div>
                     </div>
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                      <span className="text-sm text-gray-500 block mb-2">Status</span>
+                    <div>
+                      <span className="text-sm text-gray-500 block mb-1">Status</span>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize border ${selectedResult.status === 'verified'
                         ? 'bg-green-50 text-green-700 border-green-200'
                         : selectedResult.status === 'pending'
@@ -1238,285 +1141,165 @@ Generated on: ${new Date().toLocaleString()}
                     </div>
                   </div>
 
-                  {/* Property Details */}
-                  <section>
-                    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-dashed border-gray-200">
-                      <Home size={18} className="text-gray-400" />
-                      <h3 className="font-medium text-gray-900">Property Information</h3>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      <div>
-                        <span className="text-sm text-gray-500 block mb-1">Property Type</span>
-                        <span className="text-gray-900 font-medium capitalize">{selectedResult.propertyType}</span>
-                      </div>
-                      <div>
-                        <span className="text-sm text-gray-500 block mb-1">Survey Number</span>
-                        <span className="text-gray-900 font-medium">{selectedResult.surveyNumber}</span>
-                      </div>
-                      <div>
-                        <span className="text-sm text-gray-500 block mb-1">Plot Number</span>
-                        <span className="text-gray-900 font-medium">{selectedResult.plotNumber || '-'}</span>
-                      </div>
-                      <div>
-                        <span className="text-sm text-gray-500 block mb-1">Area</span>
-                        <span className="text-gray-900 font-medium">{selectedResult.area} {selectedResult.areaUnit}</span>
-                      </div>
-                      <div className="sm:col-span-2 lg:col-span-2">
-                        <span className="text-sm text-gray-500 block mb-1">Address</span>
-                        <span className="text-gray-900 font-medium">
-                          {selectedResult.village}, {selectedResult.taluka}, {selectedResult.district}, {selectedResult.state} - {selectedResult.pincode}
-                        </span>
-                      </div>
-                    </div>
-                  </section>
+                  {/* DeedBlock Details */}
+                  <div>
+                    <h3 className="text-lg font-sans font-normal text-black mb-3">DeedBlock Details</h3>
+                    <div className="border-t border-dashed border-gray-300 mb-4"></div>
 
-                  {/* Transaction Details */}
-                  <section>
-                    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-dashed border-gray-200">
-                      <FileText size={18} className="text-gray-400" />
-                      <h3 className="font-medium text-gray-900">Transaction Details</h3>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 md:gap-x-6 gap-y-6 text-sm">
+                      {/* Row 1 */}
                       <div>
-                        <span className="text-sm text-gray-500 block mb-1">Transaction Type</span>
-                        <span className="text-gray-900 font-medium capitalize">{selectedResult.transactionType}</span>
+                        <span className="text-gray-500">Survey / Door No</span>
+                        <p className="font-medium text-black mt-0.5 break-all">
+                          {selectedResult.surveyNumber || selectedResult.plotNumber || '-'}
+                        </p>
                       </div>
                       <div>
-                        <span className="text-sm text-gray-500 block mb-1">Market Value</span>
-                        <span className="text-gray-900 font-medium">₹{parseFloat(selectedResult.marketValue || selectedResult.considerationAmount).toLocaleString('en-IN')}</span>
+                        <span className="text-gray-500">Transaction Type</span>
+                        <p className="font-medium text-black mt-0.5 capitalize">{selectedResult.transactionType || '-'}</p>
                       </div>
                       <div>
-                        <span className="text-sm text-gray-500 block mb-1">Consideration</span>
-                        <span className="text-gray-900 font-medium">₹{parseFloat(selectedResult.considerationAmount).toLocaleString('en-IN')}</span>
+                        <span className="text-gray-500">Village</span>
+                        <p className="font-medium text-black mt-0.5">{selectedResult.village || '-'}</p>
                       </div>
-                      <div>
-                        <span className="text-sm text-gray-500 block mb-1">Registration Fee</span>
-                        <span className="text-gray-900 font-medium">₹{parseFloat(selectedResult.registrationFee).toLocaleString('en-IN')}</span>
-                      </div>
-                      <div>
-                        <span className="text-sm text-gray-500 block mb-1">Stamp Duty</span>
-                        <span className="text-gray-900 font-medium">₹{parseFloat(selectedResult.stampDuty).toLocaleString('en-IN')}</span>
-                      </div>
-                      <div>
-                        <span className="text-sm text-gray-500 block mb-1">Date</span>
-                        <span className="text-gray-900 font-medium">{new Date(selectedResult.registrationDate).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  </section>
 
-                  {/* Parties */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Seller */}
-                    <section className="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
-                      <div className="flex items-center gap-2 mb-4">
-                        <User size={18} className="text-blue-500" />
-                        <h3 className="font-medium text-gray-900">Seller Details</h3>
+                      {/* Row 2 */}
+                      <div>
+                        <span className="text-gray-500">Mandal</span>
+                        <p className="font-medium text-black mt-0.5">{selectedResult.taluka || '-'}</p>
                       </div>
-                      <div className="space-y-4">
-                        <div>
-                          <span className="text-sm text-gray-500 block mb-1">Name</span>
-                          <span className="text-gray-900 font-medium block">{selectedResult.sellerName}</span>
-                        </div>
-                        <div>
-                          <span className="text-sm text-gray-500 block mb-1">Father's Name</span>
-                          <span className="text-gray-900 text-sm block">{selectedResult.sellerFatherName}</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          {selectedResult.sellerAge && (
+                      <div>
+                        <span className="text-gray-500">District</span>
+                        <p className="font-medium text-black mt-0.5">{selectedResult.district || '-'}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">State</span>
+                        <p className="font-medium text-black mt-0.5">{selectedResult.state || '-'}</p>
+                      </div>
+
+                      {/* Financials (From Step 1/3) */}
+                      <div>
+                        <span className="text-gray-500">Market Value</span>
+                        <p className="font-medium text-black mt-0.5">
+                          ₹{selectedResult.considerationAmount ? parseFloat(selectedResult.considerationAmount).toLocaleString('en-IN') : '-'}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Registration Fee</span>
+                        <p className="font-medium text-black mt-0.5">
+                          ₹{selectedResult.registrationFee ? parseFloat(selectedResult.registrationFee).toLocaleString('en-IN') : '-'}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Stamp Duty</span>
+                        <p className="font-medium text-black mt-0.5">
+                          ₹{selectedResult.stampDuty ? parseFloat(selectedResult.stampDuty).toLocaleString('en-IN') : '-'}
+                        </p>
+                      </div>
+
+                      {/* Seller & Buyer Details - Unified Row */}
+                      <div className="col-span-2 md:col-span-3 pt-2">
+                        {/* Mobile View: Stacked */}
+                        <div className="sm:hidden space-y-6">
+                          {/* Seller Mobile */}
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                             <div>
-                              <span className="text-sm text-gray-500 block mb-1">Age</span>
-                              <span className="text-gray-900 text-sm block">{selectedResult.sellerAge}</span>
+                              <span className="text-gray-500 text-xs uppercase tracking-wider block mb-1">Seller</span>
+                              <span className="text-gray-500">Aadhar ID</span>
+                              <p className="font-medium text-black mt-0.5">{selectedResult.sellerAadhar || '-'}</p>
                             </div>
-                          )}
-                          {selectedResult.sellerPhone && (
-                            <div>
-                              <span className="text-sm text-gray-500 block mb-1">Phone</span>
-                              <span className="text-gray-900 text-sm block">{selectedResult.sellerPhone}</span>
+                            <div className="pt-5">
+                              <span className="text-gray-500">Phone</span>
+                              <p className="font-medium text-black mt-0.5">{selectedResult.sellerPhone || '-'}</p>
                             </div>
-                          )}
-                        </div>
-                        {selectedResult.sellerAddress && (
-                          <div>
-                            <span className="text-sm text-gray-500 block mb-1">Address</span>
-                            <span className="text-gray-900 text-sm block">{selectedResult.sellerAddress}</span>
                           </div>
-                        )}
-                      </div>
-                    </section>
 
-                    {/* Buyer */}
-                    <section className="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
-                      <div className="flex items-center gap-2 mb-4">
-                        <User size={18} className="text-green-500" />
-                        <h3 className="font-medium text-gray-900">Buyer Details</h3>
-                      </div>
-                      <div className="space-y-4">
-                        <div>
-                          <span className="text-sm text-gray-500 block mb-1">Name</span>
-                          <span className="text-gray-900 font-medium block">{selectedResult.buyerName}</span>
-                        </div>
-                        <div>
-                          <span className="text-sm text-gray-500 block mb-1">Father's Name</span>
-                          <span className="text-gray-900 text-sm block">{selectedResult.buyerFatherName}</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          {selectedResult.buyerAge && (
+                          <div className="border-t border-dashed border-gray-200"></div>
+
+                          {/* Buyer Mobile */}
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                             <div>
-                              <span className="text-sm text-gray-500 block mb-1">Age</span>
-                              <span className="text-gray-900 text-sm block">{selectedResult.buyerAge}</span>
+                              <span className="text-gray-500 text-xs uppercase tracking-wider block mb-1">Buyer</span>
+                              <span className="text-gray-500">Aadhar ID</span>
+                              <p className="font-medium text-black mt-0.5">{selectedResult.buyerAadhar || '-'}</p>
                             </div>
-                          )}
-                          {selectedResult.buyerPhone && (
-                            <div>
-                              <span className="text-sm text-gray-500 block mb-1">Phone</span>
-                              <span className="text-gray-900 text-sm block">{selectedResult.buyerPhone}</span>
+                            <div className="pt-5">
+                              <span className="text-gray-500">Phone</span>
+                              <p className="font-medium text-black mt-0.5">{selectedResult.buyerPhone || '-'}</p>
                             </div>
-                          )}
-                        </div>
-                        {selectedResult.buyerAddress && (
-                          <div>
-                            <span className="text-sm text-gray-500 block mb-1">Address</span>
-                            <span className="text-gray-900 text-sm block">{selectedResult.buyerAddress}</span>
                           </div>
-                        )}
+                        </div>
+
+                        {/* Desktop View: All in one row */}
+                        <div className="hidden sm:flex items-center gap-12 bg-gray-50/50 p-4 rounded-lg border border-gray-100">
+                          {/* Seller Group */}
+                          <div className="flex items-center gap-4">
+                            <div>
+                              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Seller</span>
+                              <span className="text-gray-500">Aadhar ID</span>
+                              <p className="font-medium text-black mt-0.5">{selectedResult.sellerAadhar || '-'}</p>
+                            </div>
+                            <div className="h-8 w-px border-l border-dashed border-gray-300 mt-5"></div>
+                            <div className="pt-5">
+                              <span className="text-gray-500">Phone</span>
+                              <p className="font-medium text-black mt-0.5">{selectedResult.sellerPhone || '-'}</p>
+                            </div>
+                          </div>
+
+                          {/* Buyer Group */}
+                          <div className="flex items-center gap-4">
+                            <div>
+                              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Buyer</span>
+                              <span className="text-gray-500">Aadhar ID</span>
+                              <p className="font-medium text-black mt-0.5">{selectedResult.buyerAadhar || '-'}</p>
+                            </div>
+                            <div className="h-8 w-px border-l border-dashed border-gray-300 mt-5"></div>
+                            <div className="pt-5">
+                              <span className="text-gray-500">Phone</span>
+                              <p className="font-medium text-black mt-0.5">{selectedResult.buyerPhone || '-'}</p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </section>
+                    </div>
                   </div>
 
-                  {/* Witnesses if present */}
-                  {selectedResult.witnesses && selectedResult.witnesses.length > 0 && (
-                    <section>
-                      <div className="flex items-center gap-2 mb-4 pb-2 border-b border-dashed border-gray-200">
-                        <Users size={18} className="text-gray-400" />
-                        <h3 className="font-medium text-gray-900">Witnesses ({selectedResult.witnesses.length})</h3>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {selectedResult.witnesses.map((witness, index) => (
-                          <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                            <p className="text-black font-medium mb-2">Witness {index + 1}</p>
-                            <div className="space-y-1 text-sm">
-                              <div>
-                                <span className="text-gray-500">Name:</span>
-                                <p className="text-black">{witness.name}</p>
-                              </div>
-                              <div>
-                                <span className="text-gray-500">Address:</span>
-                                <p className="text-black">{witness.address}</p>
-                              </div>
-                              <div>
-                                <span className="text-gray-500">Phone:</span>
-                                <p className="text-black">{witness.phone}</p>
-                              </div>
-                              <div>
-                                <span className="text-gray-500">Aadhar:</span>
-                                <p className="text-black">{witness.aadhar}</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
+                  {/* Documents Summary */}
+                  <div>
+                    <h3 className="text-lg font-sans font-normal text-black mb-3">Uploaded Documents & Photos</h3>
+                    <div className="border-t border-dashed border-gray-300 mb-4"></div>
 
-                  {/* Documents */}
-                  {selectedResult.documents && selectedResult.documents.length > 0 && (
-                    <section>
-                      <div className="flex items-center gap-2 mb-4 pb-2 border-b border-dashed border-gray-200">
-                        <FileText size={18} className="text-gray-400" />
-                        <h3 className="font-medium text-gray-900">Documents</h3>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {selectedResult.documents.map((doc: any, index: number) => (
-                          <div key={index} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg group hover:border-blue-200 transition-colors">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                                <FileText size={18} />
-                              </div>
-                              <div>
-                                <div className="text-sm font-medium text-gray-900 capitalize">
-                                  {doc.type.replace(/_/g, ' ')}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {(doc.size / 1024 / 1024).toFixed(2)} MB • {doc.name.split('.').pop().toUpperCase()}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={() => window.open(`https://gateway.pinata.cloud/ipfs/${doc.ipfsHash}`, '_blank')}
-                                className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700"
-                                title="View"
-                              >
-                                <Eye size={16} />
-                              </button>
-                              <button
-                                onClick={() => downloadDocument(doc)}
-                                className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700"
-                                title="Download"
-                              >
-                                <Download size={16} />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
+                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
+                      {selectedResult.documents && selectedResult.documents.map((doc, index) => (
+                        <button
+                          key={index}
+                          onClick={() => window.open(doc.url || `https://gateway.pinata.cloud/ipfs/${doc.ipfsHash}`, '_blank')}
+                          className="flex items-center justify-start pl-4 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors gap-2"
+                        >
+                          <FileText size={16} className="text-gray-400 shrink-0" />
+                          <span className="truncate max-w-[100px] sm:max-w-[150px] capitalize">{doc.name || doc.type}</span>
+                        </button>
+                      ))}
 
-                  {/* Property Photos */}
-                  {selectedResult.propertyPhotos && selectedResult.propertyPhotos.length > 0 && (
-                    <section>
-                      <div className="flex items-center gap-2 mb-4 pb-2 border-b border-dashed border-gray-200">
-                        <ImageIcon size={18} className="text-gray-400" />
-                        <h3 className="font-medium text-gray-900">Property Photos</h3>
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                        {selectedResult.propertyPhotos.map((photo: any, index: number) => {
-                          // Prefer IPFS URL, fallback to base64
-                          const imageSrc = photo.url
-                            ? photo.url
-                            : (photo.data && photo.data.startsWith('data:')
-                              ? photo.data
-                              : photo.data ? `data:${photo.mimeType || 'image/jpeg'};base64,${photo.data}` : null);
+                      {selectedResult.propertyPhotos && selectedResult.propertyPhotos.map((photo, index) => (
+                        <button
+                          key={`photo-${index}`}
+                          onClick={() => window.open(photo.url || `https://gateway.pinata.cloud/ipfs/${photo.ipfsHash}`, '_blank')}
+                          className="flex items-center justify-start pl-4 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors gap-2"
+                        >
+                          <ImageIcon size={16} className="text-gray-400 shrink-0" />
+                          <span className="truncate max-w-[100px] sm:max-w-[150px]">Photo {index + 1}</span>
+                        </button>
+                      ))}
 
-                          return (
-                            <div key={index} className="group relative aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                              {imageSrc ? (
-                                <img
-                                  src={imageSrc}
-                                  alt={`Property ${index + 1}`}
-                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <ImageIcon size={24} className="text-gray-300" />
-                                </div>
-                              )}
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                <button
-                                  onClick={() => window.open(`https://gateway.pinata.cloud/ipfs/${photo.ipfsHash}`, '_blank')}
-                                  className="p-2 bg-white/90 rounded-full hover:bg-white text-gray-900 transition-colors shadow-sm"
-                                  title="View"
-                                >
-                                  <Eye size={16} />
-                                </button>
-                                <button
-                                  onClick={() => downloadDocument(photo)}
-                                  className="p-2 bg-white/90 rounded-full hover:bg-white text-gray-900 transition-colors shadow-sm"
-                                  title="Download"
-                                >
-                                  <Download size={16} />
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </section>
-                  )}
+                      {(!selectedResult.documents?.length && !selectedResult.propertyPhotos?.length) && (
+                        <p className="text-gray-500 text-sm italic">No documents available.</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <div className="p-6 border-t border-gray-100 flex flex-col sm:flex-row gap-3 bg-gray-50 rounded-b-xl z-10">
                   <button
                     onClick={() => setSelectedResult(null)}
                     className="w-full sm:w-auto px-5 py-2.5 bg-white border border-gray-300 shadow-sm text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
@@ -1524,7 +1307,7 @@ Generated on: ${new Date().toLocaleString()}
                     Close
                   </button>
                   <button
-                    onClick={() => downloadCertificate(selectedResult)}
+                    onClick={() => downloadAllData(selectedResult)}
                     className="w-full sm:w-auto px-5 py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors flex items-center justify-center gap-2"
                   >
                     <Download size={16} />
@@ -1578,7 +1361,7 @@ Generated on: ${new Date().toLocaleString()}
           )}
         </AnimatePresence>
       </div>
-    </AuthGate>
+    </AuthGate >
   );
 }
 

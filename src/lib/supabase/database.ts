@@ -167,7 +167,8 @@ export async function savePayment(paymentData: Omit<PaymentData, 'id' | 'created
     .from('payments')
     .insert([{
       ...rest,
-      wallet_address: user_id,
+      ...rest,
+      user_id: user_id,
       payment_status: 'completed',
     }])
     .select()
@@ -185,7 +186,7 @@ export async function checkPayment(registrationId: string, userId: string) {
     .from('payments')
     .select('*')
     .eq('registration_id', registrationId)
-    .eq('wallet_address', userId) // Checking userId against wallet_address column
+    .eq('user_id', userId)
     .eq('payment_status', 'completed')
     .single();
 
@@ -203,14 +204,14 @@ export async function saveSearchHistory(userId: string, searchType: 'registratio
   const { data: existingHistory } = await supabase
     .from('search_history')
     .select('*')
-    .eq('wallet_address', userId) // Checking userId against wallet_address column
+    .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(10);
 
   const { data, error } = await supabase
     .from('search_history')
     .insert([{
-      wallet_address: userId, // Storing userId in wallet_address column
+      user_id: userId,
       search_type: searchType,
       query: query,
     }])
@@ -218,7 +219,7 @@ export async function saveSearchHistory(userId: string, searchType: 'registratio
     .single();
 
   if (error) {
-    console.error('Error saving search history:', error);
+    console.error('Error saving search history:', JSON.stringify(error, null, 2));
     throw error;
   }
 
@@ -240,12 +241,12 @@ export async function getSearchHistory(userId: string) {
   const { data, error } = await supabase
     .from('search_history')
     .select('*')
-    .eq('wallet_address', userId) // Checking userId against wallet_address column
+    .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(10);
 
   if (error) {
-    console.error('Error fetching search history:', error);
+    console.error('Error fetching search history:', JSON.stringify(error, null, 2));
     return [];
   }
 

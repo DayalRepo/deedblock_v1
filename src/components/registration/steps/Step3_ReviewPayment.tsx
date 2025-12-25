@@ -15,6 +15,33 @@ interface Step3Props {
     previewDocument?: (type: string, file: File) => void;
 }
 
+// Local ErrorFlasher reused from other steps
+interface ErrorFlasherProps {
+    error?: any;
+    children: React.ReactElement<{ className?: string }>;
+}
+
+const ErrorFlasher: React.FC<ErrorFlasherProps> = ({ error, children }) => {
+    const [flash, setFlash] = React.useState(false);
+
+    React.useEffect(() => {
+        // Flash on error truthiness
+        if (error) {
+            setFlash(true);
+            const timer = setTimeout(() => setFlash(false), 3000);
+            return () => clearTimeout(timer);
+        } else {
+            setFlash(false);
+        }
+    }, [error]);
+
+    const errorClass = flash ? "ring-2 ring-red-400 bg-red-50 border-red-500 rounded-lg transition-all duration-300" : "";
+
+    return React.cloneElement(children, {
+        className: `${children.props.className || ''} ${errorClass}`.trim()
+    });
+};
+
 export const Step3_ReviewPayment: React.FC<Step3Props> = ({
     form,
     surveyOrDoor,
@@ -78,7 +105,7 @@ export const Step3_ReviewPayment: React.FC<Step3Props> = ({
                 } else {
                     setPaymentVerified('invalid');
                     setValue('paymentIdVerified', false, { shouldDirty: true });
-                    toast.error("Invalid Payment ID. Must start with '4'.");
+                    // toast.error("Invalid Payment ID. Must start with '4'."); // User requested no text clutter, just flash
                 }
             }, 1500);
         } else {
@@ -346,66 +373,61 @@ export const Step3_ReviewPayment: React.FC<Step3Props> = ({
 
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                     <label className="text-sm text-gray-500 shrink-0">Payment / Receipt ID</label>
-                    <div className="flex items-center gap-2 flex-1">
-                        <input
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            maxLength={7}
-                            value={paymentId || ''}
-                            onChange={handlePaymentIdChange}
-                            disabled={paymentVerified === 'valid' || paymentVerified === 'verifying'}
-                            placeholder="Enter 7 digits"
-                            className={`flex-1 max-w-[160px] px-3 py-2 text-sm border rounded-md transition-all outline-none
-                                ${paymentVerified === 'valid'
-                                    ? 'bg-green-50 border-green-300 text-green-800 font-medium'
-                                    : paymentVerified === 'invalid'
-                                        ? 'bg-red-50 border-red-300 text-red-800'
-                                        : 'bg-white border-gray-200 hover:border-gray-300 focus:border-black'
-                                }`}
-                            aria-label="Payment ID"
-                        />
-
-                        {paymentVerified === 'valid' ? (
-                            <div className="flex items-center gap-2">
-                                <span className="flex items-center gap-1 text-green-600 text-sm font-medium">
-                                    <Check size={16} />
-                                    <span className="hidden sm:inline">Verified</span>
-                                </span>
-                                <button
-                                    onClick={copyPaymentId}
-                                    className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-md transition-colors"
-                                    type="button"
-                                    title="Copy Payment ID"
-                                >
-                                    {copiedPaymentId ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
-                                </button>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={verifyPayment}
-                                disabled={!paymentId || paymentVerified === 'verifying'}
-                                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 ${paymentId && paymentVerified !== 'verifying'
-                                    ? 'bg-black text-white hover:bg-gray-800'
-                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    <ErrorFlasher error={paymentVerified === 'invalid'}>
+                        <div className="flex items-center gap-2 flex-1">
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={7}
+                                value={paymentId || ''}
+                                onChange={handlePaymentIdChange}
+                                disabled={paymentVerified === 'valid' || paymentVerified === 'verifying'}
+                                placeholder="Enter 7 digits"
+                                className={`flex-1 max-w-[160px] px-3 py-2 text-sm border rounded-md transition-all outline-none
+                                        ${paymentVerified === 'valid'
+                                        ? 'bg-green-50 border-green-300 text-green-800 font-medium'
+                                        : paymentVerified === 'invalid'
+                                            ? 'bg-red-50 border-red-300 text-red-800'
+                                            : 'bg-white border-gray-200 hover:border-gray-300 focus:border-black'
                                     }`}
-                                type="button"
-                            >
-                                {paymentVerified === 'verifying' ? (
-                                    <Loader2 size={14} className="animate-spin" />
-                                ) : null}
-                                {paymentVerified === 'verifying' ? 'Verifying...' : 'Verify'}
-                            </button>
-                        )}
-                    </div>
-                </div>
+                                aria-label="Payment ID"
+                            />
 
-                {paymentVerified === 'invalid' && (
-                    <p className="mt-2 text-xs text-red-500 flex items-center gap-1" role="alert">
-                        <AlertCircle size={12} />
-                        Invalid Payment ID. Please check and try again.
-                    </p>
-                )}
+                            {paymentVerified === 'valid' ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="flex items-center gap-1 text-green-600 text-sm font-medium">
+                                        <Check size={16} />
+                                        <span className="hidden sm:inline">Verified</span>
+                                    </span>
+                                    <button
+                                        onClick={copyPaymentId}
+                                        className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-md transition-colors"
+                                        type="button"
+                                        title="Copy Payment ID"
+                                    >
+                                        {copiedPaymentId ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={verifyPayment}
+                                    disabled={!paymentId || paymentVerified === 'verifying'}
+                                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 ${paymentId && paymentVerified !== 'verifying'
+                                        ? 'bg-black text-white hover:bg-gray-800'
+                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        }`}
+                                    type="button"
+                                >
+                                    {paymentVerified === 'verifying' ? (
+                                        <Loader2 size={14} className="animate-spin" />
+                                    ) : null}
+                                    {paymentVerified === 'verifying' ? 'Verifying...' : 'Verify'}
+                                </button>
+                            )}
+                        </div>
+                    </ErrorFlasher>
+                </div>
             </div>
 
             <div className="border-t border-dashed border-gray-300"></div>

@@ -693,7 +693,13 @@ export default function RegistrationPage() {
           {/* Navigation Header */}
           <div className="flex justify-between items-center mb-6 px-4 sm:px-8">
             <button
-              onClick={() => router.push('/')}
+              onClick={() => {
+                if (currentStep === 1) {
+                  router.push('/');
+                } else {
+                  prevStep();
+                }
+              }}
               className="flex items-center gap-2 text-gray-600 hover:text-black transition-colors"
             >
               <ArrowLeft size={20} />
