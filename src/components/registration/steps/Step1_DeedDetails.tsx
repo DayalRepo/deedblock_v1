@@ -1,14 +1,38 @@
 import React from 'react';
-import { AlertCircle, Clock, Check, Loader2 } from 'lucide-react';
+import { Clock, Check, Loader2 } from 'lucide-react';
 import { Controller, UseFormReturn } from 'react-hook-form';
 import { AnimatedSelect } from '@/components/ui/AnimatedSelect';
 
-import { motion, AnimatePresence } from 'framer-motion';
 import { RegistrationFormSchema } from '@/lib/validations/registrationSchema';
 import { useLocationData } from '@/hooks/registration/useLocationData';
 import { useOTPVerification } from '@/hooks/registration/useOTPVerification';
 import { FingerprintIcon } from '@/components/registration/icons/RegistrationIcons';
 import { ResetButton } from '../ResetButton';
+
+interface ErrorFlasherProps {
+    error?: any;
+    children: React.ReactElement<{ className?: string }>;
+}
+
+const ErrorFlasher: React.FC<ErrorFlasherProps> = ({ error, children }) => {
+    const [flash, setFlash] = React.useState(false);
+
+    React.useEffect(() => {
+        if (error) {
+            setFlash(true);
+            const timer = setTimeout(() => setFlash(false), 3000);
+            return () => clearTimeout(timer);
+        } else {
+            setFlash(false);
+        }
+    }, [error]);
+
+    const errorClass = flash ? "ring-2 ring-red-400 bg-red-50 border-red-500 rounded-lg transition-all duration-300" : "";
+
+    return React.cloneElement(children, {
+        className: `${children.props.className || ''} ${errorClass}`.trim()
+    });
+};
 
 interface Step1Props {
     form: UseFormReturn<RegistrationFormSchema>;
@@ -159,21 +183,22 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                     {/* Row 1: State & District */}
                     <div className="flex items-end gap-2 w-full sm:contents">
                         {/* State */}
-                        <div className="flex-1 sm:flex-1 min-w-0">
+                        <div className="flex-1 sm:flex-1 min-w-0 relative">
                             <label className="block text-sm text-gray-500 mb-1.5">State <span className="text-red-400">*</span></label>
                             <Controller
                                 control={control}
                                 name="state"
                                 render={({ field }) => (
-                                    <AnimatedSelect
-                                        value={field.value}
-                                        onChange={(val) => handleLocationChange('state', val)}
-                                        placeholder="Select"
-                                        options={indianStates.map(s => ({ value: s, label: s }))}
-                                        searchable={true}
-                                        className="text-sm"
-                                        error={!!errors.state}
-                                    />
+                                    <ErrorFlasher error={errors.state}>
+                                        <AnimatedSelect
+                                            value={field.value}
+                                            onChange={(val) => handleLocationChange('state', val)}
+                                            placeholder="Select"
+                                            options={indianStates.map(s => ({ value: s, label: s }))}
+                                            searchable={true}
+                                            className="text-sm"
+                                        />
+                                    </ErrorFlasher>
                                 )}
                             />
                         </div>
@@ -181,22 +206,23 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                         <div className="w-px border-l border-dashed border-gray-300 h-10 self-end mb-1.5"></div>
 
                         {/* District */}
-                        <div className="flex-1 sm:flex-1 min-w-0">
+                        <div className="flex-1 sm:flex-1 min-w-0 relative">
                             <label className="block text-sm text-gray-500 mb-1.5">District <span className="text-red-400">*</span></label>
                             <Controller
                                 control={control}
                                 name="district"
                                 render={({ field }) => (
-                                    <AnimatedSelect
-                                        value={field.value}
-                                        onChange={(val) => handleLocationChange('district', val)}
-                                        placeholder="Select"
-                                        options={districts.map(d => ({ value: d, label: d }))}
-                                        searchable={true}
-                                        disabled={!state}
-                                        className="text-sm"
-                                        error={!!errors.district}
-                                    />
+                                    <ErrorFlasher error={errors.district}>
+                                        <AnimatedSelect
+                                            value={field.value}
+                                            onChange={(val) => handleLocationChange('district', val)}
+                                            placeholder="Select"
+                                            options={districts.map(d => ({ value: d, label: d }))}
+                                            searchable={true}
+                                            disabled={!state}
+                                            className="text-sm"
+                                        />
+                                    </ErrorFlasher>
                                 )}
                             />
                         </div>
@@ -207,22 +233,23 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                     {/* Row 2: Mandal & Village */}
                     <div className="flex items-end gap-2 w-full sm:contents">
                         {/* Mandal */}
-                        <div className="flex-1 sm:flex-1 min-w-0">
+                        <div className="flex-1 sm:flex-1 min-w-0 relative">
                             <label className="block text-sm text-gray-500 mb-1.5">Mandal <span className="text-red-400">*</span></label>
                             <Controller
                                 control={control}
                                 name="taluka"
                                 render={({ field }) => (
-                                    <AnimatedSelect
-                                        value={field.value}
-                                        onChange={(val) => handleLocationChange('taluka', val)}
-                                        placeholder="Select"
-                                        options={talukas.map(t => ({ value: t, label: t }))}
-                                        searchable={true}
-                                        disabled={!district}
-                                        className="text-sm"
-                                        error={!!errors.taluka}
-                                    />
+                                    <ErrorFlasher error={errors.taluka}>
+                                        <AnimatedSelect
+                                            value={field.value}
+                                            onChange={(val) => handleLocationChange('taluka', val)}
+                                            placeholder="Select"
+                                            options={talukas.map(t => ({ value: t, label: t }))}
+                                            searchable={true}
+                                            disabled={!district}
+                                            className="text-sm"
+                                        />
+                                    </ErrorFlasher>
                                 )}
                             />
                         </div>
@@ -230,22 +257,23 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                         <div className="w-px border-l border-dashed border-gray-300 h-10 self-end mb-1.5"></div>
 
                         {/* Village */}
-                        <div className="flex-1 sm:flex-1 min-w-0">
+                        <div className="flex-1 sm:flex-1 min-w-0 relative">
                             <label className="block text-sm text-gray-500 mb-1.5">Village <span className="text-red-400">*</span></label>
                             <Controller
                                 control={control}
                                 name="village"
                                 render={({ field }) => (
-                                    <AnimatedSelect
-                                        value={field.value}
-                                        onChange={(val) => handleLocationChange('village', val)}
-                                        placeholder="Select"
-                                        options={villages.map(v => ({ value: v, label: v }))}
-                                        searchable={true}
-                                        disabled={!taluka}
-                                        className="text-sm"
-                                        error={!!errors.village}
-                                    />
+                                    <ErrorFlasher error={errors.village}>
+                                        <AnimatedSelect
+                                            value={field.value}
+                                            onChange={(val) => handleLocationChange('village', val)}
+                                            placeholder="Select"
+                                            options={villages.map(v => ({ value: v, label: v }))}
+                                            searchable={true}
+                                            disabled={!taluka}
+                                            className="text-sm"
+                                        />
+                                    </ErrorFlasher>
                                 )}
                             />
                         </div>
@@ -295,19 +323,20 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                 control={control}
                                 name={surveyOrDoor === 'survey' ? 'surveyNumber' : 'doorNumber'}
                                 render={({ field }) => (
-                                    <AnimatedSelect
-                                        value={field.value || ''}
-                                        onChange={(val) => handleLocationChange(surveyOrDoor === 'survey' ? 'surveyNumber' : 'doorNumber', val)}
-                                        placeholder="Select"
-                                        options={surveyOrDoor === 'survey'
-                                            ? surveyNumbers.map(s => ({ value: s.number, label: s.number }))
-                                            : doorNumbers.map(d => ({ value: d.number, label: d.number }))
-                                        }
-                                        searchable={true}
-                                        disabled={!village}
-                                        className="w-[50%] sm:w-[80%]"
-                                        error={!!(errors.surveyNumber || errors.doorNumber)}
-                                    />
+                                    <ErrorFlasher error={surveyOrDoor === 'survey' ? errors.surveyNumber : errors.doorNumber}>
+                                        <AnimatedSelect
+                                            value={field.value || ''}
+                                            onChange={(val) => handleLocationChange(surveyOrDoor === 'survey' ? 'surveyNumber' : 'doorNumber', val)}
+                                            placeholder="Select"
+                                            options={surveyOrDoor === 'survey'
+                                                ? surveyNumbers.map(s => ({ value: s.number, label: s.number }))
+                                                : doorNumbers.map(d => ({ value: d.number, label: d.number }))
+                                            }
+                                            searchable={true}
+                                            disabled={!village}
+                                            className="w-[50%] sm:w-[80%]"
+                                        />
+                                    </ErrorFlasher>
                                 )}
                             />
                         </div>
@@ -348,27 +377,28 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-2">
                     {/* Transaction Type */}
-                    <div className="w-full sm:flex-1 min-w-0">
+                    <div className="w-full sm:flex-1 min-w-0 relative">
                         <label className="block text-sm text-gray-500 mb-1.5">Type <span className="text-red-400">*</span></label>
                         <Controller
                             control={control}
                             name="transactionType"
                             render={({ field }) => (
-                                <AnimatedSelect
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                    placeholder="Select"
-                                    options={[
-                                        { value: 'sale', label: 'Sale' },
-                                        { value: 'gift', label: 'Gift' },
-                                        { value: 'partition', label: 'Partition' },
-                                        { value: 'lease', label: 'Lease' },
-                                        { value: 'mortgage', label: 'Mortgage' },
-                                        { value: 'exchange', label: 'Exchange' },
-                                    ]}
-                                    className="w-[70%] sm:w-full text-sm"
-                                    error={!!errors.transactionType}
-                                />
+                                <ErrorFlasher error={errors.transactionType}>
+                                    <AnimatedSelect
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="Select"
+                                        options={[
+                                            { value: 'sale', label: 'Sale' },
+                                            { value: 'gift', label: 'Gift' },
+                                            { value: 'partition', label: 'Partition' },
+                                            { value: 'lease', label: 'Lease' },
+                                            { value: 'mortgage', label: 'Mortgage' },
+                                            { value: 'exchange', label: 'Exchange' },
+                                        ]}
+                                        className="w-[70%] sm:w-full text-sm"
+                                    />
+                                </ErrorFlasher>
                             )}
                         />
                     </div>
@@ -438,27 +468,29 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     control={control}
                                     name="sellerAadhar"
                                     render={({ field }) => (
-                                        <input
-                                            type="text"
-                                            value={field.value || ''}
-                                            onChange={(e) => {
-                                                const val = e.target.value.replace(/\D/g, '').slice(0, 12);
-                                                const formatted = val.replace(/(\d{4})(?=\d)/g, '$1 ');
-                                                field.onChange(formatted);
-                                            }}
-                                            className={`w-full border rounded-lg px-3 py-2.5 pr-20 text-sm transition-all outline-none
-                                                ${isSellerAadharVerified
-                                                    ? 'bg-green-50 border-green-200 text-green-800'
-                                                    : errors.sellerAadhar
-                                                        ? 'border-red-300 bg-red-50'
-                                                        : 'border-gray-200 focus:border-black'
-                                                }
-                                                ${(selectedSurvey?.ownerAadhar || selectedDoor?.ownerAadhar) ? 'bg-gray-100 cursor-not-allowed' : ''}
-                                                `}
-                                            placeholder="0000 0000 0000"
-                                            maxLength={14}
-                                            disabled={isSellerAadharVerified || !!(selectedSurvey?.ownerAadhar || selectedDoor?.ownerAadhar)}
-                                        />
+                                        <ErrorFlasher error={errors.sellerAadhar}>
+                                            <input
+                                                type="text"
+                                                value={field.value || ''}
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/\D/g, '').slice(0, 12);
+                                                    const formatted = val.replace(/(\d{4})(?=\d)/g, '$1 ');
+                                                    field.onChange(formatted);
+                                                }}
+                                                className={`w-full border rounded-lg px-3 py-2.5 pr-20 text-sm transition-all outline-none
+                                                    ${isSellerAadharVerified
+                                                        ? 'bg-green-50 border-green-200 text-green-800'
+                                                        : errors.sellerAadhar
+                                                            ? 'border-red-300 bg-red-50'
+                                                            : 'border-gray-200 focus:border-black'
+                                                    }
+                                                    ${(selectedSurvey?.ownerAadhar || selectedDoor?.ownerAadhar) ? 'bg-gray-100 cursor-not-allowed' : ''}
+                                                    `}
+                                                placeholder="0000 0000 0000"
+                                                maxLength={14}
+                                                disabled={isSellerAadharVerified || !!(selectedSurvey?.ownerAadhar || selectedDoor?.ownerAadhar)}
+                                            />
+                                        </ErrorFlasher>
                                     )}
                                 />
                                 {isSellerAadharVerified && (
@@ -467,7 +499,6 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     </span>
                                 )}
                             </div>
-
 
                             {/* Aadhar Verification */}
                             <div className="mt-2 flex flex-wrap items-center gap-3">
@@ -556,25 +587,27 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     control={control}
                                     name="sellerPhone"
                                     render={({ field }) => (
-                                        <input
-                                            type="tel"
-                                            value={field.value || ''}
-                                            onChange={(e) => {
-                                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                                                const formatted = val.replace(/(\d{5})(?=\d)/g, '$1 ');
-                                                field.onChange(formatted);
-                                            }}
-                                            className={`w-full border rounded-lg py-2.5 pl-16 pr-20 text-sm transition-all outline-none
-                                                ${sellerOtpVerified
-                                                    ? 'bg-green-50 border-green-200 text-green-800'
-                                                    : errors.sellerPhone
-                                                        ? 'border-red-300 bg-red-50'
-                                                        : 'border-gray-200 focus:border-black'
-                                                }`}
-                                            placeholder="98765 43210"
-                                            maxLength={11}
-                                            disabled={sellerOtpVerified}
-                                        />
+                                        <ErrorFlasher error={errors.sellerPhone}>
+                                            <input
+                                                type="tel"
+                                                value={field.value || ''}
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                    const formatted = val.replace(/(\d{5})(?=\d)/g, '$1 ');
+                                                    field.onChange(formatted);
+                                                }}
+                                                className={`w-full border rounded-lg py-2.5 pl-16 pr-20 text-sm transition-all outline-none
+                                                    ${sellerOtpVerified
+                                                        ? 'bg-green-50 border-green-200 text-green-800'
+                                                        : errors.sellerPhone
+                                                            ? 'border-red-300 bg-red-50'
+                                                            : 'border-gray-200 focus:border-black'
+                                                    }`}
+                                                placeholder="98765 43210"
+                                                maxLength={11}
+                                                disabled={sellerOtpVerified}
+                                            />
+                                        </ErrorFlasher>
                                     )}
                                 />
                                 {sellerOtpVerified && (
@@ -583,7 +616,6 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     </span>
                                 )}
                             </div>
-
 
                             {/* Phone OTP */}
                             {sellerOtpVerified ? (
@@ -641,25 +673,27 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     control={control}
                                     name="buyerAadhar"
                                     render={({ field }) => (
-                                        <input
-                                            type="text"
-                                            value={field.value || ''}
-                                            onChange={(e) => {
-                                                const val = e.target.value.replace(/\D/g, '').slice(0, 12);
-                                                const formatted = val.replace(/(\d{4})(?=\d)/g, '$1 ');
-                                                field.onChange(formatted);
-                                            }}
-                                            className={`w-full border rounded-lg px-3 py-2.5 pr-20 text-sm transition-all outline-none
-                                                ${isBuyerAadharVerified
-                                                    ? 'bg-green-50 border-green-200 text-green-800'
-                                                    : errors.buyerAadhar
-                                                        ? 'border-red-300 bg-red-50'
-                                                        : 'border-gray-200 focus:border-black'
-                                                }`}
-                                            placeholder="0000 0000 0000"
-                                            maxLength={14}
-                                            disabled={isBuyerAadharVerified}
-                                        />
+                                        <ErrorFlasher error={errors.buyerAadhar}>
+                                            <input
+                                                type="text"
+                                                value={field.value || ''}
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/\D/g, '').slice(0, 12);
+                                                    const formatted = val.replace(/(\d{4})(?=\d)/g, '$1 ');
+                                                    field.onChange(formatted);
+                                                }}
+                                                className={`w-full border rounded-lg px-3 py-2.5 pr-20 text-sm transition-all outline-none
+                                                    ${isBuyerAadharVerified
+                                                        ? 'bg-green-50 border-green-200 text-green-800'
+                                                        : errors.buyerAadhar
+                                                            ? 'border-red-300 bg-red-50'
+                                                            : 'border-gray-200 focus:border-black'
+                                                    }`}
+                                                placeholder="0000 0000 0000"
+                                                maxLength={14}
+                                                disabled={isBuyerAadharVerified}
+                                            />
+                                        </ErrorFlasher>
                                     )}
                                 />
                                 {isBuyerAadharVerified && (
@@ -668,6 +702,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     </span>
                                 )}
                             </div>
+
                             {/* Aadhar Verification */}
                             <div className="mt-2 flex flex-wrap items-center gap-3">
                                 {/* OTP Section */}
@@ -754,25 +789,27 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     control={control}
                                     name="buyerPhone"
                                     render={({ field }) => (
-                                        <input
-                                            type="tel"
-                                            value={field.value || ''}
-                                            onChange={(e) => {
-                                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                                                const formatted = val.replace(/(\d{5})(?=\d)/g, '$1 ');
-                                                field.onChange(formatted);
-                                            }}
-                                            className={`w-full border rounded-lg py-2.5 pl-16 pr-20 text-sm transition-all outline-none
-                                                ${buyerOtpVerified
-                                                    ? 'bg-green-50 border-green-200 text-green-800'
-                                                    : errors.buyerPhone
-                                                        ? 'border-red-300 bg-red-50'
-                                                        : 'border-gray-200 focus:border-black'
-                                                }`}
-                                            placeholder="98765 43210"
-                                            maxLength={11}
-                                            disabled={buyerOtpVerified}
-                                        />
+                                        <ErrorFlasher error={errors.buyerPhone}>
+                                            <input
+                                                type="tel"
+                                                value={field.value || ''}
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                    const formatted = val.replace(/(\d{5})(?=\d)/g, '$1 ');
+                                                    field.onChange(formatted);
+                                                }}
+                                                className={`w-full border rounded-lg py-2.5 pl-16 pr-20 text-sm transition-all outline-none
+                                                    ${buyerOtpVerified
+                                                        ? 'bg-green-50 border-green-200 text-green-800'
+                                                        : errors.buyerPhone
+                                                            ? 'border-red-300 bg-red-50'
+                                                            : 'border-gray-200 focus:border-black'
+                                                    }`}
+                                                placeholder="98765 43210"
+                                                maxLength={11}
+                                                disabled={buyerOtpVerified}
+                                            />
+                                        </ErrorFlasher>
                                     )}
                                 />
                                 {buyerOtpVerified && (
@@ -781,6 +818,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     </span>
                                 )}
                             </div>
+
                             {/* Phone OTP */}
                             {buyerOtpVerified ? (
                                 <div className="mt-2">
@@ -829,6 +867,6 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
             <div className="flex justify-center items-center">
                 <span className="text-gray-500 text-sm font-sans">Step 1 of 3</span>
             </div>
-        </div >
+        </div>
     );
 };

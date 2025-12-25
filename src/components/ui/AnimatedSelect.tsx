@@ -10,10 +10,9 @@ export interface AnimatedSelectProps {
     className?: string;
     searchable?: boolean;
     disabled?: boolean;
-    error?: boolean;
 }
 
-export function AnimatedSelect({ value, onChange, options, placeholder = 'Select...', className = '', searchable = false, disabled = false, error = false }: AnimatedSelectProps) {
+export function AnimatedSelect({ value, onChange, options, placeholder = 'Select...', className = '', searchable = false, disabled = false }: AnimatedSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const selectRef = useRef<HTMLDivElement>(null);
@@ -61,9 +60,7 @@ export function AnimatedSelect({ value, onChange, options, placeholder = 'Select
                 }}
                 className={`w-full border rounded-lg px-4 py-3 flex items-center justify-between transition-all duration-200 ${disabled
                     ? 'bg-gray-100 border-gray-200 cursor-not-allowed'
-                    : error
-                        ? 'bg-red-50 border-red-300 text-red-900 hover:border-red-400 focus:border-red-500'
-                        : 'bg-white border-gray-200 text-black hover:border-gray-300 focus:outline-none focus:border-black focus:ring-4 focus:ring-gray-100'
+                    : 'bg-white border-gray-200 text-black hover:border-gray-300 focus:outline-none focus:border-black focus:ring-4 focus:ring-gray-100'
                     }`}
             >
                 <span className={`truncate ${value && !disabled ? 'text-black' : 'text-gray-500'}`}>{selectedLabel}</span>
