@@ -43,7 +43,8 @@ export const INITIAL_FORM_DATA = {
     sellerAadharOtpVerified: false,
     buyerAadharOtpVerified: false,
     declarationChecked: false,
-    paymentId: ''
+    paymentId: '',
+    paymentIdVerified: false
 };
 
 export function useRegistrationForm() {

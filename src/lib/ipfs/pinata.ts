@@ -38,32 +38,35 @@ export async function uploadFileToIPFS(file: File, fileName: string): Promise<{ 
         // If response is not JSON, use status text
         errorMessage = response.statusText || `HTTP ${response.status}`;
       }
-      
+
       // Provide more specific error messages
       if (response.status === 0 || response.status === 503) {
         errorMessage = 'Network error: Unable to reach the server. Please check your internet connection.';
       } else if (response.status === 413) {
         errorMessage = 'File too large. Please reduce the file size.';
       } else if (response.status >= 500) {
-        errorMessage = 'Server error: Please try again later.';
+        // Prioritize server error message if available
+        if (errorMessage === 'Failed to upload file') {
+          errorMessage = 'Server error: Please try again later.';
+        }
       }
-      
+
       throw new Error(errorMessage);
     }
 
     const result = await response.json();
-    
+
     if (!result.hash) {
       throw new Error('Upload succeeded but no hash was returned from server');
     }
-    
+
     return {
       hash: result.hash,
       url: result.url,
     };
   } catch (error) {
     console.error('Error uploading file to IPFS:', error);
-    
+
     // Provide user-friendly error messages
     if (error instanceof Error) {
       if (error.name === 'AbortError' || error.message.includes('timeout') || error.message.includes('aborted')) {
@@ -77,7 +80,7 @@ export async function uploadFileToIPFS(file: File, fileName: string): Promise<{ 
       }
       throw error;
     }
-    
+
     throw new Error(`Failed to upload file to IPFS: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -87,9 +90,9 @@ export async function uploadFileToIPFS(file: File, fileName: string): Promise<{ 
 export async function uploadFilesToIPFS(files: File[]): Promise<Array<{ name: string; hash: string; url: string; mimeType: string }>> {
   try {
     // Detect if we're on mobile
-    const isMobile = typeof window !== 'undefined' && 
+    const isMobile = typeof window !== 'undefined' &&
       (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-       (window.innerWidth <= 768));
+        (window.innerWidth <= 768));
 
     const results: Array<{ name: string; hash: string; url: string; mimeType: string }> = [];
 
@@ -100,14 +103,14 @@ export async function uploadFilesToIPFS(files: File[]): Promise<Array<{ name: st
         const file = files[i];
         try {
           console.log(`Uploading photo ${i + 1}/${files.length}: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
-          
+
           // Verify file is still valid before uploading
           if (!file || file.size === 0) {
             throw new Error(`File ${file.name} is invalid or empty`);
           }
 
           const result = await uploadFileToIPFS(file, file.name);
-          
+
           if (!result || !result.hash) {
             throw new Error(`Upload succeeded but no hash returned for ${file.name}`);
           }
@@ -118,9 +121,9 @@ export async function uploadFilesToIPFS(files: File[]): Promise<Array<{ name: st
             url: result.url,
             mimeType: file.type || 'image/jpeg',
           });
-          
+
           console.log(`✓ Successfully uploaded photo ${i + 1}/${files.length}: ${file.name}`);
-          
+
           // Small delay between uploads on mobile to avoid overwhelming the connection
           if (i < files.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
@@ -132,7 +135,7 @@ export async function uploadFilesToIPFS(files: File[]): Promise<Array<{ name: st
       }
     } else {
       // On desktop: upload in parallel for better performance
-      const uploadPromises = files.map((file, index) => 
+      const uploadPromises = files.map((file, index) =>
         uploadFileToIPFS(file, file.name)
           .then(result => {
             console.log(`✓ Successfully uploaded photo ${index + 1}/${files.length}: ${file.name}`);
@@ -191,7 +194,7 @@ export async function testPinataConnection(): Promise<boolean> {
     // Test with a small file
     const testBlob = new Blob(['test'], { type: 'text/plain' });
     const testFile = new File([testBlob], 'test.txt', { type: 'text/plain' });
-    
+
     await uploadFileToIPFS(testFile, 'test.txt');
     return true;
   } catch (error) {

@@ -131,7 +131,6 @@ export function useSupabaseDraft(form: UseFormReturn<RegistrationFormSchema>) {
                 if (error) throw error;
                 lastSavedData.current = currentString;
                 console.log('[Draft] Saved successfully.');
-                toast.success("Draft saved", { duration: 1000, id: 'draft-save' });
             } catch (err) {
                 console.error('[Draft] Save Error:', err);
                 // Don't toast on every background save error to avoid spam, but log it.

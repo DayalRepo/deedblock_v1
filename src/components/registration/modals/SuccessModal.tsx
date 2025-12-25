@@ -97,17 +97,17 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
                     <div className="border-t border-dashed border-gray-200 mb-4 sm:mb-6"></div>
 
                     {/* Actions */}
-                    <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
                         <button
                             onClick={downloadSummary}
-                            className="w-full flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-black text-gray-700 hover:text-black font-medium py-2.5 sm:py-3 rounded-lg transition-colors text-sm sm:text-base"
+                            className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-black text-gray-700 hover:text-black font-medium py-2.5 sm:py-3 rounded-lg transition-colors text-sm sm:text-base"
                         >
                             <Download className="w-4 h-4 sm:w-5 sm:h-5" />
                             Download Summary
                         </button>
                         <button
                             onClick={() => router.push('/')}
-                            className="w-full bg-black hover:bg-gray-800 text-white font-medium py-2.5 sm:py-3 rounded-lg transition-colors text-sm sm:text-base"
+                            className="flex-1 bg-black hover:bg-gray-800 text-white font-medium py-2.5 sm:py-3 rounded-lg transition-colors text-sm sm:text-base"
                         >
                             Back to Home
                         </button>

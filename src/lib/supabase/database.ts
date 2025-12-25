@@ -81,7 +81,8 @@ export async function saveRegistration(data: RegistrationData) {
     .from('registrations')
     .insert([{
       ...rest,
-      wallet_address: user_id,
+      user_id: user_id,
+
     }])
     .select()
     .single();

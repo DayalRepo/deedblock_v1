@@ -520,7 +520,7 @@ export const Step2_Documents: React.FC<Step2Props> = ({
                     >
                         <div className="flex items-center gap-4">
                             <div className="text-gray-400">
-                                {renderStatusIcon('photos', false, "w-4 h-4 sm:w-6 sm:h-6")}
+                                {/* Icon removed as per request */}
                             </div>
                             <div className="text-left">
                                 <p className="text-xs sm:text-sm font-normal text-gray-500 mb-0.5">
@@ -544,82 +544,49 @@ export const Step2_Documents: React.FC<Step2Props> = ({
                 {/* Photo List - Document Style */}
                 {displayPhotoCount > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
-                        {/* Show from File objects if available */}
-                        {validFilePhotos.length > 0 ? (
-                            validFilePhotos.map((photo, index) => (
-                                <div
-                                    key={index}
-                                    className="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-lg bg-white hover:border-black transition-all w-full"
-                                >
-                                    <div className="shrink-0 text-gray-400">
-                                        <CustomFolderIcon className="w-4 h-4 sm:w-6 sm:h-6" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <span className="text-xs sm:text-sm text-gray-500 truncate max-w-[140px] sm:max-w-none block">
-                                            Photo {index + 1}
-                                        </span>
-                                        <p className="text-xs sm:text-sm font-medium text-black truncate mt-0.5">{photo.name}</p>
-                                    </div>
-                                    <div className="flex items-center gap-1 shrink-0">
-                                        <button
-                                            onClick={() => previewDocument(`photo_${index}`, photo)}
-                                            className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
-                                            type="button"
-                                            aria-label={`Preview photo ${index + 1}`}
-                                        >
-                                            <PreviewIcon className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => removePhoto(index)}
-                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                            type="button"
-                                            aria-label={`Remove photo ${index + 1}`}
-                                        >
-                                            <CloseIcon className="w-4 h-4" />
-                                        </button>
-                                    </div>
+                        {/* Always show from draftPhotoUrls (Source of Truth for both hydrated and new photo URLs) */}
+                        {draftPhotoUrls.map((photoData, index) => (
+                            <div
+                                key={index}
+                                className="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-lg bg-white hover:border-black transition-all w-full"
+                            >
+                                <div className="flex-1 min-w-0">
+                                    <span className="text-xs sm:text-sm text-gray-500 truncate max-w-[140px] sm:max-w-none block">
+                                        Photo {index + 1}
+                                    </span>
+                                    <p className="text-xs sm:text-sm font-medium text-black truncate mt-0.5">{photoData.name}</p>
                                 </div>
-                            ))
-                        ) : (
-                            /* Show from draftPhotoUrls (after refresh/hydration) */
-                            draftPhotoUrls.map((photoData, index) => (
-                                <div
-                                    key={index}
-                                    className="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-lg bg-white hover:border-black transition-all w-full"
-                                >
-                                    <div className="shrink-0 text-gray-400">
-                                        <CustomFolderIcon className="w-4 h-4 sm:w-6 sm:h-6" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <span className="text-xs sm:text-sm text-gray-500 truncate max-w-[140px] sm:max-w-none block">
-                                            Photo {index + 1}
-                                        </span>
-                                        <p className="text-xs sm:text-sm font-medium text-black truncate mt-0.5">{photoData.name}</p>
-                                    </div>
-                                    <div className="flex items-center gap-1 shrink-0">
-                                        <button
-                                            onClick={() => {
-                                                // Open preview with URL from Supabase Storage
-                                                onPreviewPhotos?.();
-                                            }}
-                                            className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
-                                            type="button"
-                                            aria-label={`Preview photo ${index + 1}`}
-                                        >
-                                            <PreviewIcon className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => removePhoto(index)}
-                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                            type="button"
-                                            aria-label={`Remove photo ${index + 1}`}
-                                        >
-                                            <CloseIcon className="w-4 h-4" />
-                                        </button>
-                                    </div>
+                                <div className="flex items-center gap-1 shrink-0">
+                                    <button
+                                        onClick={() => {
+                                            // Open preview with URL from Supabase Storage
+                                            if (onPreviewPhotos) {
+                                                onPreviewPhotos(); // Triggers the parent's photo preview logic which uses current index/state
+                                                // Ideally we should pass the index to start at, but onPreviewPhotos logic in page.tsx might handle it?
+                                                // Let's check: page.tsx handles "showPropertyPhotos" -> true.
+                                                // It usually opens the carousel at the first image or current state? 
+                                                // Since we don't pass index here, it opens gallery. 
+                                                // To open specific image, page.tsx needs updates or we rely on the gallery view.
+                                                // For now, consistent behavior: opens gallery.
+                                            }
+                                        }}
+                                        className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
+                                        type="button"
+                                        aria-label={`Preview photo ${index + 1}`}
+                                    >
+                                        <PreviewIcon className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => removePhoto(index)}
+                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                        type="button"
+                                        aria-label={`Remove photo ${index + 1}`}
+                                    >
+                                        <CloseIcon className="w-4 h-4" />
+                                    </button>
                                 </div>
-                            ))
-                        )}
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>

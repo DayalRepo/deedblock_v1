@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    
+
     if (!file) {
       return NextResponse.json(
         { error: 'No file provided' },
@@ -51,7 +51,19 @@ export async function POST(request: NextRequest) {
     const pinata = getPinata();
 
     // Convert File to buffer for Pinata
-    const fileBuffer = await file.arrayBuffer();
+    let fileBuffer: ArrayBuffer;
+
+    if (typeof file === 'string') {
+      throw new Error('Expected file but received string');
+    }
+
+    if (typeof file.arrayBuffer === 'function') {
+      fileBuffer = await file.arrayBuffer();
+    } else {
+      // Fallback for environments where File/Blob doesn't have arrayBuffer directly
+      fileBuffer = await new Response(file).arrayBuffer();
+    }
+
     const buffer = Buffer.from(fileBuffer);
 
     // Create a readable stream from buffer
@@ -67,7 +79,7 @@ export async function POST(request: NextRequest) {
     };
 
     const result = await pinata.pinFileToIPFS(stream, options);
-    
+
     const gateway = process.env.NEXT_PUBLIC_PINATA_GATEWAY || 'https://salmon-adjacent-marmot-760.mypinata.cloud';
     const url = `${gateway}/ipfs/${result.IpfsHash}`;
 

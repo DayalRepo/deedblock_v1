@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { saveRegistration, type RegistrationData } from '@/lib/supabase/database';
 import { uploadFileToIPFS, uploadFilesToIPFS, uploadJSONToIPFS } from '@/lib/ipfs/pinata';
 import { supabase } from '@/lib/supabase/client';
-import { clearUserDraftFiles } from '@/lib/supabase/supabaseStorage';
+import { clearUserDraftFiles, downloadDraftFile } from '@/lib/supabase/supabaseStorage';
 
 // Components
 import AuthGate from '@/components/AuthGate';
@@ -148,7 +148,7 @@ export default function RegistrationPage() {
   // Success Countdown
   useEffect(() => {
     if (submitSuccess) {
-      setCountdown(60);
+      setCountdown(600);
     } else {
       setCountdown(0);
     }
@@ -191,21 +191,121 @@ export default function RegistrationPage() {
 
   // --- Logic ---
 
-  const previewDocument = (type: string, file: File) => {
-    setDocumentPreview({ type, file });
-    setDocumentPreviewName(null); // Clear URL name if previewing a File
-    if (type.startsWith('photo_')) {
-      setShowPropertyPhotos(true);
-    } else {
-      setShowDocuments(true);
+  // Gallery Mode State
+  const [galleryItems, setGalleryItems] = useState<any[]>([]);
+  const [galleryStartIndex, setGalleryStartIndex] = useState(0);
+
+  // --- Logic ---
+
+  // Helper to build the full gallery list (Documents + Photos)
+  const buildGalleryItems = useCallback(() => {
+    const items: any[] = [];
+    const values = getValues();
+
+    // 1. Add "Required Documents" in specific order
+    const docKeys = ['saleDeed', 'ec', 'khata', 'taxReceipt'] as const;
+    const docLabels: Record<string, string> = {
+      'saleDeed': 'Sale Deed',
+      'ec': 'Encumbrance Certificate',
+      'khata': 'Seller Aadhar',
+      'taxReceipt': 'Buyer Aadhar'
+    };
+
+    docKeys.forEach((key) => {
+      // Cast the access to ensure TS understands the key is valid for both objects
+      // We know these keys exist in the schema
+      const file = values.documents?.[key as keyof typeof values.documents];
+      const draft = values.draftDocumentUrls?.[key as keyof typeof values.draftDocumentUrls];
+
+      if (file instanceof File) {
+        items.push({
+          type: 'file',
+          url: URL.createObjectURL(file), // Create object URL for preview
+          name: docLabels[key],
+          file: file,
+          category: 'Document',
+          key: key // Original key to match for start index
+        });
+      } else if (draft?.url) {
+        items.push({
+          type: 'url',
+          url: draft.url,
+          name: docLabels[key],
+          category: 'Document',
+          key: key
+        });
+      }
+    });
+
+    // 2. Add "Property Photos"
+    // Use the photoUrls map we already maintain for consistent object URLs
+    const photos = propertyPhotos || [];
+    const draftPhotoUrls = values.draftPhotoUrls || [];
+
+    // Determine max count to iterate (max 6)
+    const maxPhotos = Math.max(photos.length, draftPhotoUrls.length);
+
+    for (let i = 0; i < maxPhotos; i++) {
+      let url = null;
+      let name = `Property Photo ${i + 1}`;
+      let file = null;
+
+      // Prefer File Object URL (fresh upload)
+      if (photos[i] instanceof File) {
+        url = propertyPhotoUrls.get(i);
+        file = photos[i];
+        name = photos[i].name;
+      }
+      // Fallback to Draft URL (hydrated)
+      else if (draftPhotoUrls[i]?.url) {
+        url = draftPhotoUrls[i].url;
+        name = draftPhotoUrls[i].name;
+      }
+
+      if (url) {
+        items.push({
+          type: 'file', // Treat as file type for preview logic
+          url: url,
+          name: name,
+          file: file,
+          category: 'Photo',
+          key: `photo_${i}`
+        });
+      }
     }
+
+    return items;
+  }, [getValues, propertyPhotos, propertyPhotoUrls]);
+
+  const previewDocument = (type: string, file: File) => {
+    // Legacy support for single file preview if needed, but now we prefer gallery
+    // Find index of this file in the gallery
+    const items = buildGalleryItems();
+    const index = items.findIndex(item => item.file === file || item.key === type);
+
+    setGalleryItems(items);
+    setGalleryStartIndex(index >= 0 ? index : 0);
+    setShowDocuments(true);
   };
 
   // Preview document from URL (for hydrated documents)
   const previewDocumentUrl = (type: string, url: string, name: string) => {
-    setDocumentPreview(null); // Clear file preview
-    setDocumentPreviewUrl(url);
-    setDocumentPreviewName(name);
+    const items = buildGalleryItems();
+    // For URL-based docs, type is the key (e.g., 'saleDeed')
+    const index = items.findIndex(item => item.key === type);
+
+    setGalleryItems(items);
+    setGalleryStartIndex(index >= 0 ? index : 0);
+    setShowDocuments(true);
+  };
+
+  const previewPhotos = () => {
+    // Open gallery starting at first photo
+    const items = buildGalleryItems();
+    const firstPhotoIndex = items.findIndex(item => item.category === 'Photo');
+
+    setGalleryItems(items);
+    setGalleryStartIndex(firstPhotoIndex >= 0 ? firstPhotoIndex : 0);
     setShowDocuments(true);
   };
 
@@ -223,6 +323,7 @@ export default function RegistrationPage() {
     resetTimer();
     setRegistrationId('');
     setSubmitSuccess(false);
+    window.scrollTo(0, 0);
   };
 
   const resetStep1Only = async () => {
@@ -253,6 +354,52 @@ export default function RegistrationPage() {
 
 
 
+  const resetStep2Only = async () => {
+    // 1. Clear Form State (Documents & Photos)
+    // We explicitly set to null/empty as per schema
+    setValue('documents', {
+      saleDeed: null,
+      ec: null,
+      khata: null,
+      taxReceipt: null
+    }, { shouldValidate: true, shouldDirty: true });
+
+    setValue('draftDocumentUrls', {
+      saleDeed: null,
+      ec: null,
+      khata: null,
+      taxReceipt: null
+    }, { shouldDirty: true });
+
+    setValue('propertyPhotos', [], { shouldValidate: true, shouldDirty: true });
+    setValue('draftPhotoUrls', [], { shouldDirty: true });
+
+    // 2. Clear Local State
+    setPropertyPhotoUrls(new Map());
+
+    // 3. Clear Supabase Storage Files
+    if (userId) {
+      try {
+        await clearUserDraftFiles(userId);
+        toast.success("All documents and photos cleared.");
+      } catch (err) {
+        console.error("Error clearing storage:", err);
+        // Toast already handled?
+      }
+    }
+  };
+
+
+  const resetStep3Only = async () => {
+    // Reset only Step 3 specific fields
+    // Payment ID and Declaration
+    setValue('paymentId', '', { shouldValidate: true, shouldDirty: true });
+    setValue('paymentIdVerified', false, { shouldDirty: true });
+    setValue('declarationChecked', false, { shouldDirty: true });
+
+    // We do NOT call clearDraft() here because we want to preserve Step 1 & 2 data.
+    // The useSupabaseDraft hook will automatically sync these empty values to the draft.
+  };
 
   const handleSuccessClose = useCallback(() => {
     setSubmitSuccess(false);
@@ -365,35 +512,71 @@ export default function RegistrationPage() {
       const documentsIPFS: Record<string, { name: string; ipfsHash: string; mimeType: string }> = {};
       const documentUploadPromises = [];
 
-      if (data.documents.saleDeed) {
-        const f = data.documents.saleDeed;
-        documentUploadPromises.push(uploadFileToIPFS(f, f.name).then(res => {
-          if (res?.hash) documentsIPFS['saleDeed'] = { name: f.name, ipfsHash: res.hash, mimeType: f.type };
-        }));
-      }
-      if (data.documents.ec) {
-        const f = data.documents.ec;
-        documentUploadPromises.push(uploadFileToIPFS(f, f.name).then(res => {
-          if (res?.hash) documentsIPFS['ec'] = { name: f.name, ipfsHash: res.hash, mimeType: f.type };
-        }));
-      }
-      if (data.documents.khata) {
-        const f = data.documents.khata;
-        documentUploadPromises.push(uploadFileToIPFS(f, f.name).then(res => {
-          if (res?.hash) documentsIPFS['khata'] = { name: f.name, ipfsHash: res.hash, mimeType: f.type };
-        }));
-      }
-      if (data.documents.taxReceipt) {
-        const f = data.documents.taxReceipt;
-        documentUploadPromises.push(uploadFileToIPFS(f, f.name).then(res => {
-          if (res?.hash) documentsIPFS['taxReceipt'] = { name: f.name, ipfsHash: res.hash, mimeType: f.type };
-        }));
-      }
+      // Helper to process document (upload File OR download draft then upload)
+      const processDocument = async (key: string, file: any, draft: any) => {
+        let fileToUpload: File | null = null;
+
+        if (file instanceof File) {
+          fileToUpload = file;
+        } else if (draft?.path) {
+          // Download from Supabase Storage
+          console.log(`Downloading draft ${key} from ${draft.path}...`);
+          fileToUpload = await downloadDraftFile(draft.path, draft.name || `${key}.pdf`);
+        }
+
+        if (fileToUpload) {
+          try {
+            const res = await uploadFileToIPFS(fileToUpload, fileToUpload.name);
+            if (res?.hash) {
+              documentsIPFS[key] = {
+                name: fileToUpload.name,
+                ipfsHash: res.hash,
+                mimeType: fileToUpload.type
+              };
+            }
+          } catch (err) {
+            console.error(`Failed to process ${key}:`, err);
+            throw new Error(`Failed to upload ${key}. Please try again.`);
+          }
+        }
+      };
+
+      // Process all required docs
+      if (data.documents.saleDeed || data.draftDocumentUrls?.saleDeed)
+        documentUploadPromises.push(processDocument('saleDeed', data.documents.saleDeed, data.draftDocumentUrls?.saleDeed));
+
+      if (data.documents.ec || data.draftDocumentUrls?.ec)
+        documentUploadPromises.push(processDocument('ec', data.documents.ec, data.draftDocumentUrls?.ec));
+
+      if (data.documents.khata || data.draftDocumentUrls?.khata)
+        documentUploadPromises.push(processDocument('khata', data.documents.khata, data.draftDocumentUrls?.khata));
+
+      if (data.documents.taxReceipt || data.draftDocumentUrls?.taxReceipt)
+        documentUploadPromises.push(processDocument('taxReceipt', data.documents.taxReceipt, data.draftDocumentUrls?.taxReceipt));
+
       await Promise.all(documentUploadPromises);
 
       let photosIPFS: Array<{ name: string; ipfsHash: string; mimeType: string }> = [];
-      if (data.propertyPhotos && data.propertyPhotos.length > 0) {
-        const uploadedPhotos = await uploadFilesToIPFS(data.propertyPhotos);
+      const photosToUpload: File[] = [];
+
+      // Collect photos (mix of Files and Drafts)
+      const maxPhotos = Math.max(data.propertyPhotos?.length || 0, data.draftPhotoUrls?.length || 0);
+
+      // We need to gather all valid File objects first
+      for (let i = 0; i < maxPhotos; i++) {
+        const file = data.propertyPhotos?.[i];
+        const draft = data.draftPhotoUrls?.[i];
+
+        if (file instanceof File) {
+          photosToUpload.push(file);
+        } else if (draft?.path) {
+          const downloaded = await downloadDraftFile(draft.path, draft.name || `photo_${i}.jpg`);
+          if (downloaded) photosToUpload.push(downloaded);
+        }
+      }
+
+      if (photosToUpload.length > 0) {
+        const uploadedPhotos = await uploadFilesToIPFS(photosToUpload);
         photosIPFS = uploadedPhotos.map(p => ({
           name: p.name,
           ipfsHash: p.hash,
@@ -483,8 +666,8 @@ export default function RegistrationPage() {
             savePhotos={savePhotos}
             previewDocument={previewDocument}
             onPreviewDocumentUrl={previewDocumentUrl}
-            onPreviewPhotos={() => setShowPropertyPhotos(true)}
-            onReset={resetFormFull}
+            onPreviewPhotos={previewPhotos}
+            onReset={resetStep2Only} // Use specific reset for Step 2
           />
         );
       case 3:
@@ -493,7 +676,7 @@ export default function RegistrationPage() {
             form={form}
             surveyOrDoor={surveyOrDoor}
             downloadSummary={() => downloadSummary(getValues(), registrationId)}
-            onReset={resetFormFull}
+            onReset={resetStep3Only}
             previewDocument={previewDocument}
           />
         );
@@ -649,18 +832,12 @@ export default function RegistrationPage() {
           {(showDocuments || showPropertyPhotos) && (
             <DocumentPreviewModal
               key="document-preview-modal"
-              file={documentPreview?.file || null}
-              fileUrl={documentPreviewUrl}
-              fileName={documentPreviewName}
-              showPropertyPhotos={showPropertyPhotos}
-              propertyPhotos={propertyPhotos}
-              propertyPhotoUrls={propertyPhotoUrls}
-              draftPhotoUrls={form.watch('draftPhotoUrls') || []}
+              items={galleryItems}
+              initialIndex={galleryStartIndex}
               onClose={() => {
                 setShowDocuments(false);
                 setShowPropertyPhotos(false);
-                setDocumentPreviewUrl(null);
-                setDocumentPreviewName(null);
+                setGalleryItems([]);
               }}
             />
           )}

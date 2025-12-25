@@ -320,7 +320,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                         }
                                         searchable={true}
                                         disabled={!village}
-                                        className="w-[50%] sm:w-[90%]"
+                                        className="w-[50%] sm:w-[80%]"
                                     />
                                 )}
                             />
@@ -333,9 +333,8 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                         </div>
                     </div>
 
-                    {/* Vertical Dashed Line */}
-                    {/* Vertical Dashed Line */}
-                    <div className="hidden sm:block w-px border-l border-dashed border-gray-300 mx-auto sm:h-auto sm:mx-auto sm:self-stretch"></div>
+                    {/* Vertical Dashed Line - Removed for Desktop */}
+                    {/* <div className="hidden sm:block w-px border-l border-dashed border-gray-300 mx-auto sm:h-auto sm:mx-auto sm:self-stretch"></div> */}
 
                     {/* Fee Preview */}
                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 w-full sm:flex-1">
@@ -387,7 +386,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                         { value: 'mortgage', label: 'Mortgage' },
                                         { value: 'exchange', label: 'Exchange' },
                                     ]}
-                                    className="w-[80%] sm:w-full text-sm"
+                                    className="w-[70%] sm:w-full text-sm"
                                 />
                             )}
                         />
@@ -437,7 +436,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                             type="text"
                             value={`₹${estimatedFee.toLocaleString()}`}
                             readOnly
-                            className="w-[50%] sm:w-full border border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-black font-medium text-sm cursor-not-allowed"
+                            className="w-[calc(48%-0.25rem)] sm:w-full border border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-black font-medium text-sm cursor-not-allowed"
                         />
                     </div>
                 </div>

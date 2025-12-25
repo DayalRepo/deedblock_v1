@@ -90,6 +90,7 @@ export const registrationSchema = z.object({
 
     // Payment
     paymentId: z.string().optional(),
+    paymentIdVerified: z.boolean().default(false),
 });
 
 export type RegistrationFormSchema = z.infer<typeof registrationSchema>;
