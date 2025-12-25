@@ -5,10 +5,14 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Calendar, Loader2, AlertCircle, X, Copy, Check, Download, QrCode, ChevronDown, MapPin, Users, IndianRupee, Eye, Image as ImageIcon, Search, Shield, Clock, Filter, ChevronLeft, ChevronRight, Home, User, ArrowLeft } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { searchRegistrations, savePayment, saveSearchHistory, getSearchHistory, type RegistrationData } from '@/lib/supabase/database';
+import { searchRegistrations, savePayment, type RegistrationData } from '@/lib/supabase/database';
 import { getIPFSUrl } from '@/lib/ipfs/pinata';
 import AuthGate from '@/components/AuthGate';
 import { supabase } from '@/lib/supabase/client';
+import dynamic from 'next/dynamic';
+import { PreviewIcon } from '@/components/registration/icons/RegistrationIcons';
+
+const DocumentPreviewModal = dynamic(() => import('@/components/registration/modals/DocumentPreviewModal').then(mod => mod.DocumentPreviewModal), { ssr: false });
 
 
 
@@ -122,10 +126,10 @@ export default function SearchPage() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
   const [copiedId, setCopiedId] = useState(false);
+  const [copiedSurvey, setCopiedSurvey] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showFilters, setShowFilters] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
-  const [searchHistory, setSearchHistory] = useState<Array<{ type: string; query: string; timestamp: number }>>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [sortOption, setSortOption] = useState<SortOption>('date');
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -136,7 +140,47 @@ export default function SearchPage() {
   const [itemsPerPage] = useState(10);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [isRecentSearchesOpen, setIsRecentSearchesOpen] = useState(false);
+
+  // Document Preview State
+  const [showDocumentPreview, setShowDocumentPreview] = useState(false);
+  const [previewInitialIndex, setPreviewInitialIndex] = useState(0);
+
+  // Prepare preview items
+  const previewItems = React.useMemo(() => {
+    if (!selectedResult) return [];
+
+    const docs = (selectedResult.documents || []).map(doc => ({
+      type: 'url' as const,
+      url: doc.url || (doc.ipfsHash ? `https://gateway.pinata.cloud/ipfs/${doc.ipfsHash}` : ''),
+      name: doc.name || doc.type || 'Document',
+      category: 'Document'
+    }));
+
+    const photos = (selectedResult.propertyPhotos || []).map((photo, idx) => ({
+      type: 'url' as const,
+      url: photo.url || (photo.ipfsHash ? `https://gateway.pinata.cloud/ipfs/${photo.ipfsHash}` : ''),
+      name: `Photo ${idx + 1}`,
+      category: 'Photo'
+    }));
+
+    return [...docs, ...photos];
+  }, [selectedResult]);
+
+  const handlePreviewDocument = (index: number) => {
+    setPreviewInitialIndex(index);
+    setShowDocumentPreview(true);
+  };
+
+
+
+  const handleCopySurvey = (text: string) => {
+    if (text) {
+      navigator.clipboard.writeText(text);
+      setCopiedSurvey(true);
+      setTimeout(() => setCopiedSurvey(false), 2000);
+    }
+  };
+
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [pendingResult, setPendingResult] = useState<SearchResult | null>(null);
   const [paidRegistrations, setPaidRegistrations] = useState<string[]>([]);
@@ -265,8 +309,7 @@ export default function SearchPage() {
     setSearchError(null);
     setSearchResults([]);
 
-    // Save to search history
-    await saveToHistory(searchForm.searchType, searchQuery);
+
 
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 800));
@@ -376,27 +419,7 @@ export default function SearchPage() {
     setSelectedResult(null);
   };
 
-  // Load search history from Supabase
-  useEffect(() => {
-    const loadHistory = async () => {
-      if (!userId) return;
 
-      try {
-        const history = await getSearchHistory(userId);
-        setSearchHistory(history.map(item => ({
-          type: item.search_type,
-          query: item.query,
-          timestamp: new Date(item.created_at || '').getTime(),
-        })));
-      } catch (e) {
-        console.error('Failed to load search history:', e);
-      }
-    };
-
-    if (userId) {
-      loadHistory();
-    }
-  }, [userId]);
 
   // Filter and sort results
   useEffect(() => {
@@ -464,80 +487,7 @@ export default function SearchPage() {
   const endIndex = startIndex + itemsPerPage;
   const paginatedResults = filteredResults.slice(startIndex, endIndex);
 
-  // Save to search history (non-blocking - don't fail if this doesn't work)
-  const saveToHistory = async (searchType: string, query: string) => {
-    if (!userId) return;
 
-    try {
-      await saveSearchHistory(
-        userId,
-        searchType as 'registrationId' | 'surveyNumber',
-        query
-      );
-
-      // Reload history to update UI
-      const history = await getSearchHistory(userId);
-      setSearchHistory(history.map(item => ({
-        type: item.search_type,
-        query: item.query,
-        timestamp: new Date(item.created_at || '').getTime(),
-      })));
-    } catch {
-      // Silently fail - search history is non-essential
-    }
-  };
-
-  // Load from history and trigger search
-  const loadFromHistory = async (entry: { type: string; query: string }) => {
-    setSearchForm(prev => ({
-      ...prev,
-      ...(() => {
-        const key = entry.type as 'registrationId' | 'surveyNumber';
-        return { searchType: key, [key]: entry.query } as Pick<SearchFormData, 'searchType'> & Partial<SearchFormData>;
-      })(),
-    }));
-    setIsRecentSearchesOpen(false);
-
-    // Wait for state to update, then trigger search
-    setTimeout(async () => {
-      // Set the form values first
-      const searchType = entry.type as 'registrationId' | 'surveyNumber';
-      const newForm = {
-        searchType,
-        registrationId: searchType === 'registrationId' ? entry.query : '',
-        surveyNumber: searchType === 'surveyNumber' ? entry.query : '',
-      };
-      setSearchForm(newForm);
-
-      const searchQuery = entry.query.trim().toUpperCase();
-
-      setIsSearching(true);
-      setSearchError(null);
-      setSearchResults([]);
-
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      try {
-        // Search registrations from Supabase
-        const foundRegistrations = await searchRegistrations(
-          entry.type as 'registrationId' | 'surveyNumber',
-          searchQuery
-        );
-        const foundResults: SearchResult[] = foundRegistrations.map(reg => convertToSearchResult(reg));
-
-        if (foundResults.length === 0) {
-          setSearchError('No registration found matching your search criteria.');
-        } else {
-          setSearchResults(foundResults);
-        }
-      } catch (error) {
-        console.error('Search error:', error);
-        setSearchError('An error occurred while searching. Please try again.');
-      } finally {
-        setIsSearching(false);
-      }
-    }, 100);
-  };
 
 
 
@@ -849,70 +799,7 @@ Generated on: ${new Date().toLocaleString()}
             </div>
           </motion.div>
 
-          {/* Search History */}
-          {searchHistory.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="relative"
-            >
-              <div className="relative z-20">
-                <button
-                  onClick={() => setIsRecentSearchesOpen(!isRecentSearchesOpen)}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:border-black hover:text-black transition-colors"
-                >
-                  <Calendar size={14} />
-                  <span>Recent Searches</span>
-                  <ChevronDown
-                    size={14}
-                    className={`transition-transform duration-200 ${isRecentSearchesOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
-                <AnimatePresence>
-                  {isRecentSearchesOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg border border-gray-200 shadow-lg z-20 overflow-hidden"
-                    >
-                      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                        <span className="text-sm font-medium text-black">Recent Searches</span>
-                        <button
-                          onClick={() => setIsRecentSearchesOpen(false)}
-                          className="p-1 hover:bg-gray-100 rounded transition-colors"
-                        >
-                          <X size={14} className="text-gray-400" />
-                        </button>
-                      </div>
-                      <div className="max-h-48 overflow-y-auto">
-                        {searchHistory.map((entry, index) => (
-                          <button
-                            key={index}
-                            onClick={() => loadFromHistory(entry)}
-                            className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
-                          >
-                            <div className="text-xs text-gray-400 mb-0.5">
-                              {entry.type === 'registrationId' ? 'Registration ID' : 'Survey No.'}
-                            </div>
-                            <div className="text-sm text-black font-mono">{entry.query}</div>
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-              {isRecentSearchesOpen && (
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setIsRecentSearchesOpen(false)}
-                />
-              )}
-            </motion.div>
-          )}
+
 
           {/* Search Results */}
           <AnimatePresence>
@@ -1097,7 +984,7 @@ Generated on: ${new Date().toLocaleString()}
                 exit={{ scale: 0.95, opacity: 0, y: 20 }}
                 transition={{ duration: 0.2 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-white rounded-xl shadow-xl w-full max-w-4xl overflow-hidden my-8 flex flex-col max-h-[90vh]"
+                className="bg-white rounded shadow-xl w-full max-w-3xl overflow-hidden my-8 flex flex-col max-h-[90vh]"
               >
                 {/* Header */}
                 <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
@@ -1115,203 +1002,226 @@ Generated on: ${new Date().toLocaleString()}
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
                   {/* Registration Status Section */}
-                  <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-gray-50 p-4 rounded-lg border border-gray-100">
+                  <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                      <span className="text-sm text-gray-500 block mb-1">Registration ID</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl font-mono font-medium text-black">{selectedResult.registrationId}</span>
-                        <button
-                          onClick={() => copyRegistrationId(selectedResult.registrationId)}
-                          className="text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          {copiedId ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
-                        </button>
+                      <div className="flex items-center gap-3 mb-1">
+                        <h3 className="text-lg font-medium text-gray-900">{selectedResult.registrationId}</h3>
+                        <span className={`px-2.5 py-0.5 rounded text-xs font-medium border uppercase ${true
+                          ? 'bg-green-50 text-green-500 border-green-400'
+                          : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                          }`}>
+                          Verified
+                        </span>
                       </div>
+                      <p className="text-sm text-gray-500">
+                        Registered on {new Date(selectedResult.registrationDate).toLocaleDateString('en-IN', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
                     </div>
-                    <div>
-                      <span className="text-sm text-gray-500 block mb-1">Status</span>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize border ${selectedResult.status === 'verified'
-                        ? 'bg-green-50 text-green-700 border-green-200'
-                        : selectedResult.status === 'pending'
-                          ? 'bg-amber-50 text-amber-700 border-amber-200'
-                          : 'bg-red-50 text-red-700 border-red-200'
-                        }`}>
-                        {selectedResult.status}
-                      </span>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setShowQRCode(true)}
+                        className="hidden sm:flex px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors items-center justify-center gap-2"
+                      >
+                        <QrCode size={18} />
+                        <span>View QR</span>
+                      </button>
                     </div>
                   </div>
 
-                  {/* DeedBlock Details */}
-                  <div>
-                    <h3 className="text-lg font-sans font-normal text-black mb-3">DeedBlock Details</h3>
-                    <div className="border-t border-dashed border-gray-300 mb-4"></div>
+                  {/* Scrollable Content */}
+                  <div className="p-6 space-y-8 overflow-y-auto">
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 md:gap-x-6 gap-y-6 text-sm">
-                      {/* Row 1 */}
-                      <div>
-                        <span className="text-gray-500">Survey / Door No</span>
-                        <p className="font-medium text-black mt-0.5 break-all">
-                          {selectedResult.surveyNumber || selectedResult.plotNumber || '-'}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Transaction Type</span>
-                        <p className="font-medium text-black mt-0.5 capitalize">{selectedResult.transactionType || '-'}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Village</span>
-                        <p className="font-medium text-black mt-0.5">{selectedResult.village || '-'}</p>
-                      </div>
+                    {/* DeedBlock Details */}
+                    <div>
+                      <div className="border-t border-dashed border-gray-300 mb-4"></div>
+                      <h3 className="text-lg font-sans font-normal text-black mb-3">DeedBlock Details</h3>
+                      <div className="border-t border-dashed border-gray-300 mb-4"></div>
 
-                      {/* Row 2 */}
-                      <div>
-                        <span className="text-gray-500">Mandal</span>
-                        <p className="font-medium text-black mt-0.5">{selectedResult.taluka || '-'}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">District</span>
-                        <p className="font-medium text-black mt-0.5">{selectedResult.district || '-'}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">State</span>
-                        <p className="font-medium text-black mt-0.5">{selectedResult.state || '-'}</p>
-                      </div>
-
-                      {/* Financials (From Step 1/3) */}
-                      <div>
-                        <span className="text-gray-500">Market Value</span>
-                        <p className="font-medium text-black mt-0.5">
-                          ₹{selectedResult.considerationAmount ? parseFloat(selectedResult.considerationAmount).toLocaleString('en-IN') : '-'}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Registration Fee</span>
-                        <p className="font-medium text-black mt-0.5">
-                          ₹{selectedResult.registrationFee ? parseFloat(selectedResult.registrationFee).toLocaleString('en-IN') : '-'}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Stamp Duty</span>
-                        <p className="font-medium text-black mt-0.5">
-                          ₹{selectedResult.stampDuty ? parseFloat(selectedResult.stampDuty).toLocaleString('en-IN') : '-'}
-                        </p>
-                      </div>
-
-                      {/* Seller & Buyer Details - Unified Row */}
-                      <div className="col-span-2 md:col-span-3 pt-2">
-                        {/* Mobile View: Stacked */}
-                        <div className="sm:hidden space-y-6">
-                          {/* Seller Mobile */}
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                            <div>
-                              <span className="text-gray-500 text-xs uppercase tracking-wider block mb-1">Seller</span>
-                              <span className="text-gray-500">Aadhar ID</span>
-                              <p className="font-medium text-black mt-0.5">{selectedResult.sellerAadhar || '-'}</p>
-                            </div>
-                            <div className="pt-5">
-                              <span className="text-gray-500">Phone</span>
-                              <p className="font-medium text-black mt-0.5">{selectedResult.sellerPhone || '-'}</p>
+                      <div className="space-y-6">
+                        {/* Property Details Grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 md:gap-x-6 gap-y-6 text-sm">
+                          <div>
+                            <span className="text-gray-500">Survey / Door No</span>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <p className="font-medium text-black">{selectedResult.surveyNumber || '-'}</p>
+                              <button
+                                onClick={() => handleCopySurvey(selectedResult.surveyNumber)}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                                title="Copy Survey No"
+                              >
+                                {copiedSurvey ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+                              </button>
                             </div>
                           </div>
+                          <div>
+                            <span className="text-gray-500">Transaction Type</span>
+                            <p className="font-medium text-black mt-0.5 capitalize">{selectedResult.transactionType || '-'}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Village</span>
+                            <p className="font-medium text-black mt-0.5">{selectedResult.village || '-'}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Mandal</span>
+                            <p className="font-medium text-black mt-0.5">{selectedResult.taluka || '-'}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">District</span>
+                            <p className="font-medium text-black mt-0.5">{selectedResult.district || '-'}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">State</span>
+                            <p className="font-medium text-black mt-0.5">{selectedResult.state || '-'}</p>
+                          </div>
 
-                          <div className="border-t border-dashed border-gray-200"></div>
+                          {/* Row 3: Seller & Buyer Details - Unified Row (From Step 3) */}
+                          <div className="col-span-2 md:col-span-3 pt-2">
+                            {/* Mobile View: Stacked */}
+                            <div className="sm:hidden space-y-4">
+                              {/* Seller Mobile */}
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                                <div>
+                                  <span className="text-gray-500 block mb-1">Seller Aadhar ID</span>
+                                  <p className="font-medium text-black mt-0.5">{selectedResult.sellerAadhar || '-'}</p>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500 block mb-1">Seller Phone</span>
+                                  <p className="font-medium text-black mt-0.5">{selectedResult.sellerPhone || '-'}</p>
+                                </div>
+                              </div>
 
-                          {/* Buyer Mobile */}
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                            <div>
-                              <span className="text-gray-500 text-xs uppercase tracking-wider block mb-1">Buyer</span>
-                              <span className="text-gray-500">Aadhar ID</span>
-                              <p className="font-medium text-black mt-0.5">{selectedResult.buyerAadhar || '-'}</p>
+                              {/* Buyer Mobile */}
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                                <div>
+                                  <span className="text-gray-500 block mb-1">Buyer Aadhar ID</span>
+                                  <p className="font-medium text-black mt-0.5">{selectedResult.buyerAadhar || '-'}</p>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500 block mb-1">Buyer Phone</span>
+                                  <p className="font-medium text-black mt-0.5">{selectedResult.buyerPhone || '-'}</p>
+                                </div>
+                              </div>
                             </div>
-                            <div className="pt-5">
-                              <span className="text-gray-500">Phone</span>
-                              <p className="font-medium text-black mt-0.5">{selectedResult.buyerPhone || '-'}</p>
+
+                            {/* Desktop View: All in one row */}
+                            <div className="hidden sm:flex items-center gap-12">
+                              {/* Seller Group */}
+                              <div className="flex items-center gap-4">
+                                <div>
+                                  <span className="text-gray-500">Seller Aadhar ID</span>
+                                  <p className="font-medium text-black mt-0.5">{selectedResult.sellerAadhar || '-'}</p>
+                                </div>
+                                <div className="h-8 w-px border-l border-dashed border-gray-300"></div>
+                                <div>
+                                  <span className="text-gray-500">Seller Phone</span>
+                                  <p className="font-medium text-black mt-0.5">{selectedResult.sellerPhone || '-'}</p>
+                                </div>
+                              </div>
+
+                              {/* Buyer Group */}
+                              <div className="flex items-center gap-4">
+                                <div>
+                                  <span className="text-gray-500">Buyer Aadhar ID</span>
+                                  <p className="font-medium text-black mt-0.5">{selectedResult.buyerAadhar || '-'}</p>
+                                </div>
+                                <div className="h-8 w-px border-l border-dashed border-gray-300"></div>
+                                <div>
+                                  <span className="text-gray-500">Buyer Phone</span>
+                                  <p className="font-medium text-black mt-0.5">{selectedResult.buyerPhone || '-'}</p>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
 
-                        {/* Desktop View: All in one row */}
-                        <div className="hidden sm:flex items-center gap-12 bg-gray-50/50 p-4 rounded-lg border border-gray-100">
-                          {/* Seller Group */}
-                          <div className="flex items-center gap-4">
-                            <div>
-                              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Seller</span>
-                              <span className="text-gray-500">Aadhar ID</span>
-                              <p className="font-medium text-black mt-0.5">{selectedResult.sellerAadhar || '-'}</p>
-                            </div>
-                            <div className="h-8 w-px border-l border-dashed border-gray-300 mt-5"></div>
-                            <div className="pt-5">
-                              <span className="text-gray-500">Phone</span>
-                              <p className="font-medium text-black mt-0.5">{selectedResult.sellerPhone || '-'}</p>
-                            </div>
+                        <div className="border-t border-dashed border-gray-300"></div>
+
+                        {/* Financials Grid (Fees Only) */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 md:gap-x-6 gap-y-8 text-sm">
+                          {/* Market Value */}
+                          <div>
+                            <span className="text-gray-500">Market Value</span>
+                            <p className="font-medium text-black mt-0.5">
+                              ₹{selectedResult.considerationAmount ? parseFloat(selectedResult.considerationAmount).toLocaleString('en-IN') : '-'}
+                            </p>
                           </div>
 
-                          {/* Buyer Group */}
-                          <div className="flex items-center gap-4">
-                            <div>
-                              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Buyer</span>
-                              <span className="text-gray-500">Aadhar ID</span>
-                              <p className="font-medium text-black mt-0.5">{selectedResult.buyerAadhar || '-'}</p>
-                            </div>
-                            <div className="h-8 w-px border-l border-dashed border-gray-300 mt-5"></div>
-                            <div className="pt-5">
-                              <span className="text-gray-500">Phone</span>
-                              <p className="font-medium text-black mt-0.5">{selectedResult.buyerPhone || '-'}</p>
-                            </div>
+                          {/* Registration Fee */}
+                          <div>
+                            <span className="text-gray-500">Registration Fee</span>
+                            <p className="font-medium text-black mt-0.5">
+                              ₹{selectedResult.registrationFee ? parseFloat(selectedResult.registrationFee).toLocaleString('en-IN') : '-'}
+                            </p>
+                          </div>
+
+                          {/* Stamp Duty */}
+                          <div>
+                            <span className="text-gray-500">Stamp Duty</span>
+                            <p className="font-medium text-black mt-0.5">
+                              ₹{selectedResult.stampDuty ? parseFloat(selectedResult.stampDuty).toLocaleString('en-IN') : '-'}
+                            </p>
+                          </div>
+                        </div>
+
+
+
+                        {/* Documents Summary */}
+                        <div>
+                          <div className="border-t border-dashed border-gray-300 mb-4"></div>
+                          <h3 className="text-lg font-sans font-normal text-black mb-3">Uploaded Documents & Photos</h3>
+                          <div className="border-t border-dashed border-gray-300 mb-4"></div>
+
+                          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
+                            {selectedResult.documents && selectedResult.documents.map((doc, index) => (
+                              <button
+                                key={index}
+                                onClick={() => handlePreviewDocument(index)}
+                                className="flex items-center justify-start pl-4 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors gap-2"
+                              >
+                                <PreviewIcon className="w-4 h-4 text-gray-400 shrink-0" />
+                                <span className="truncate max-w-[100px] sm:max-w-[150px] capitalize">{doc.name || doc.type}</span>
+                              </button>
+                            ))}
+
+                            {selectedResult.propertyPhotos && selectedResult.propertyPhotos.length > 0 && (
+                              <button
+                                onClick={() => handlePreviewDocument((selectedResult.documents?.length || 0))}
+                                className="col-span-2 justify-self-center sm:col-span-auto sm:justify-self-auto flex items-center justify-center sm:justify-start gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors"
+                              >
+                                <PreviewIcon className="w-4 h-4 text-gray-400 shrink-0" />
+                                <span className="truncate">{selectedResult.propertyPhotos.length} Photo{selectedResult.propertyPhotos.length > 1 ? 's' : ''}</span>
+                              </button>
+                            )}
+
+                            {(!selectedResult.documents?.length && !selectedResult.propertyPhotos?.length) && (
+                              <p className="text-sm text-gray-400 col-span-2 sm:col-span-auto">No documents available</p>
+                            )}
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Documents Summary */}
-                  <div>
-                    <h3 className="text-lg font-sans font-normal text-black mb-3">Uploaded Documents & Photos</h3>
-                    <div className="border-t border-dashed border-gray-300 mb-4"></div>
-
-                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
-                      {selectedResult.documents && selectedResult.documents.map((doc, index) => (
-                        <button
-                          key={index}
-                          onClick={() => window.open(doc.url || `https://gateway.pinata.cloud/ipfs/${doc.ipfsHash}`, '_blank')}
-                          className="flex items-center justify-start pl-4 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors gap-2"
-                        >
-                          <FileText size={16} className="text-gray-400 shrink-0" />
-                          <span className="truncate max-w-[100px] sm:max-w-[150px] capitalize">{doc.name || doc.type}</span>
-                        </button>
-                      ))}
-
-                      {selectedResult.propertyPhotos && selectedResult.propertyPhotos.map((photo, index) => (
-                        <button
-                          key={`photo-${index}`}
-                          onClick={() => window.open(photo.url || `https://gateway.pinata.cloud/ipfs/${photo.ipfsHash}`, '_blank')}
-                          className="flex items-center justify-start pl-4 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors gap-2"
-                        >
-                          <ImageIcon size={16} className="text-gray-400 shrink-0" />
-                          <span className="truncate max-w-[100px] sm:max-w-[150px]">Photo {index + 1}</span>
-                        </button>
-                      ))}
-
-                      {(!selectedResult.documents?.length && !selectedResult.propertyPhotos?.length) && (
-                        <p className="text-gray-500 text-sm italic">No documents available.</p>
-                      )}
                     </div>
                   </div>
                 </div>
 
-                <div className="p-6 border-t border-gray-100 flex flex-col sm:flex-row gap-3 bg-gray-50 rounded-b-xl z-10">
-                  <button
-                    onClick={() => setSelectedResult(null)}
-                    className="w-full sm:w-auto px-5 py-2.5 bg-white border border-gray-300 shadow-sm text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
-                  >
-                    Close
-                  </button>
+
+                <div className="p-6 border-t border-gray-100 flex flex-row gap-3 bg-gray-50 rounded-b-xl z-10 justify-end">
                   <button
                     onClick={() => downloadAllData(selectedResult)}
-                    className="w-full sm:w-auto px-5 py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors flex items-center justify-center gap-2"
+                    className="w-auto px-5 py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors flex items-center justify-center gap-2"
                   >
                     <Download size={16} />
-                    Download Certificate
+                    Download
+                  </button>
+                  <button
+                    onClick={() => setSelectedResult(null)}
+                    className="w-auto px-5 py-2.5 bg-white border border-gray-300 shadow-sm text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                  >
+                    Close
                   </button>
                 </div>
               </motion.div>
@@ -1360,8 +1270,18 @@ Generated on: ${new Date().toLocaleString()}
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+
+        {/* Document Preview Modal */}
+        <AnimatePresence>
+          {showDocumentPreview && (
+            <DocumentPreviewModal
+              initialIndex={previewInitialIndex}
+              items={previewItems}
+              onClose={() => setShowDocumentPreview(false)}
+            />
+          )}
+        </AnimatePresence>
+      </div >
     </AuthGate >
   );
 }
-

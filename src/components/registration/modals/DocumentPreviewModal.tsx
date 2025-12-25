@@ -93,7 +93,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.95, opacity: 0 }}
-                    className="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-full max-h-[85vh] sm:max-h-[90vh] flex flex-col overflow-hidden"
+                    className="bg-white rounded shadow-2xl w-full max-w-6xl h-full max-h-[85vh] sm:max-h-[90vh] flex flex-col overflow-hidden"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header */}

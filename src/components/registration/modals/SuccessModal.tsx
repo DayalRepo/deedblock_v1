@@ -38,7 +38,7 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="bg-white border border-gray-200 rounded-lg w-full max-w-sm sm:max-w-md overflow-hidden"
+                className="bg-white border border-gray-200 rounded-lg w-full max-w-[320px] sm:max-w-sm overflow-hidden"
             >
                 {/* Header */}
                 <div className="p-4 sm:p-6">
@@ -97,17 +97,10 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
                     <div className="border-t border-dashed border-gray-200 mb-4 sm:mb-6"></div>
 
                     {/* Actions */}
-                    <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex justify-end">
                         <button
-                            onClick={downloadSummary}
-                            className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-black text-gray-700 hover:text-black font-medium py-2.5 sm:py-3 rounded-lg transition-colors text-sm sm:text-base"
-                        >
-                            <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-                            Download Summary
-                        </button>
-                        <button
-                            onClick={() => router.push('/')}
-                            className="flex-1 bg-black hover:bg-gray-800 text-white font-medium py-2.5 sm:py-3 rounded-lg transition-colors text-sm sm:text-base"
+                            onClick={() => window.location.reload()}
+                            className="bg-black hover:bg-gray-800 text-white font-medium px-6 py-2.5 sm:py-3 rounded-lg transition-colors text-sm sm:text-base"
                         >
                             Back to Home
                         </button>

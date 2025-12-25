@@ -136,15 +136,6 @@ export const Step3_ReviewPayment: React.FC<Step3Props> = ({
                 <h2 className="text-xl sm:text-2xl font-sans font-normal text-black">Review & Payment</h2>
                 <div className="flex items-center gap-2">
                     <ResetButton size="sm" onReset={onReset} mobileIconOnly={true} />
-                    <button
-                        onClick={downloadSummary}
-                        className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-black hover:bg-gray-100 border border-gray-200 rounded-md transition-colors"
-                        type="button"
-                        aria-label="Download summary"
-                    >
-                        <Download size={16} />
-                        <span className="hidden sm:inline">Download</span>
-                    </button>
                 </div>
             </div>
             <div className="border-t border-dashed border-gray-300 mb-2"></div>
@@ -214,9 +205,9 @@ export const Step3_ReviewPayment: React.FC<Step3Props> = ({
                             </div>
                         </div>
 
-                        {/* Desktop View: All in one row */}
-                        <div className="hidden sm:flex items-center gap-12">
-                            {/* Seller Group */}
+                        {/* Desktop View: Grid to align with parent columns */}
+                        <div className="hidden sm:grid grid-cols-3 gap-6">
+                            {/* Seller Group (Aligns with Column 1) */}
                             <div className="flex items-center gap-4">
                                 <div>
                                     <span className="text-gray-500">Seller Aadhar ID</span>
@@ -229,7 +220,7 @@ export const Step3_ReviewPayment: React.FC<Step3Props> = ({
                                 </div>
                             </div>
 
-                            {/* Buyer Group */}
+                            {/* Buyer Group (Aligns with Column 2 - District) */}
                             <div className="flex items-center gap-4">
                                 <div>
                                     <span className="text-gray-500">Buyer Aadhar ID</span>
