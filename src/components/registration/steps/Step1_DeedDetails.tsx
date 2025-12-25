@@ -3,6 +3,7 @@ import { AlertCircle, Clock, Check, Loader2 } from 'lucide-react';
 import { Controller, UseFormReturn } from 'react-hook-form';
 import { AnimatedSelect } from '@/components/ui/AnimatedSelect';
 
+import { motion, AnimatePresence } from 'framer-motion';
 import { RegistrationFormSchema } from '@/lib/validations/registrationSchema';
 import { useLocationData } from '@/hooks/registration/useLocationData';
 import { useOTPVerification } from '@/hooks/registration/useOTPVerification';
@@ -158,7 +159,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                     {/* Row 1: State & District */}
                     <div className="flex items-end gap-2 w-full sm:contents">
                         {/* State */}
-                        <div className="flex-1 sm:flex-1">
+                        <div className="flex-1 sm:flex-1 min-w-0">
                             <label className="block text-sm text-gray-500 mb-1.5">State <span className="text-red-400">*</span></label>
                             <Controller
                                 control={control}
@@ -171,20 +172,16 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                         options={indianStates.map(s => ({ value: s, label: s }))}
                                         searchable={true}
                                         className="text-sm"
+                                        error={!!errors.state}
                                     />
                                 )}
                             />
-                            {errors.state && (
-                                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                                    <AlertCircle size={12} />{errors.state.message}
-                                </p>
-                            )}
                         </div>
 
                         <div className="w-px border-l border-dashed border-gray-300 h-10 self-end mb-1.5"></div>
 
                         {/* District */}
-                        <div className="flex-1 sm:flex-1">
+                        <div className="flex-1 sm:flex-1 min-w-0">
                             <label className="block text-sm text-gray-500 mb-1.5">District <span className="text-red-400">*</span></label>
                             <Controller
                                 control={control}
@@ -198,14 +195,10 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                         searchable={true}
                                         disabled={!state}
                                         className="text-sm"
+                                        error={!!errors.district}
                                     />
                                 )}
                             />
-                            {errors.district && (
-                                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                                    <AlertCircle size={12} />{errors.district.message}
-                                </p>
-                            )}
                         </div>
                     </div>
 
@@ -214,7 +207,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                     {/* Row 2: Mandal & Village */}
                     <div className="flex items-end gap-2 w-full sm:contents">
                         {/* Mandal */}
-                        <div className="flex-1 sm:flex-1">
+                        <div className="flex-1 sm:flex-1 min-w-0">
                             <label className="block text-sm text-gray-500 mb-1.5">Mandal <span className="text-red-400">*</span></label>
                             <Controller
                                 control={control}
@@ -228,20 +221,16 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                         searchable={true}
                                         disabled={!district}
                                         className="text-sm"
+                                        error={!!errors.taluka}
                                     />
                                 )}
                             />
-                            {errors.taluka && (
-                                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                                    <AlertCircle size={12} />{errors.taluka.message}
-                                </p>
-                            )}
                         </div>
 
                         <div className="w-px border-l border-dashed border-gray-300 h-10 self-end mb-1.5"></div>
 
                         {/* Village */}
-                        <div className="flex-1 sm:flex-1">
+                        <div className="flex-1 sm:flex-1 min-w-0">
                             <label className="block text-sm text-gray-500 mb-1.5">Village <span className="text-red-400">*</span></label>
                             <Controller
                                 control={control}
@@ -255,14 +244,10 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                         searchable={true}
                                         disabled={!taluka}
                                         className="text-sm"
+                                        error={!!errors.village}
                                     />
                                 )}
                             />
-                            {errors.village && (
-                                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                                    <AlertCircle size={12} />{errors.village.message}
-                                </p>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -277,7 +262,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
 
                 <div className="flex flex-col sm:flex-row gap-4">
                     {/* Radio Toggle */}
-                    <div className="w-full sm:flex-1 sm:flex sm:flex-col">
+                    <div className="w-full sm:flex-1 sm:flex sm:flex-col min-w-0 relative">
                         <label className="block text-sm text-gray-500 mb-2">Select Type</label>
                         <div className="flex items-center gap-4">
                             <label className="flex items-center gap-2 cursor-pointer">
@@ -302,7 +287,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                             </label>
                         </div>
 
-                        <div className="mt-3 sm:mt-auto">
+                        <div className="mt-3 sm:mt-auto relative">
                             <label className="block text-sm text-gray-500 mb-1.5">
                                 {surveyOrDoor === 'survey' ? 'Survey Number' : 'Door Number'} <span className="text-red-400">*</span>
                             </label>
@@ -321,15 +306,10 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                         searchable={true}
                                         disabled={!village}
                                         className="w-[50%] sm:w-[80%]"
+                                        error={!!(errors.surveyNumber || errors.doorNumber)}
                                     />
                                 )}
                             />
-                            {(errors.surveyNumber || errors.doorNumber) && (
-                                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                                    <AlertCircle size={12} />
-                                    {errors.surveyNumber?.message || errors.doorNumber?.message}
-                                </p>
-                            )}
                         </div>
                     </div>
 
@@ -368,7 +348,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-2">
                     {/* Transaction Type */}
-                    <div className="w-full sm:flex-1">
+                    <div className="w-full sm:flex-1 min-w-0">
                         <label className="block text-sm text-gray-500 mb-1.5">Type <span className="text-red-400">*</span></label>
                         <Controller
                             control={control}
@@ -387,14 +367,10 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                         { value: 'exchange', label: 'Exchange' },
                                     ]}
                                     className="w-[70%] sm:w-full text-sm"
+                                    error={!!errors.transactionType}
                                 />
                             )}
                         />
-                        {errors.transactionType && (
-                            <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                                <AlertCircle size={12} />{errors.transactionType.message}
-                            </p>
-                        )}
                     </div>
 
                     <div className="hidden sm:block w-px border-l border-dashed border-gray-300 h-10 self-end mb-1.5"></div>
@@ -491,11 +467,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     </span>
                                 )}
                             </div>
-                            {errors.sellerAadhar && (
-                                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                                    <AlertCircle size={12} />{errors.sellerAadhar.message}
-                                </p>
-                            )}
+
 
                             {/* Aadhar Verification */}
                             <div className="mt-2 flex flex-wrap items-center gap-3">
@@ -611,11 +583,7 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     </span>
                                 )}
                             </div>
-                            {errors.sellerPhone && (
-                                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                                    <AlertCircle size={12} />{errors.sellerPhone.message}
-                                </p>
-                            )}
+
 
                             {/* Phone OTP */}
                             {sellerOtpVerified ? (
@@ -700,12 +668,6 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     </span>
                                 )}
                             </div>
-                            {errors.buyerAadhar && (
-                                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                                    <AlertCircle size={12} />{errors.buyerAadhar.message}
-                                </p>
-                            )}
-
                             {/* Aadhar Verification */}
                             <div className="mt-2 flex flex-wrap items-center gap-3">
                                 {/* OTP Section */}
@@ -819,12 +781,6 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
                                     </span>
                                 )}
                             </div>
-                            {errors.buyerPhone && (
-                                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                                    <AlertCircle size={12} />{errors.buyerPhone.message}
-                                </p>
-                            )}
-
                             {/* Phone OTP */}
                             {buyerOtpVerified ? (
                                 <div className="mt-2">
@@ -873,6 +829,6 @@ export const Step1_DeedDetails: React.FC<Step1Props> = ({
             <div className="flex justify-center items-center">
                 <span className="text-gray-500 text-sm font-sans">Step 1 of 3</span>
             </div>
-        </div>
+        </div >
     );
 };
