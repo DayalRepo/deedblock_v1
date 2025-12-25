@@ -14,6 +14,7 @@ export function useSupabaseDraft(form: UseFormReturn<RegistrationFormSchema>) {
     const [isLoaded, setIsLoaded] = useState(false);
     const [userId, setUserId] = useState<string | undefined>(undefined);
     const lastSavedData = useRef<string>('');
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Listen to Auth State
     useEffect(() => {
@@ -115,7 +116,10 @@ export function useSupabaseDraft(form: UseFormReturn<RegistrationFormSchema>) {
         const currentString = JSON.stringify(formData);
         if (currentString === lastSavedData.current) return;
 
-        const timeout = setTimeout(async () => {
+        // Clear any existing timeout
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+        timeoutRef.current = setTimeout(async () => {
             console.log('[Draft] Saving change...');
             // console.log('Diff:', currentString.length, lastSavedData.current.length);
 
@@ -137,11 +141,20 @@ export function useSupabaseDraft(form: UseFormReturn<RegistrationFormSchema>) {
             }
         }, 500); // 500ms Debounce
 
-        return () => clearTimeout(timeout);
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
     }, [formData, userId, isLoaded]); // Removed isDirty dependency
 
     const clearDraft = useCallback(async () => {
         if (!userId) return;
+
+        // CRITICAL FIX: Cancel any pending save to prevent resurrection of the draft
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+
         try {
             const { error } = await supabase
                 .from(TABLE_NAME)
@@ -150,11 +163,13 @@ export function useSupabaseDraft(form: UseFormReturn<RegistrationFormSchema>) {
 
             if (error) throw error;
             console.log('Draft cleared from Supabase');
-            lastSavedData.current = '';
+
+            // Mark current state as "saved" (even if empty) to prevent immediate auto-save check from triggering
+            lastSavedData.current = JSON.stringify(watch());
         } catch (err) {
             console.error('Error clearing draft:', err);
         }
-    }, [userId]);
+    }, [userId, watch]);
 
     return { clearDraft, isLoaded };
 }

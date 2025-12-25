@@ -140,6 +140,11 @@ export async function refreshSignedUrl(path: string): Promise<string | null> {
             .createSignedUrl(path, 60 * 60 * 24 * 7); // 7 days
 
         if (error || !data?.signedUrl) {
+            // Squelch "Object not found" errors as they are expected when drafts outlive files
+            if (error?.message?.includes('Object not found')) {
+                // console.warn('[Storage] File missing for path:', path);
+                return null;
+            }
             console.error('[Storage] Refresh signed URL error:', error);
             return null;
         }
@@ -169,21 +174,25 @@ export async function refreshDraftPhotoUrls(
                 try {
                     // Skip if photo object is malformed
                     if (!photo || typeof photo !== 'object' || !photo.path) {
-                        console.warn('[Storage] Skipping malformed photo:', photo);
-                        return photo;
+                        return null; // Remove malformed
                     }
                     const newUrl = await refreshSignedUrl(photo.path);
+                    if (!newUrl) return null; // File missing -> Remove
+
                     return {
                         ...photo,
-                        url: newUrl || photo.url // Keep old URL if refresh fails
+                        url: newUrl
                     };
                 } catch (err) {
-                    console.error('[Storage] Error refreshing photo URL:', err);
-                    return photo; // Return original on error
+                    // On unexpected error, keep original? Or remove?
+                    // Safer to keep original if network blip, but if file gone, remove.
+                    // refreshSignedUrl handles the specific 404.
+                    return photo;
                 }
             })
         );
-        return refreshed.filter(p => p && typeof p === 'object');
+        // Filter out nulls (removed files)
+        return refreshed.filter((p): p is { url: string; path: string; name: string } => !!p);
     } catch (err) {
         console.error('[Storage] Error in refreshDraftPhotoUrls:', err);
         return draftPhotoUrls; // Return original on error
@@ -219,6 +228,9 @@ export async function refreshDraftDocumentUrls(
                         const newUrl = await refreshSignedUrl(doc.path);
                         if (newUrl) {
                             refreshed[key] = { ...doc, url: newUrl };
+                        } else {
+                            // File missing -> Set to null to clear it from form
+                            refreshed[key] = null;
                         }
                     }
                 } catch (err) {

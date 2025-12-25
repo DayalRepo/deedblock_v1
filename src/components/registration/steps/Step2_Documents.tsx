@@ -17,6 +17,31 @@ const CustomFolderIcon = ({ className }: { className?: string }) => (
     </svg>
 );
 
+interface ErrorFlasherProps {
+    error?: any;
+    children: React.ReactElement<{ className?: string }>;
+}
+
+const ErrorFlasher: React.FC<ErrorFlasherProps> = ({ error, children }) => {
+    const [flash, setFlash] = React.useState(false);
+
+    React.useEffect(() => {
+        if (error) {
+            setFlash(true);
+            const timer = setTimeout(() => setFlash(false), 3000);
+            return () => clearTimeout(timer);
+        } else {
+            setFlash(false);
+        }
+    }, [error]);
+
+    const errorClass = flash ? "ring-2 ring-red-400 bg-red-50 border-red-500 rounded-lg transition-all duration-300" : "";
+
+    return React.cloneElement(children, {
+        className: `${children.props.className || ''} ${errorClass}`.trim()
+    });
+};
+
 interface Step2Props {
     form: UseFormReturn<RegistrationFormSchema>;
     userId: string | undefined;
@@ -101,12 +126,12 @@ export const Step2_Documents: React.FC<Step2Props> = ({
         });
     }, []);
 
-    // Show error message and auto-clear after 6 seconds
+    // Show error message and auto-clear after 3 seconds
     const showFileError = useCallback((key: string, message: string) => {
         setFileErrors(prev => ({ ...prev, [key]: message }));
         setTimeout(() => {
             clearFileError(key);
-        }, 6000); // 6 seconds
+        }, 3000); // 3 seconds
     }, [clearFileError]);
 
     const handleFileChange = async (key: keyof RegistrationFormSchema['documents'], file: File | null) => {
@@ -358,102 +383,88 @@ export const Step2_Documents: React.FC<Step2Props> = ({
 
         return (
             <div key={key} className="w-full">
-                <div
-                    className="relative"
-                    onDragEnter={(e) => handleDrag(e, key)}
-                    onDragLeave={(e) => handleDrag(e, key)}
-                    onDragOver={(e) => handleDrag(e, key)}
-                    onDrop={(e) => handleDrop(e, key)}
-                >
-                    <input
-                        type="file"
-                        accept={accept}
-                        onChange={(e) => {
-                            handleFileChange(key as keyof RegistrationFormSchema['documents'], e.target.files?.[0] || null);
-                            // Reset input value to allow re-selecting the same file
-                            e.target.value = '';
-                        }}
-                        className="hidden"
-                        id={`file-${key}`}
-                        disabled={uploading[key]}
-                        aria-label={`Upload ${label}`}
-                    />
-                    <label
-                        htmlFor={`file-${key}`}
-                        className={`flex items-center gap-3 px-4 py-3 border rounded-lg cursor-pointer transition-all w-full
-                            ${dragActive === key ? 'border-black ring-1 ring-black' : 'border-gray-200'}
-                            ${hasDocument ? 'bg-white hover:border-black' : 'bg-white hover:border-black hover:bg-gray-50'}
-                            ${hasError ? 'border-red-300 bg-red-50' : ''}`}
+                <ErrorFlasher error={hasError ? hasError : undefined}>
+                    <div
+                        className="relative"
+                        onDragEnter={(e) => handleDrag(e, key)}
+                        onDragLeave={(e) => handleDrag(e, key)}
+                        onDragOver={(e) => handleDrag(e, key)}
+                        onDrop={(e) => handleDrop(e, key)}
                     >
-                        <div className="shrink-0 text-gray-400">
-                            {renderStatusIcon(key, hasDocument, "w-4 h-4 sm:w-6 sm:h-6")}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs sm:text-sm text-gray-500 truncate max-w-[140px] sm:max-w-none">{label}</span>
-                                {required && <span className="text-red-400 text-[10px] sm:text-xs shrink-0">*</span>}
+                        <input
+                            type="file"
+                            accept={accept}
+                            onChange={(e) => {
+                                handleFileChange(key as keyof RegistrationFormSchema['documents'], e.target.files?.[0] || null);
+                                // Reset input value to allow re-selecting the same file
+                                e.target.value = '';
+                            }}
+                            className="hidden"
+                            id={`file-${key}`}
+                            disabled={uploading[key]}
+                            aria-label={`Upload ${label}`}
+                        />
+                        <label
+                            htmlFor={`file-${key}`}
+                            className={`flex items-center gap-3 px-4 py-3 border rounded-lg cursor-pointer transition-all w-full
+                                ${dragActive === key ? 'border-black ring-1 ring-black' : 'border-gray-200'}
+                                ${hasDocument ? 'bg-white hover:border-black' : 'bg-white hover:border-black hover:bg-gray-50'}
+                                ${hasError ? 'border-red-300 bg-red-50' : ''}`}
+                        >
+                            <div className="shrink-0 text-gray-400">
+                                {renderStatusIcon(key, hasDocument, "w-4 h-4 sm:w-6 sm:h-6")}
                             </div>
-                            {hasDocument && (
-                                <p className="text-xs sm:text-sm font-medium text-black truncate mt-0.5">{getDocumentName()}</p>
-                            )}
-                            {!hasDocument && !uploading[key] && (
-                                <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">PDF, JPG, PNG up to 5MB each</p>
-                            )}
-                            {uploading[key] && (
-                                <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5">Uploading...</p>
-                            )}
-                        </div>
-                        {hasDocument && !uploading[key] && (
-                            <div className="flex items-center gap-1 shrink-0">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        if (isValidFile) {
-                                            previewDocument(key, file);
-                                        } else if (draftUrl?.url && onPreviewDocumentUrl) {
-                                            // Open in preview modal for hydrated documents
-                                            onPreviewDocumentUrl(key, draftUrl.url, getDocumentName());
-                                        }
-                                    }}
-                                    className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
-                                    type="button"
-                                    aria-label={`Preview ${label}`}
-                                >
-                                    <PreviewIcon className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        handleFileChange(key as keyof RegistrationFormSchema['documents'], null);
-                                    }}
-                                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                    type="button"
-                                    aria-label={`Remove ${label}`}
-                                >
-                                    <CloseIcon className="w-4 h-4" />
-                                </button>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs sm:text-sm text-gray-500 truncate max-w-[140px] sm:max-w-none">{label}</span>
+                                    {required && <span className="text-red-400 text-[10px] sm:text-xs shrink-0">*</span>}
+                                </div>
+                                {hasDocument && (
+                                    <p className="text-xs sm:text-sm font-medium text-black truncate mt-0.5">{getDocumentName()}</p>
+                                )}
+                                {!hasDocument && !uploading[key] && (
+                                    <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">PDF, JPG, PNG up to 5MB each</p>
+                                )}
+                                {uploading[key] && (
+                                    <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5">Uploading...</p>
+                                )}
                             </div>
-                        )}
-                    </label>
-                </div >
-                {
-                    fileErrors[key] && (
-                        <p className="mt-2 text-[10px] sm:text-xs text-red-500 flex items-start gap-1.5 bg-red-50 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg animate-pulse" role="alert">
-                            <AlertCircle size={14} className="shrink-0 mt-0.5" />
-                            <span className="break-words">{fileErrors[key]}</span>
-                        </p>
-                    )
-                }
-                {
-                    errors.documents?.[key as keyof RegistrationFormSchema['documents']] && (
-                        <p className="mt-1 text-xs text-red-500 flex items-center gap-1" role="alert">
-                            <AlertCircle size={12} />
-                            {(errors.documents[key as keyof RegistrationFormSchema['documents']] as { message?: string })?.message || 'File is required'}
-                        </p>
-                    )
-                }
+                            {hasDocument && !uploading[key] && (
+                                <div className="flex items-center gap-1 shrink-0">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            if (isValidFile) {
+                                                previewDocument(key, file);
+                                            } else if (draftUrl?.url && onPreviewDocumentUrl) {
+                                                // Open in preview modal for hydrated documents
+                                                onPreviewDocumentUrl(key, draftUrl.url, getDocumentName());
+                                            }
+                                        }}
+                                        className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
+                                        type="button"
+                                        aria-label={`Preview ${label}`}
+                                    >
+                                        <PreviewIcon className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            handleFileChange(key as keyof RegistrationFormSchema['documents'], null);
+                                        }}
+                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                        type="button"
+                                        aria-label={`Remove ${label}`}
+                                    >
+                                        <CloseIcon className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+                        </label>
+                    </div >
+                </ErrorFlasher>
             </div >
         );
     };
@@ -491,55 +502,49 @@ export const Step2_Documents: React.FC<Step2Props> = ({
                     Upload up to 6 photos of the property <span className="text-gray-400">(Optional)</span>
                 </p>
 
-                {/* Upload Area */}
-                <div
-                    onDragEnter={(e) => handleDrag(e, 'photos')}
-                    onDragLeave={(e) => handleDrag(e, 'photos')}
-                    onDragOver={(e) => handleDrag(e, 'photos')}
-                    onDrop={(e) => handleDrop(e, 'photos')}
-                >
-                    <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={(e) => {
-                            handlePhotoUpload(e.target.files);
-                            // Reset input value to allow re-selecting the same file
-                            e.target.value = '';
-                        }}
-                        className="hidden"
-                        id="property-photos"
-                        disabled={uploading.photos || propertyPhotos.length >= 6}
-                        aria-label="Upload property photos"
-                    />
-                    <label
-                        htmlFor="property-photos"
-                        className={`flex items-center justify-center gap-3 px-4 py-4 sm:py-5 border border-dashed rounded-lg cursor-pointer transition-all
-                            ${dragActive === 'photos' ? 'border-black bg-gray-50 ring-1 ring-black' : 'border-gray-300'}
-                            ${propertyPhotos.length >= 6 ? 'opacity-50 cursor-not-allowed' : 'hover:border-black hover:bg-gray-50'}`}
+                <ErrorFlasher error={fileErrors.photos || (uploading.photos ? undefined : undefined)}>
+                    <div
+                        onDragEnter={(e) => handleDrag(e, 'photos')}
+                        onDragLeave={(e) => handleDrag(e, 'photos')}
+                        onDragOver={(e) => handleDrag(e, 'photos')}
+                        onDrop={(e) => handleDrop(e, 'photos')}
                     >
-                        <div className="flex items-center gap-4">
-                            <div className="text-gray-400">
-                                {/* Icon removed as per request */}
+                        <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={(e) => {
+                                handlePhotoUpload(e.target.files);
+                                // Reset input value to allow re-selecting the same file
+                                e.target.value = '';
+                            }}
+                            className="hidden"
+                            id="property-photos"
+                            disabled={uploading.photos || propertyPhotos.length >= 6}
+                            aria-label="Upload property photos"
+                        />
+                        <label
+                            htmlFor="property-photos"
+                            className={`flex items-center justify-center gap-3 px-4 py-4 sm:py-5 border border-dashed rounded-lg cursor-pointer transition-all
+                                ${dragActive === 'photos' ? 'border-black bg-gray-50 ring-1 ring-black' : 'border-gray-300'}
+                                ${propertyPhotos.length >= 6 ? 'opacity-50 cursor-not-allowed' : 'hover:border-black hover:bg-gray-50'}`}
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className="text-gray-400">
+                                    {/* Icon removed as per request */}
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-xs sm:text-sm font-normal text-gray-500 mb-0.5">
+                                        Property Photos
+                                    </p>
+                                    <p className="text-xs sm:text-sm font-medium text-gray-400">
+                                        {uploading.photos ? 'Uploading...' : propertyPhotos.length >= 6 ? 'Maximum 6 photos' : 'JPG, PNG up to 5MB each'}
+                                    </p>
+                                </div>
                             </div>
-                            <div className="text-left">
-                                <p className="text-xs sm:text-sm font-normal text-gray-500 mb-0.5">
-                                    Property Photos
-                                </p>
-                                <p className="text-xs sm:text-sm font-medium text-gray-400">
-                                    {uploading.photos ? 'Uploading...' : propertyPhotos.length >= 6 ? 'Maximum 6 photos' : 'JPG, PNG up to 5MB each'}
-                                </p>
-                            </div>
-                        </div>
-                    </label>
-                </div>
-
-                {fileErrors.photos && (
-                    <p className="mt-2 text-[10px] sm:text-xs text-red-500 flex items-start gap-1.5 bg-red-50 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg animate-pulse" role="alert">
-                        <AlertCircle size={14} className="shrink-0 mt-0.5" />
-                        <span className="break-words">{fileErrors.photos}</span>
-                    </p>
-                )}
+                        </label>
+                    </div>
+                </ErrorFlasher>
 
                 {/* Photo List - Document Style */}
                 {displayPhotoCount > 0 && (
