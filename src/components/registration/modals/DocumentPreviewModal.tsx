@@ -195,10 +195,11 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                                     if (isPdf) {
                                         const isBlob = url.startsWith('blob:');
                                         const isSupabase = url.includes('supabase.co');
+                                        const isIPFS = url.includes('pinata.cloud') || url.includes('ipfs.io') || url.includes('/ipfs/');
                                         
                                         return (
                                             <div className="w-full max-w-4xl h-full bg-white border border-gray-200 rounded-lg overflow-hidden relative shadow-sm">
-                                                {isBlob || isSupabase ? (
+                                                {isBlob || isSupabase || isIPFS ? (
                                                     <iframe
                                                         src={url}
                                                         className="w-full h-full"
