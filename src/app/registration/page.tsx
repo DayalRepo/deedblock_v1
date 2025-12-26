@@ -1,6 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/utils/logger';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, CheckCircle, Loader2, ArrowLeft, X } from 'lucide-react';
 import { Toaster } from '@/components/ui/Toaster';

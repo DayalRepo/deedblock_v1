@@ -1,6 +1,7 @@
 // Note: Pinata SDK is now only used server-side in API route
 // Client-side functions use the API route for uploads
 import { logger } from '@/utils/logger';
+import { supabase } from '@/lib/supabase/client';
 
 // Upload a single file to IPFS via API route (server-side)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

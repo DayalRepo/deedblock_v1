@@ -12,7 +12,7 @@ const MAX_REQUESTS = 30; // 30 requests per minute per IP
 export function middleware(request: NextRequest) {
   // Only apply to API routes
   if (request.nextUrl.pathname.startsWith('/api')) {
-    const ip = request.ip || 'anonymous';
+    const ip = (request as any).ip || request.headers.get('x-forwarded-for') || 'anonymous';
     const now = Date.now();
     
     const rateData = rateLimitMap.get(ip) || { count: 0, lastReset: now };
