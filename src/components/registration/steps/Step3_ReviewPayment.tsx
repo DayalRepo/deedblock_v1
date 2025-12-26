@@ -245,60 +245,67 @@ export const Step3_ReviewPayment: React.FC<Step3Props> = ({
                 <div className="border-t border-dashed border-gray-300 mb-4"></div>
 
                 <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
-                    {documents?.saleDeed && (
+                    {formData.documents?.saleDeed || formData.draftDocumentUrls?.saleDeed?.url ? (
                         <button
-                            onClick={() => previewDocument?.('saleDeed', documents.saleDeed!)}
+                            onClick={() => previewDocument?.('saleDeed')}
                             className="flex items-center justify-start pl-6 pr-2 sm:px-3 sm:justify-start gap-2 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors"
                             type="button"
                         >
                             <PreviewIcon className="w-4 h-4 text-gray-400 shrink-0" />
                             <span className="truncate">Deed Doc</span>
                         </button>
-                    )}
-                    {documents?.ec && (
+                    ) : null}
+                    {formData.documents?.ec || formData.draftDocumentUrls?.ec?.url ? (
                         <button
-                            onClick={() => previewDocument?.('ec', documents.ec!)}
+                            onClick={() => previewDocument?.('ec')}
                             className="flex items-center justify-start pl-6 pr-2 sm:px-3 sm:justify-start gap-2 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors"
                             type="button"
                         >
                             <PreviewIcon className="w-4 h-4 text-gray-400 shrink-0" />
                             <span className="truncate">EC</span>
                         </button>
-                    )}
-                    {documents?.khata && (
+                    ) : null}
+                    {formData.documents?.khata || formData.draftDocumentUrls?.khata?.url ? (
                         <button
-                            onClick={() => previewDocument?.('khata', documents.khata!)}
+                            onClick={() => previewDocument?.('khata')}
                             className="flex items-center justify-start pl-6 pr-2 sm:px-3 sm:justify-start gap-2 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors"
                             type="button"
                         >
                             <PreviewIcon className="w-4 h-4 text-gray-400 shrink-0" />
                             <span className="truncate">Seller ID</span>
                         </button>
-                    )}
-                    {documents?.taxReceipt && (
+                    ) : null}
+                    {formData.documents?.taxReceipt || formData.draftDocumentUrls?.taxReceipt?.url ? (
                         <button
-                            onClick={() => previewDocument?.('taxReceipt', documents.taxReceipt!)}
+                            onClick={() => previewDocument?.('taxReceipt')}
                             className="flex items-center justify-start pl-6 pr-2 sm:px-3 sm:justify-start gap-2 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors"
                             type="button"
                         >
                             <PreviewIcon className="w-4 h-4 text-gray-400 shrink-0" />
                             <span className="truncate">Buyer ID</span>
                         </button>
-                    )}
-                    {propertyPhotos.length > 0 && (
+                    ) : null}
+                    {(formData.propertyPhotos?.length > 0 || formData.draftPhotoUrls?.length > 0) && (
                         <button
-                            onClick={() => previewDocument?.('photos', propertyPhotos[0])}
+                            onClick={() => {
+                                previewDocument?.('photo_0');
+                            }}
                             className="col-span-2 justify-self-center sm:col-span-auto sm:justify-self-auto flex items-center justify-center sm:justify-start gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors"
                             type="button"
                         >
                             <PreviewIcon className="w-4 h-4 text-gray-400 shrink-0" />
-                            <span className="truncate">{propertyPhotos.length} Photo{propertyPhotos.length > 1 ? 's' : ''}</span>
+                            <span className="truncate">{Math.max(formData.propertyPhotos?.length || 0, formData.draftPhotoUrls?.length || 0)} Photo{Math.max(formData.propertyPhotos?.length || 0, formData.draftPhotoUrls?.length || 0) > 1 ? 's' : ''}</span>
                         </button>
                     )}
-                    {!documents?.saleDeed && !documents?.ec && !documents?.khata && !documents?.taxReceipt && propertyPhotos.length === 0 && (
+                    {!(formData.documents?.saleDeed || formData.draftDocumentUrls?.saleDeed?.url) && 
+                      !(formData.documents?.ec || formData.draftDocumentUrls?.ec?.url) && 
+                      !(formData.documents?.khata || formData.draftDocumentUrls?.khata?.url) && 
+                      !(formData.documents?.taxReceipt || formData.draftDocumentUrls?.taxReceipt?.url) && 
+                      (formData.propertyPhotos?.length === 0 && formData.draftPhotoUrls?.length === 0) && (
                         <p className="text-sm text-gray-400 col-span-2 sm:col-span-auto">No documents uploaded</p>
                     )}
                 </div>
+
             </div>
 
             <div className="border-t border-dashed border-gray-300"></div>

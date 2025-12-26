@@ -113,6 +113,7 @@ export default function RegistrationPage() {
   ]);
 
   const [propertyPhotoUrls, setPropertyPhotoUrls] = useState<Map<number, string>>(new Map());
+  const [documentPreviewUrls, setDocumentPreviewUrls] = useState<Map<string, string>>(new Map());
 
   // Supabase Persistence Hook
   const { clearDraft, isLoaded: isDraftLoaded } = useSupabaseDraft(form);
@@ -126,25 +127,37 @@ export default function RegistrationPage() {
     });
   }, []);
 
-  // Cleanup property photo URLs on unmount
+  // Cleanup all object URLs on unmount
   useEffect(() => {
     return () => {
       propertyPhotoUrls.forEach(url => URL.revokeObjectURL(url));
+      documentPreviewUrls.forEach(url => URL.revokeObjectURL(url));
     };
-  }, [propertyPhotoUrls]);
+  }, [propertyPhotoUrls, documentPreviewUrls]);
 
-  // Document preview URL - only create object URL for File objects
-  // Don't clear the URL when documentPreview is null because we might be using URL-only preview
+  // Sync document object URLs
+  const documents = watch('documents');
   useEffect(() => {
-    if (documentPreview?.file && documentPreview.file instanceof File) {
-      const url = URL.createObjectURL(documentPreview.file);
-      setDocumentPreviewUrl(url);
-      return () => {
+    const newDocumentUrls = new Map<string, string>();
+    const docKeys = ['saleDeed', 'ec', 'khata', 'taxReceipt'] as const;
+
+    docKeys.forEach(key => {
+      const file = documents?.[key];
+      if (file instanceof File) {
+        newDocumentUrls.set(key, URL.createObjectURL(file));
+      }
+    });
+
+    // Cleanup old URLs
+    documentPreviewUrls.forEach((url, key) => {
+      if (!newDocumentUrls.has(key)) {
         URL.revokeObjectURL(url);
-      };
-    }
-    // Don't set to null here - it would overwrite URLs set by previewDocumentUrl
-  }, [documentPreview]);
+      }
+    });
+
+    setDocumentPreviewUrls(newDocumentUrls);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documents]);
 
   // Success Countdown
   useEffect(() => {
@@ -167,27 +180,27 @@ export default function RegistrationPage() {
     return () => clearTimeout(timer);
   }, [countdown, submitSuccess]);
 
-  // Sync photo URLs
+  // Sync photo object URLs
   useEffect(() => {
     const photosToProcess = propertyPhotos || [];
     const newPropertyPhotoUrls = new Map<number, string>();
-    const oldUrls = new Map(propertyPhotoUrls);
 
     photosToProcess.forEach((file: File, index: number) => {
-      // Only create URLs for valid File objects (not hydrated plain objects)
       if (file instanceof File) {
         newPropertyPhotoUrls.set(index, URL.createObjectURL(file));
       }
     });
-    // Clean old
-    oldUrls.forEach(url => URL.revokeObjectURL(url));
+
+    // Cleanup old URLs
+    propertyPhotoUrls.forEach((url, index) => {
+      if (!newPropertyPhotoUrls.has(index)) {
+        URL.revokeObjectURL(url);
+      }
+    });
+
     setPropertyPhotoUrls(newPropertyPhotoUrls);
-    return () => {
-      newPropertyPhotoUrls.forEach(url => URL.revokeObjectURL(url));
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propertyPhotos]);
-  // The above effect logic is a bit aggressive (recreates on every array change). Should be fine for now.
 
 
   // --- Logic ---
@@ -213,25 +226,22 @@ export default function RegistrationPage() {
     };
 
     docKeys.forEach((key) => {
-      // Cast the access to ensure TS understands the key is valid for both objects
-      // We know these keys exist in the schema
       const file = values.documents?.[key as keyof typeof values.documents];
       const draft = values.draftDocumentUrls?.[key as keyof typeof values.draftDocumentUrls];
+      let url = null;
 
       if (file instanceof File) {
-        items.push({
-          type: 'file',
-          url: URL.createObjectURL(file), // Create object URL for preview
-          name: docLabels[key],
-          file: file,
-          category: 'Document',
-          key: key // Original key to match for start index
-        });
+        url = documentPreviewUrls.get(key);
       } else if (draft?.url) {
+        url = draft.url;
+      }
+
+      if (url) {
         items.push({
-          type: 'url',
-          url: draft.url,
+          type: file instanceof File ? 'file' : 'url',
+          url: url,
           name: docLabels[key],
+          file: file instanceof File ? file : undefined,
           category: 'Document',
           key: key
         });
@@ -239,11 +249,8 @@ export default function RegistrationPage() {
     });
 
     // 2. Add "Property Photos"
-    // Use the photoUrls map we already maintain for consistent object URLs
     const photos = propertyPhotos || [];
     const draftPhotoUrls = values.draftPhotoUrls || [];
-
-    // Determine max count to iterate (max 6)
     const maxPhotos = Math.max(photos.length, draftPhotoUrls.length);
 
     for (let i = 0; i < maxPhotos; i++) {
@@ -251,41 +258,51 @@ export default function RegistrationPage() {
       let name = `Property Photo ${i + 1}`;
       let file = null;
 
-      // Prefer File Object URL (fresh upload)
       if (photos[i] instanceof File) {
         url = propertyPhotoUrls.get(i);
         file = photos[i];
         name = photos[i].name;
-      }
-      // Fallback to Draft URL (hydrated)
-      else if (draftPhotoUrls[i]?.url) {
+      } else if (draftPhotoUrls[i]?.url) {
         url = draftPhotoUrls[i].url;
         name = draftPhotoUrls[i].name;
       }
 
       if (url) {
         items.push({
-          type: 'file', // Treat as file type for preview logic
+          type: 'file',
           url: url,
           name: name,
           file: file,
           category: 'Photo',
-          key: `photo_${i}`
+          key: `photo_${i}`,
+          index: i
         });
       }
     }
 
     return items;
-  }, [getValues, propertyPhotos, propertyPhotoUrls]);
+  }, [getValues, propertyPhotos, propertyPhotoUrls, documentPreviewUrls]);
 
-  const previewDocument = (type: string, file: File) => {
-    // Legacy support for single file preview if needed, but now we prefer gallery
-    // Find index of this file in the gallery
+  const previewDocument = (type: string, file?: File | null) => {
     const items = buildGalleryItems();
-    const index = items.findIndex(item => item.file === file || item.key === type);
+    // Prioritize searching by key (type) as it's more stable than File reference
+    const index = items.findIndex(item => item.key === type);
 
     setGalleryItems(items);
     setGalleryStartIndex(index >= 0 ? index : 0);
+    setShowDocuments(true);
+  };
+
+  const previewPhotos = (startIndex: number = 0) => {
+    const items = buildGalleryItems();
+    // Find the first photo item
+    const firstPhotoIdx = items.findIndex(item => item.category === 'Photo');
+
+    // Calculate index within the whole gallery
+    const targetIndex = firstPhotoIdx >= 0 ? firstPhotoIdx + startIndex : 0;
+
+    setGalleryItems(items);
+    setGalleryStartIndex(targetIndex < items.length ? targetIndex : (firstPhotoIdx >= 0 ? firstPhotoIdx : 0));
     setShowDocuments(true);
   };
 

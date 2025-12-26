@@ -564,15 +564,8 @@ export const Step2_Documents: React.FC<Step2Props> = ({
                                 <div className="flex items-center gap-1 shrink-0">
                                     <button
                                         onClick={() => {
-                                            // Open preview with URL from Supabase Storage
                                             if (onPreviewPhotos) {
-                                                onPreviewPhotos(); // Triggers the parent's photo preview logic which uses current index/state
-                                                // Ideally we should pass the index to start at, but onPreviewPhotos logic in page.tsx might handle it?
-                                                // Let's check: page.tsx handles "showPropertyPhotos" -> true.
-                                                // It usually opens the carousel at the first image or current state? 
-                                                // Since we don't pass index here, it opens gallery. 
-                                                // To open specific image, page.tsx needs updates or we rely on the gallery view.
-                                                // For now, consistent behavior: opens gallery.
+                                                onPreviewPhotos(index);
                                             }
                                         }}
                                         className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
