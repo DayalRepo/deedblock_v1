@@ -147,27 +147,27 @@ export default function SearchPage() {
   const [previewInitialIndex, setPreviewInitialIndex] = useState(0);
 
   // Prepare preview items
-  const previewItems = React.useMemo(() => {
-    if (!selectedResult) return [];
-
-    const docs = (selectedResult.documents || []).map(doc => ({
-      type: 'url' as const,
-      url: doc.url || (doc.ipfsHash ? `https://gateway.pinata.cloud/ipfs/${doc.ipfsHash}` : ''),
-      name: doc.name || doc.type || 'Document',
-      category: 'Document',
-      mimeType: doc.mimeType
-    }));
-
-    const photos = (selectedResult.propertyPhotos || []).map((photo, idx) => ({
-      type: 'url' as const,
-      url: photo.url || (photo.ipfsHash ? `https://gateway.pinata.cloud/ipfs/${photo.ipfsHash}` : ''),
-      name: `Photo ${idx + 1}`,
-      category: 'Photo',
-      mimeType: photo.mimeType
-    }));
-
-    return [...docs, ...photos];
-  }, [selectedResult]);
+    const previewItems = React.useMemo(() => {
+      if (!selectedResult) return [];
+  
+      const docs = (selectedResult.documents || []).map(doc => ({
+        type: 'url' as const,
+        url: doc.url || (doc.ipfsHash ? getIPFSUrl(doc.ipfsHash) : ''),
+        name: doc.name || doc.type || 'Document',
+        category: 'Document',
+        mimeType: doc.mimeType
+      }));
+  
+      const photos = (selectedResult.propertyPhotos || []).map((photo, idx) => ({
+        type: 'url' as const,
+        url: photo.url || (photo.ipfsHash ? getIPFSUrl(photo.ipfsHash) : ''),
+        name: `Photo ${idx + 1}`,
+        category: 'Photo',
+        mimeType: photo.mimeType
+      }));
+  
+      return [...docs, ...photos];
+    }, [selectedResult]);
 
   const handlePreviewDocument = (index: number) => {
     setPreviewInitialIndex(index);

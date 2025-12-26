@@ -193,32 +193,23 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                                     }
 
                                     if (isPdf) {
+                                        const isBlob = url.startsWith('blob:');
                                         return (
                                             <div className="w-full max-w-4xl h-full bg-white border border-gray-200 rounded-lg overflow-hidden relative shadow-sm">
-                                                {/* Desktop: standard iframe */}
-                                                <iframe
-                                                    src={url}
-                                                    title={`PDF Preview: ${currentItem.name}`}
-                                                    className="hidden sm:block w-full h-full"
-                                                />
-
-                                                {/* Mobile: Google Docs Viewer */}
-                                                <div className="sm:hidden w-full h-full">
-                                                    {!url.startsWith('blob:') ? (
-                                                        <iframe
-                                                            src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(url)}`}
-                                                            className="w-full h-full"
-                                                            title="PDF Preview (Mobile)"
-                                                            frameBorder="0"
-                                                        />
-                                                    ) : (
-                                                        <iframe
-                                                            src={url}
-                                                            className="w-full h-full"
-                                                            title="PDF Preview"
-                                                        />
-                                                    )}
-                                                </div>
+                                                {!isBlob ? (
+                                                    <iframe
+                                                        src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(url)}`}
+                                                        className="w-full h-full"
+                                                        title="PDF Preview"
+                                                        frameBorder="0"
+                                                    />
+                                                ) : (
+                                                    <iframe
+                                                        src={url}
+                                                        className="w-full h-full"
+                                                        title="PDF Preview"
+                                                    />
+                                                )}
                                             </div>
                                         );
                                     }
