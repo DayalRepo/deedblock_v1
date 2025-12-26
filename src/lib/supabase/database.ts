@@ -1,4 +1,5 @@
 import { supabase } from './client';
+import { logger } from '@/utils/logger';
 
 // Types
 export interface RegistrationData {
@@ -88,7 +89,7 @@ export async function saveRegistration(data: RegistrationData) {
     .single();
 
   if (error) {
-    console.error('Error saving registration:', JSON.stringify(error, null, 2));
+    logger.error('Error saving registration:', JSON.stringify(error, null, 2));
     await createAuditLog('registration_failed', { error: error.message, registration_id: rest.registration_id }, 'error');
     throw error;
   }
@@ -105,7 +106,7 @@ export async function getRegistrationById(registrationId: string) {
     .single();
 
   if (error) {
-    console.error('Error fetching registration:', error);
+    logger.error('Error fetching registration:', error);
     throw error;
   }
 
@@ -119,7 +120,7 @@ export async function getRegistrationsBySurveyNumber(surveyNumber: string) {
     .ilike('survey_number', `%${surveyNumber}%`);
 
   if (error) {
-    console.error('Error fetching registrations:', error);
+    logger.error('Error fetching registrations:', error);
     throw error;
   }
 
@@ -133,7 +134,7 @@ export async function getAllRegistrations() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching registrations:', error);
+    logger.error('Error fetching registrations:', error);
     throw error;
   }
 
@@ -148,7 +149,7 @@ export async function searchRegistrations(searchType: 'registrationId' | 'survey
       .ilike('registration_id', `%${query.toUpperCase()}%`);
 
     if (error) {
-      console.error('Error searching registrations:', error);
+      logger.error('Error searching registrations:', error);
       throw error;
     }
 
@@ -177,6 +178,7 @@ export async function savePayment(paymentData: Omit<PaymentData, 'id' | 'created
     .single();
 
   if (error) {
+    logger.error('Error saving payment:', error);
     await createAuditLog('payment_failed', { error: error.message, registration_id: rest.registration_id }, 'error');
     throw error;
   }
@@ -195,7 +197,7 @@ export async function checkPayment(registrationId: string, userId: string) {
     .single();
 
   if (error && error.code !== 'PGRST116') {
-    console.error('Error checking payment:', error);
+    logger.error('Error checking payment:', error);
     throw error;
   }
 
@@ -223,7 +225,7 @@ export async function saveSearchHistory(userId: string, searchType: 'registratio
     .single();
 
   if (error) {
-    console.error('Error saving search history:', JSON.stringify(error, null, 2));
+    logger.error('Error saving search history:', JSON.stringify(error, null, 2));
     await createAuditLog('search_history_failed', { error: error.message, query, searchType }, 'error');
     throw error;
   }
@@ -253,7 +255,7 @@ export async function getSearchHistory(userId: string) {
     .limit(10);
 
   if (error) {
-    console.error('Error fetching search history:', JSON.stringify(error, null, 2));
+    logger.error('Error fetching search history:', JSON.stringify(error, null, 2));
     return [];
   }
 
@@ -273,6 +275,6 @@ export async function createAuditLog(action: string, metadata: any = {}, severit
       ip_address: typeof window !== 'undefined' ? 'client-side' : 'server-side' // Basic differentiation
     }]);
   } catch (err) {
-    console.error('Failed to create audit log:', err);
+    logger.error('Failed to create audit log:', err);
   }
 }

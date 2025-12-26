@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import pinataSDK, { type PinataPinOptions } from '@pinata/sdk';
 import { Readable } from 'stream';
 import { createClient } from '@supabase/supabase-js';
+import { createAuditLog } from '@/lib/supabase/database';
+import { logger } from '@/utils/logger';
 
 // Initialize Supabase for auth check
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -22,7 +24,7 @@ const getPinata = () => {
         pinataSecretApiKey: secretKey
       });
     } catch (error) {
-      console.error('Error initializing Pinata SDK with API keys:', error);
+      logger.error('Error initializing Pinata SDK with API keys:', error);
       throw error;
     }
   }
@@ -34,7 +36,7 @@ const getPinata = () => {
         pinataJWTKey: jwt
       });
     } catch (error) {
-      console.error('Error initializing Pinata SDK with JWT:', error);
+      logger.error('Error initializing Pinata SDK with JWT:', error);
       throw error;
     }
   }
@@ -102,12 +104,22 @@ export async function POST(request: NextRequest) {
     const gateway = process.env.NEXT_PUBLIC_PINATA_GATEWAY || 'https://salmon-adjacent-marmot-760.mypinata.cloud';
     const url = `${gateway}/ipfs/${result.IpfsHash}`;
 
+    await createAuditLog('ipfs_upload_success', { 
+      fileName: file.name, 
+      ipfsHash: result.IpfsHash,
+      fileSize: file.size
+    }, 'info');
+
     return NextResponse.json({
       hash: result.IpfsHash,
       url: url,
     });
   } catch (error) {
-    console.error('Error uploading to IPFS:', error);
+    logger.error('Error uploading to IPFS:', error);
+    await createAuditLog('ipfs_upload_failed', { 
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 'error');
+    
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to upload file' },
       { status: 500 }

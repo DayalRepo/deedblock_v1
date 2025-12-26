@@ -49,11 +49,6 @@ class Logger {
   debug(message: string, context?: any) {
     this.log('debug', message, context);
   }
-
-  // Add compatibility with old logger
-  log(message: string, context?: any) {
-    this.info(message, context);
-  }
 }
 
 export const logger = new Logger();

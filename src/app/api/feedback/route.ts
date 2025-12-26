@@ -2,6 +2,8 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { createClient } from '@supabase/supabase-js';
+import { createAuditLog } from '@/lib/supabase/database';
+import { logger } from '@/utils/logger';
 
 // Initialize Supabase for auth check
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -34,7 +36,7 @@ export async function POST(request: Request) {
     const attachments = formData.getAll('attachments') as File[];
 
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      console.error('Email credentials missing');
+      logger.error('Email credentials missing');
       return NextResponse.json(
         { success: false, message: 'Server configuration error: Email credentials missing' },
         { status: 500 }
@@ -81,7 +83,7 @@ export async function POST(request: Request) {
             <p><strong>Name:</strong> ${name || 'N/A'}</p>
             <p><strong>Email:</strong> ${email || 'N/A'}</p>
             <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
-
+  
             <h3 style="border-bottom: 1px solid #eee; padding-bottom: 10px;">Message</h3>
             <p style="white-space: pre-wrap; background-color: #fff; padding: 10px; border: 1px solid #eee; border-radius: 5px;">${message}</p>
         </div>
@@ -91,12 +93,19 @@ export async function POST(request: Request) {
 
     await transporter.sendMail(mailOptions);
 
+    await createAuditLog('feedback_submitted', { feedbackType, subject }, 'info');
+
     return NextResponse.json({ success: true, message: 'Email sent successfully' });
   } catch (error) {
-    console.error('Error sending email:', error);
+    logger.error('Error sending email:', error);
+    await createAuditLog('feedback_failed', { 
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 'error');
+    
     return NextResponse.json(
       { success: false, message: 'Failed to send email' },
       { status: 500 }
     );
   }
 }
+
