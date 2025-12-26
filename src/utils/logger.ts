@@ -11,7 +11,7 @@ interface LogData {
 const isProduction = process.env.NODE_ENV === 'production';
 
 class Logger {
-  private log(level: LogLevel, message: string, context?: any) {
+  private executeLog(level: LogLevel, message: string, context?: any) {
     const logData: LogData = {
       message,
       level,
@@ -35,19 +35,19 @@ class Logger {
   }
 
   info(message: string, context?: any) {
-    this.log('info', message, context);
+    this.executeLog('info', message, context);
   }
 
   warn(message: string, context?: any) {
-    this.log('warn', message, context);
+    this.executeLog('warn', message, context);
   }
 
   error(message: string, context?: any) {
-    this.log('error', message, context);
+    this.executeLog('error', message, context);
   }
 
   debug(message: string, context?: any) {
-    this.log('debug', message, context);
+    this.executeLog('debug', message, context);
   }
 
   // Add compatibility with old logger
