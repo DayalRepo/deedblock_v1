@@ -72,7 +72,7 @@ export const Step2_Documents: React.FC<Step2Props> = ({
 
     // Filter valid File objects and count from draftPhotoUrls for hydrated state
     const validFilePhotos = propertyPhotos.filter(p => p instanceof File);
-    const displayPhotoCount = validFilePhotos.length || draftPhotoUrls.length;
+    const displayPhotoCount = Math.max(validFilePhotos.length, draftPhotoUrls.length);
 
     const [uploading, setUploading] = React.useState<Record<string, boolean>>({});
     const [dragActive, setDragActive] = React.useState<string | null>(null);
@@ -534,18 +534,18 @@ export const Step2_Documents: React.FC<Step2Props> = ({
                             htmlFor="property-photos"
                             className={`flex items-center justify-center gap-3 px-4 py-4 sm:py-5 border border-dashed rounded-lg cursor-pointer transition-all
                                 ${dragActive === 'photos' ? 'border-black bg-gray-50 ring-1 ring-black' : 'border-gray-300'}
-                                ${propertyPhotos.length >= 6 ? 'opacity-50 cursor-not-allowed' : 'hover:border-black hover:bg-gray-50'}`}
+                                ${displayPhotoCount >= 6 ? 'opacity-50 cursor-not-allowed' : 'hover:border-black hover:bg-gray-50'}`}
                         >
                             <div className="flex items-center gap-4">
                                 <div className="text-gray-400">
-                                    {/* Icon removed as per request */}
+                                    {renderStatusIcon('photos', displayPhotoCount > 0, "w-8 h-8 sm:w-10 sm:h-10")}
                                 </div>
                                 <div className="text-left">
                                     <p className="text-xs sm:text-sm font-normal text-gray-500 mb-0.5">
                                         Property Photos
                                     </p>
                                     <p className="text-xs sm:text-sm font-medium text-gray-400">
-                                        {uploading.photos ? 'Uploading...' : propertyPhotos.length >= 6 ? 'Maximum 6 photos' : 'JPG, PNG up to 5MB each'}
+                                        {uploading.photos ? 'Uploading...' : displayPhotoCount >= 6 ? 'Maximum 6 photos' : 'JPG, PNG up to 5MB each'}
                                     </p>
                                 </div>
                             </div>

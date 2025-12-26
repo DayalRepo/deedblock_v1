@@ -46,6 +46,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
 }) => {
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const [isLoaded, setIsLoaded] = useState(false);
+    const [hasError, setHasError] = useState(false);
 
     useEffect(() => {
         setCurrentIndex(initialIndex);
@@ -53,6 +54,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
 
     useEffect(() => {
         setIsLoaded(false);
+        setHasError(false);
     }, [currentIndex]);
 
     const currentItem = items[currentIndex];
@@ -183,12 +185,30 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
 
                                     if (isImage) {
                                         return (
-                                            <img
-                                                src={url}
-                                                alt={currentItem.name}
-                                                className={`max-w-full max-h-full object-contain shadow-sm rounded-lg transition-opacity duration-200 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
-                                                onLoad={() => setIsLoaded(true)}
-                                            />
+                                            <div className="relative w-full h-full flex items-center justify-center">
+                                                {!isLoaded && !hasError && (
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+                                                    </div>
+                                                )}
+                                                {hasError ? (
+                                                    <div className="text-center text-gray-400">
+                                                        <AlertCircle className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                                                        <p className="text-sm">Failed to load image. The link may have expired.</p>
+                                                    </div>
+                                                ) : (
+                                                    <img
+                                                        src={url}
+                                                        alt={currentItem.name}
+                                                        className={`max-w-full max-h-full object-contain shadow-sm rounded-lg transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+                                                        onLoad={() => setIsLoaded(true)}
+                                                        onError={() => {
+                                                            setIsLoaded(false);
+                                                            setHasError(true);
+                                                        }}
+                                                    />
+                                                )}
+                                            </div>
                                         );
                                     }
 
@@ -259,23 +279,33 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                                     >
                                         {(() => {
                                             const urlLower = item.url.toLowerCase();
-                                            const isImage = urlLower.includes('.png') || urlLower.includes('.jpg') ||
-                                                urlLower.includes('.jpeg') || urlLower.includes('.webp') ||
+                                            const nameLower = item.name.toLowerCase();
+                                            const isImage = 
+                                                urlLower.includes('.png') || urlLower.includes('.jpg') ||
+                                                urlLower.includes('.jpeg') || urlLower.includes('.gif') ||
+                                                urlLower.includes('.webp') ||
+                                                nameLower.includes('.png') || nameLower.includes('.jpg') ||
+                                                nameLower.includes('.jpeg') || nameLower.includes('.gif') ||
+                                                nameLower.includes('.webp') ||
                                                 item.file?.type.startsWith('image/');
-
-                                            if (isImage) {
-                                                return (
-                                                    <img
-                                                        src={item.url}
-                                                        alt={item.name}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                );
-                                            }
 
                                             return (
                                                 <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                                                    <CustomDocumentIcon className="w-5 h-5 text-gray-400" />
+                                                    {isImage ? (
+                                                        <img
+                                                            src={item.url}
+                                                            alt={item.name}
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                // Hide image and show icon if load fails
+                                                                (e.target as HTMLImageElement).style.display = 'none';
+                                                                (e.target as HTMLImageElement).parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+                                                            }}
+                                                        />
+                                                    ) : null}
+                                                    <div className={`fallback-icon ${isImage ? 'hidden' : ''}`}>
+                                                        <CustomDocumentIcon className="w-5 h-5 text-gray-400" />
+                                                    </div>
                                                 </div>
                                             );
                                         })()}
