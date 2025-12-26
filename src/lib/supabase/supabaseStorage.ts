@@ -1,4 +1,5 @@
 import { supabase } from './client';
+import { logger } from '@/utils/logger';
 
 const BUCKET_NAME = 'draft-files';
 
@@ -25,7 +26,7 @@ export async function uploadDraftFile(
         });
 
     if (error) {
-        console.error('[Storage] Upload error:', error);
+        logger.error('[Storage] Upload error:', error);
         throw new Error(`Failed to upload file: ${error.message}`);
     }
 
@@ -35,11 +36,11 @@ export async function uploadDraftFile(
         .createSignedUrl(data.path, 60 * 60 * 24 * 7); // 7 days
 
     if (signedUrlError || !signedUrlData?.signedUrl) {
-        console.error('[Storage] Signed URL error:', signedUrlError);
+        logger.error('[Storage] Signed URL error:', signedUrlError);
         throw new Error('Failed to get signed URL for uploaded file');
     }
 
-    console.log(`[Storage] Uploaded: ${filePath}`);
+    logger.debug(`[Storage] Uploaded: ${filePath}`);
     return {
         url: signedUrlData.signedUrl,
         path: data.path
@@ -55,11 +56,11 @@ export async function deleteDraftFile(path: string): Promise<void> {
         .remove([path]);
 
     if (error) {
-        console.error('[Storage] Delete error:', error);
+        logger.error('[Storage] Delete error:', error);
         throw new Error(`Failed to delete file: ${error.message}`);
     }
 
-    console.log(`[Storage] Deleted: ${path}`);
+    logger.debug(`[Storage] Deleted: ${path}`);
 }
 
 /**
@@ -77,8 +78,8 @@ export async function clearUserDraftFiles(userId: string): Promise<void> {
             .from(BUCKET_NAME)
             .list(`${userId}/photos`);
 
-        if (docError) console.error('[Storage] List documents error:', docError);
-        if (photoError) console.error('[Storage] List photos error:', photoError);
+        if (docError) logger.error('[Storage] List documents error:', docError);
+        if (photoError) logger.error('[Storage] List photos error:', photoError);
 
         const filesToDelete: string[] = [];
 
@@ -95,13 +96,13 @@ export async function clearUserDraftFiles(userId: string): Promise<void> {
                 .remove(filesToDelete);
 
             if (deleteError) {
-                console.error('[Storage] Batch delete error:', deleteError);
+                logger.error('[Storage] Batch delete error:', deleteError);
             } else {
-                console.log(`[Storage] Cleared ${filesToDelete.length} files for user ${userId}`);
+                logger.debug(`[Storage] Cleared ${filesToDelete.length} files for user ${userId}`);
             }
         }
     } catch (err) {
-        console.error('[Storage] Clear user files error:', err);
+        logger.error('[Storage] Clear user files error:', err);
         // Don't throw - this is cleanup, we don't want to block the main flow
     }
 }
@@ -117,14 +118,14 @@ export async function downloadDraftFile(path: string, fileName: string): Promise
             .download(path);
 
         if (error || !data) {
-            console.error('[Storage] Download error:', error);
+            logger.error('[Storage] Download error:', error);
             return null;
         }
 
         // Convert Blob to File
         return new File([data], fileName, { type: data.type });
     } catch (err) {
-        console.error('[Storage] Download error:', err);
+        logger.error('[Storage] Download error:', err);
         return null;
     }
 }
@@ -142,16 +143,16 @@ export async function refreshSignedUrl(path: string): Promise<string | null> {
         if (error || !data?.signedUrl) {
             // Squelch "Object not found" errors as they are expected when drafts outlive files
             if (error?.message?.includes('Object not found')) {
-                // console.warn('[Storage] File missing for path:', path);
+                // logger.warn('[Storage] File missing for path:', path);
                 return null;
             }
-            console.error('[Storage] Refresh signed URL error:', error);
+            logger.error('[Storage] Refresh signed URL error:', error);
             return null;
         }
 
         return data.signedUrl;
     } catch (err) {
-        console.error('[Storage] Refresh signed URL error:', err);
+        logger.error('[Storage] Refresh signed URL error:', err);
         return null;
     }
 }
@@ -194,7 +195,7 @@ export async function refreshDraftPhotoUrls(
         // Filter out nulls (removed files)
         return refreshed.filter((p): p is { url: string; path: string; name: string } => !!p);
     } catch (err) {
-        console.error('[Storage] Error in refreshDraftPhotoUrls:', err);
+        logger.error('[Storage] Error in refreshDraftPhotoUrls:', err);
         return draftPhotoUrls; // Return original on error
     }
 }
@@ -234,7 +235,7 @@ export async function refreshDraftDocumentUrls(
                         }
                     }
                 } catch (err) {
-                    console.error(`[Storage] Error refreshing ${key} URL:`, err);
+                    logger.error(`[Storage] Error refreshing ${key} URL:`, err);
                     // Keep original on error
                 }
             })
@@ -242,7 +243,7 @@ export async function refreshDraftDocumentUrls(
 
         return refreshed;
     } catch (err) {
-        console.error('[Storage] Error in refreshDraftDocumentUrls:', err);
+        logger.error('[Storage] Error in refreshDraftDocumentUrls:', err);
         return draftDocumentUrls; // Return original on error
     }
 }

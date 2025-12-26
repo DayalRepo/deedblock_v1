@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   // Fix for "inferred workspace root" warning
   outputFileTracingRoot: process.cwd(),
 
+  // Allowed origins for development
+  allowedDevOrigins: ['192.168.0.102', '192.168.0.102:3000', 'localhost', 'localhost:3000'],
+
   // Note: swcMinify is enabled by default in Next.js 13+ and not needed
 
   // Optimize package imports for faster bundle sizes

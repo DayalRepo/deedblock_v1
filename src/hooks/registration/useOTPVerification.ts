@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { UseFormSetValue, UseFormWatch } from 'react-hook-form';
 import { RegistrationFormSchema } from '@/lib/validations/registrationSchema';
+import { logger } from '@/utils/logger';
 
 type UseOTPVerificationProps = {
     setValue: UseFormSetValue<RegistrationFormSchema>;
@@ -74,7 +75,7 @@ export function useOTPVerification({ setValue, watch }: UseOTPVerificationProps)
         setSellerOtpSent(true);
         setSellerOtpTimer(30);
         setSellerOtpError('');
-        console.log(`Seller OTP: ${mockOtp}`);
+        logger.debug(`Seller OTP: ${mockOtp}`);
     };
 
     const handleVerifySellerOtp = () => {
@@ -97,7 +98,7 @@ export function useOTPVerification({ setValue, watch }: UseOTPVerificationProps)
         setBuyerOtpSent(true);
         setBuyerOtpTimer(30);
         setBuyerOtpError('');
-        console.log(`Buyer OTP: ${mockOtp}`);
+        logger.debug(`Buyer OTP: ${mockOtp}`);
     };
 
     const handleVerifyBuyerOtp = () => {
@@ -128,7 +129,7 @@ export function useOTPVerification({ setValue, watch }: UseOTPVerificationProps)
         setSellerAadharMockOtp(mockOtp);
         setSellerAadharOtpSent(true);
         setSellerAadharOtpTimer(30);
-        console.log(`Seller Aadhar OTP: ${mockOtp}`);
+        logger.debug(`Seller Aadhar OTP: ${mockOtp}`);
     };
 
     const handleVerifySellerAadharOtp = () => {
@@ -176,7 +177,7 @@ export function useOTPVerification({ setValue, watch }: UseOTPVerificationProps)
             });
             return !!credential;
         } catch (error) {
-            console.error("Biometric failed", error);
+            logger.error("Biometric failed", error);
             // alert("Biometric verification failed or was cancelled.");
             return false;
         }

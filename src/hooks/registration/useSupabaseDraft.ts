@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase/client';
 import { RegistrationFormSchema } from '@/lib/validations/registrationSchema';
 import { refreshDraftPhotoUrls, refreshDraftDocumentUrls } from '@/lib/supabase/supabaseStorage';
+import { logger } from '@/utils/logger';
 
 const TABLE_NAME = 'registration_drafts';
 
@@ -21,7 +22,7 @@ export function useSupabaseDraft(form: UseFormReturn<RegistrationFormSchema>) {
         // Get initial session
         supabase.auth.getSession().then(({ data }) => {
             const id = data.session?.user?.id;
-            console.log('[Draft] Initial Session User:', id);
+            logger.debug('[Draft] Initial Session User:', id);
             setUserId(id);
         });
 
@@ -29,7 +30,7 @@ export function useSupabaseDraft(form: UseFormReturn<RegistrationFormSchema>) {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
             const id = session?.user?.id;
-            console.log('[Draft] Auth Change User:', id);
+            logger.debug('[Draft] Auth Change User:', id);
             setUserId(id);
         });
 
@@ -44,7 +45,7 @@ export function useSupabaseDraft(form: UseFormReturn<RegistrationFormSchema>) {
         }
 
         const fetchDraft = async () => {
-            console.log('[Draft] Fetching for user:', userId);
+            logger.debug('[Draft] Fetching for user:', userId);
             try {
                 const { data, error } = await supabase
                     .from(TABLE_NAME)
@@ -54,19 +55,19 @@ export function useSupabaseDraft(form: UseFormReturn<RegistrationFormSchema>) {
 
                 if (error) {
                     if (error.code !== 'PGRST116') {
-                        console.error('[Draft] Error fetching:', error);
+                        logger.error('[Draft] Error fetching:', error);
                         // CRITICAL: Do NOT enable loading/saving if we failed to fetch.
                         toast.error("Failed to load draft. Auto-save is disabled.");
                         return;
                     } else {
-                        console.log('[Draft] No existing draft found.');
+                        logger.debug('[Draft] No existing draft found.');
                         // CRITICAL FIX: Initialize lastSaved with current defaults.
                         lastSavedData.current = JSON.stringify(getValues());
                         setIsLoaded(true);
                     }
                 } else {
                     if (data?.draft_data) {
-                        console.log('[Draft] Restoring data:', data.draft_data);
+                        logger.debug('[Draft] Restoring data:', data.draft_data);
                         const parsedData = data.draft_data;
                         reset(parsedData);
                         lastSavedData.current = JSON.stringify(parsedData);
@@ -75,30 +76,30 @@ export function useSupabaseDraft(form: UseFormReturn<RegistrationFormSchema>) {
                         // These URLs expire after 7 days, so we regenerate them on load
                         try {
                             if (parsedData.draftPhotoUrls && parsedData.draftPhotoUrls.length > 0) {
-                                console.log('[Draft] Refreshing photo URLs...');
+                                logger.debug('[Draft] Refreshing photo URLs...');
                                 const refreshedPhotos = await refreshDraftPhotoUrls(parsedData.draftPhotoUrls);
                                 setValue('draftPhotoUrls', refreshedPhotos, { shouldDirty: false });
-                                console.log('[Draft] Photo URLs refreshed:', refreshedPhotos);
+                                logger.debug('[Draft] Photo URLs refreshed:', refreshedPhotos);
                             }
 
                             if (parsedData.draftDocumentUrls) {
-                                console.log('[Draft] Refreshing document URLs...');
+                                logger.debug('[Draft] Refreshing document URLs...');
                                 const refreshedDocs = await refreshDraftDocumentUrls(parsedData.draftDocumentUrls);
                                 // Only set if we got a valid object back
                                 if (refreshedDocs && typeof refreshedDocs === 'object') {
                                     setValue('draftDocumentUrls', refreshedDocs as typeof parsedData.draftDocumentUrls, { shouldDirty: false });
-                                    console.log('[Draft] Document URLs refreshed:', refreshedDocs);
+                                    logger.debug('[Draft] Document URLs refreshed:', refreshedDocs);
                                 }
                             }
                         } catch (refreshErr) {
-                            console.error('[Draft] URL refresh error:', refreshErr);
+                            logger.error('[Draft] URL refresh error:', refreshErr);
                             // Don't fail the load, just log the error
                         }
                     }
                     setIsLoaded(true);
                 }
             } catch (err) {
-                console.error('[Draft] Unexpected fetch error:', err);
+                logger.error('[Draft] Unexpected fetch error:', err);
                 toast.error("Connection error. Auto-save is disabled.");
                 // Still set isLoaded to true to allow the app to function
                 setIsLoaded(true);
@@ -120,8 +121,8 @@ export function useSupabaseDraft(form: UseFormReturn<RegistrationFormSchema>) {
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
         timeoutRef.current = setTimeout(async () => {
-            console.log('[Draft] Saving change...');
-            // console.log('Diff:', currentString.length, lastSavedData.current.length);
+            logger.debug('[Draft] Saving change...');
+            // logger.debug('Diff:', currentString.length, lastSavedData.current.length);
 
             try {
                 const { error } = await supabase
@@ -134,9 +135,9 @@ export function useSupabaseDraft(form: UseFormReturn<RegistrationFormSchema>) {
 
                 if (error) throw error;
                 lastSavedData.current = currentString;
-                console.log('[Draft] Saved successfully.');
+                logger.debug('[Draft] Saved successfully.');
             } catch (err) {
-                console.error('[Draft] Save Error:', err);
+                logger.error('[Draft] Save Error:', err);
                 // Don't toast on every background save error to avoid spam, but log it.
             }
         }, 500); // 500ms Debounce
@@ -162,12 +163,12 @@ export function useSupabaseDraft(form: UseFormReturn<RegistrationFormSchema>) {
                 .eq('user_id', userId);
 
             if (error) throw error;
-            console.log('Draft cleared from Supabase');
+            logger.log('Draft cleared from Supabase');
 
             // Mark current state as "saved" (even if empty) to prevent immediate auto-save check from triggering
             lastSavedData.current = JSON.stringify(watch());
         } catch (err) {
-            console.error('Error clearing draft:', err);
+            logger.error('Error clearing draft:', err);
         }
     }, [userId, watch]);
 
