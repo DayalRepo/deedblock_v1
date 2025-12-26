@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, ChevronLeft, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
 
 // Custom close icon matching project design
 const CloseIcon = ({ className }: { className?: string }) => (
