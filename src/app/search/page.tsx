@@ -153,14 +153,16 @@ export default function SearchPage() {
       type: 'url' as const,
       url: doc.url || (doc.ipfsHash ? `https://gateway.pinata.cloud/ipfs/${doc.ipfsHash}` : ''),
       name: doc.name || doc.type || 'Document',
-      category: 'Document'
+      category: 'Document',
+      mimeType: doc.mimeType
     }));
 
     const photos = (selectedResult.propertyPhotos || []).map((photo, idx) => ({
       type: 'url' as const,
       url: photo.url || (photo.ipfsHash ? `https://gateway.pinata.cloud/ipfs/${photo.ipfsHash}` : ''),
       name: `Photo ${idx + 1}`,
-      category: 'Photo'
+      category: 'Photo',
+      mimeType: photo.mimeType
     }));
 
     return [...docs, ...photos];

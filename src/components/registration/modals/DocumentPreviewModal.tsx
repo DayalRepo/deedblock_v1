@@ -22,6 +22,7 @@ export interface PreviewItem {
     name: string;
     file?: File; // Optional original file object
     category?: string; // e.g., 'Document', 'Photo'
+    mimeType?: string;
 }
 
 interface DocumentPreviewModalProps {
@@ -161,10 +162,24 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                                 {(() => {
                                     const url = currentItem.url;
                                     const urlLower = url.toLowerCase();
-                                    const isImage = urlLower.includes('.png') || urlLower.includes('.jpg') ||
+                                    const nameLower = currentItem.name.toLowerCase();
+                                    const mimeType = currentItem.mimeType;
+
+                                    const isImage =
+                                        urlLower.includes('.png') || urlLower.includes('.jpg') ||
                                         urlLower.includes('.jpeg') || urlLower.includes('.gif') ||
-                                        urlLower.includes('.webp') || currentItem.file?.type.startsWith('image/');
-                                    const isPdf = urlLower.includes('.pdf') || currentItem.file?.type === 'application/pdf';
+                                        urlLower.includes('.webp') ||
+                                        nameLower.includes('.png') || nameLower.includes('.jpg') ||
+                                        nameLower.includes('.jpeg') || nameLower.includes('.gif') ||
+                                        nameLower.includes('.webp') ||
+                                        currentItem.file?.type.startsWith('image/') ||
+                                        mimeType?.startsWith('image/');
+
+                                    const isPdf =
+                                        urlLower.includes('.pdf') ||
+                                        nameLower.includes('.pdf') ||
+                                        currentItem.file?.type === 'application/pdf' ||
+                                        mimeType === 'application/pdf';
 
                                     if (isImage) {
                                         return (
