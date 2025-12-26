@@ -11,24 +11,33 @@ interface LogData {
 const isProduction = process.env.NODE_ENV === 'production';
 
 class Logger {
-  private log(level: LogLevel, message: string, context?: any) {
-    const logData: LogData = {
-      message,
-      level,
-      timestamp: new Date().toISOString(),
-      context,
-    };
+  private isLogging = false;
 
-    // In production, we only log errors and warnings to console
-    // In dev, we log everything
-    if (!isProduction || level === 'error' || level === 'warn') {
-      const consoleMethod = level === 'debug' ? 'debug' : level === 'info' ? 'info' : level === 'warn' ? 'warn' : 'error';
-      
-      if (context) {
-        console[consoleMethod](`[${logData.timestamp}] [${level.toUpperCase()}] ${message}`, context);
-      } else {
-        console[consoleMethod](`[${logData.timestamp}] [${level.toUpperCase()}] ${message}`);
+  private log(level: LogLevel, message: string, context?: any) {
+    if (this.isLogging) return;
+    this.isLogging = true;
+
+    try {
+      const logData: LogData = {
+        message,
+        level,
+        timestamp: new Date().toISOString(),
+        context,
+      };
+
+      // In production, we only log errors and warnings to console
+      // In dev, we log everything
+      if (!isProduction || level === 'error' || level === 'warn') {
+        const consoleMethod = level === 'debug' ? 'debug' : level === 'info' ? 'info' : level === 'warn' ? 'warn' : 'error';
+        
+        if (context) {
+          console[consoleMethod](`[${logData.timestamp}] [${level.toUpperCase()}] ${message}`, context);
+        } else {
+          console[consoleMethod](`[${logData.timestamp}] [${level.toUpperCase()}] ${message}`);
+        }
       }
+    } finally {
+      this.isLogging = false;
     }
 
     // Future enhancement: Send logs to an external service like Sentry, Axiom, or Logtail
