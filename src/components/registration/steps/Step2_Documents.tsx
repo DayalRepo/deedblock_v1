@@ -47,9 +47,9 @@ interface Step2Props {
     userId: string | undefined;
     saveDocument: (key: string, file: File | null) => Promise<void>;
     savePhotos: (photos: File[]) => Promise<void>;
-    previewDocument: (type: string, file: File) => void;
+    previewDocument: (type: string, file?: File | null) => void;
     onPreviewDocumentUrl?: (type: string, url: string, name: string) => void;
-    onPreviewPhotos?: () => void;
+    onPreviewPhotos?: (startIndex?: number) => void;
     onReset: () => void;
 }
 

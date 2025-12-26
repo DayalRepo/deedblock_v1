@@ -317,16 +317,6 @@ export default function RegistrationPage() {
     setShowDocuments(true);
   };
 
-  const previewPhotos = () => {
-    // Open gallery starting at first photo
-    const items = buildGalleryItems();
-    const firstPhotoIndex = items.findIndex(item => item.category === 'Photo');
-
-    setGalleryItems(items);
-    setGalleryStartIndex(firstPhotoIndex >= 0 ? firstPhotoIndex : 0);
-    setShowDocuments(true);
-  };
-
   const resetFormFull = async () => {
     // Explicitly reset to initial empty state to clear UI
     reset(INITIAL_FORM_DATA);

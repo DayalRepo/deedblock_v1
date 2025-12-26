@@ -12,7 +12,7 @@ interface Step3Props {
     surveyOrDoor: 'survey' | 'door';
     downloadSummary: () => void;
     onReset: () => void;
-    previewDocument?: (type: string, file: File) => void;
+    previewDocument?: (type: string, file?: File | null) => void;
 }
 
 // Local ErrorFlasher reused from other steps
@@ -285,7 +285,7 @@ export const Step3_ReviewPayment: React.FC<Step3Props> = ({
                             <span className="truncate">Buyer ID</span>
                         </button>
                     ) : null}
-                    {(formData.propertyPhotos?.length > 0 || formData.draftPhotoUrls?.length > 0) && (
+                    {(formData.propertyPhotos?.length > 0 || (formData.draftPhotoUrls?.length || 0) > 0) && (
                         <button
                             onClick={() => {
                                 previewDocument?.('photo_0');
