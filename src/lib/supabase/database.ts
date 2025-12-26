@@ -89,9 +89,11 @@ export async function saveRegistration(data: RegistrationData) {
 
   if (error) {
     console.error('Error saving registration:', JSON.stringify(error, null, 2));
+    await createAuditLog('registration_failed', { error: error.message, registration_id: rest.registration_id }, 'error');
     throw error;
   }
 
+  await createAuditLog('registration_created', { registration_id: rest.registration_id }, 'info');
   return result;
 }
 
@@ -175,9 +177,11 @@ export async function savePayment(paymentData: Omit<PaymentData, 'id' | 'created
     .single();
 
   if (error) {
+    await createAuditLog('payment_failed', { error: error.message, registration_id: rest.registration_id }, 'error');
     throw error;
   }
 
+  await createAuditLog('payment_completed', { registration_id: rest.registration_id, amount: rest.amount }, 'info');
   return data;
 }
 
@@ -220,8 +224,11 @@ export async function saveSearchHistory(userId: string, searchType: 'registratio
 
   if (error) {
     console.error('Error saving search history:', JSON.stringify(error, null, 2));
+    await createAuditLog('search_history_failed', { error: error.message, query, searchType }, 'error');
     throw error;
   }
+
+  await createAuditLog('search_performed', { query, searchType }, 'info');
 
   // Delete old entries beyond limit of 10
   if (existingHistory && existingHistory.length >= 10) {
@@ -251,4 +258,21 @@ export async function getSearchHistory(userId: string) {
   }
 
   return data || [];
+}
+
+// Audit Logging
+export async function createAuditLog(action: string, metadata: any = {}, severity: 'info' | 'warning' | 'error' = 'info') {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    await supabase.from('audit_logs').insert([{
+      user_id: user?.id,
+      action,
+      metadata,
+      severity,
+      ip_address: typeof window !== 'undefined' ? 'client-side' : 'server-side' // Basic differentiation
+    }]);
+  } catch (err) {
+    console.error('Failed to create audit log:', err);
+  }
 }

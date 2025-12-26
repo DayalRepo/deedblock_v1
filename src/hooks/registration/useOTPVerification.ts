@@ -228,7 +228,7 @@ export function useOTPVerification({ setValue, watch }: UseOTPVerificationProps)
         setBuyerAadharMockOtp(mockOtp);
         setBuyerAadharOtpSent(true);
         setBuyerAadharOtpTimer(30);
-        console.log(`Buyer Aadhar OTP: ${mockOtp}`);
+        logger.debug(`Buyer Aadhar OTP: ${mockOtp}`);
     };
 
     const handleVerifyBuyerAadharOtp = () => {

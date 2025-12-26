@@ -6,6 +6,9 @@ import { ArrowLeft, MessageSquare, Send, CheckCircle, AlertCircle, Phone, Loader
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
+// Supabase
+import { supabase } from '@/lib/supabase/client';
+
 const dmSans = DM_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
@@ -121,14 +124,21 @@ export default function FeedbackPage() {
       formData.append('subject', subject);
       formData.append('message', message);
 
-      attachments.forEach((file) => {
-        formData.append('attachments', file);
-      });
+        attachments.forEach((file) => {
+          formData.append('attachments', file);
+        });
 
-      const response = await fetch('/api/feedback', {
-        method: 'POST',
-        body: formData,
-      });
+        // Get auth session for security
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+
+        const response = await fetch('/api/feedback', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          },
+        });
 
       const data = await response.json();
 

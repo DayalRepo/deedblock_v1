@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Calendar, Loader2, AlertCircle, X, Copy, Check, Download, QrCode, ChevronDown, MapPin, Users, IndianRupee, Eye, Image as ImageIcon, Search, Shield, Clock, Filter, ChevronLeft, ChevronRight, Home, User, ArrowLeft } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { searchRegistrations, savePayment, type RegistrationData } from '@/lib/supabase/database';
+import { searchRegistrations, savePayment, saveSearchHistory, type RegistrationData } from '@/lib/supabase/database';
 import { getIPFSUrl } from '@/lib/ipfs/pinata';
 import AuthGate from '@/components/AuthGate';
 import { supabase } from '@/lib/supabase/client';
@@ -331,6 +331,12 @@ export default function SearchPage() {
         }
       } else {
         setSearchResults(foundResults);
+        // Save search history
+        if (userId) {
+          saveSearchHistory(userId, searchForm.searchType, searchQuery).catch(err => {
+            logger.error('Error saving search history:', err);
+          });
+        }
       }
     } catch (error) {
       logger.error('Search error:', error);

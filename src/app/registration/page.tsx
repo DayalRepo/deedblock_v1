@@ -383,7 +383,7 @@ export default function RegistrationPage() {
         await clearUserDraftFiles(userId);
         toast.success("All documents and photos cleared.");
       } catch (err) {
-        console.error("Error clearing storage:", err);
+        logger.error("Error clearing storage:", err);
         // Toast already handled?
       }
     }
@@ -520,7 +520,7 @@ export default function RegistrationPage() {
           fileToUpload = file;
         } else if (draft?.path) {
           // Download from Supabase Storage
-          console.log(`Downloading draft ${key} from ${draft.path}...`);
+          logger.debug(`Downloading draft ${key} from ${draft.path}...`);
           fileToUpload = await downloadDraftFile(draft.path, draft.name || `${key}.pdf`);
         }
 

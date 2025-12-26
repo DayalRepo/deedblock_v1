@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pinataSDK, { type PinataPinOptions } from '@pinata/sdk';
 import { Readable } from 'stream';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase for auth check
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Initialize Pinata SDK on server side
 const getPinata = () => {
@@ -38,6 +44,19 @@ const getPinata = () => {
 
 export async function POST(request: NextRequest) {
   try {
+    // Security check: Verify Supabase Auth token
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized: Missing token' }, { status: 401 });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
 

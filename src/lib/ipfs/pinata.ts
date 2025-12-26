@@ -1,5 +1,6 @@
 // Note: Pinata SDK is now only used server-side in API route
 // Client-side functions use the API route for uploads
+import { logger } from '@/utils/logger';
 
 // Upload a single file to IPFS via API route (server-side)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -13,6 +14,10 @@ export async function uploadFileToIPFS(file: File, fileName: string): Promise<{ 
     // Use relative URL to avoid origin issues and let browser handle it
     const apiUrl = '/api/ipfs/upload';
 
+    // Get auth session for security
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+
     // Create abort controller for timeout (fallback for browsers without AbortSignal.timeout)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout
@@ -22,6 +27,9 @@ export async function uploadFileToIPFS(file: File, fileName: string): Promise<{ 
       response = await fetch(apiUrl, {
         method: 'POST',
         body: formData,
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
@@ -65,10 +73,10 @@ export async function uploadFileToIPFS(file: File, fileName: string): Promise<{ 
       hash: result.hash,
       url: result.url,
     };
-  } catch (error) {
-    console.error('Error uploading file to IPFS:', error);
-
-    // Provide user-friendly error messages
+    } catch (error) {
+      logger.error('Error uploading file to IPFS:', error);
+  
+      // Provide user-friendly error messages
     if (error instanceof Error) {
       if (error.name === 'AbortError' || error.message.includes('timeout') || error.message.includes('aborted')) {
         throw new Error('Upload timeout: The file upload took too long. Please check your internet connection and try again.');
@@ -95,13 +103,13 @@ export async function uploadFilesToIPFS(files: File[]): Promise<Array<{ name: st
     const validFiles = files.filter(f => f instanceof File);
     if (validFiles.length === 0) return [];
 
-    console.log(`Starting sequential upload for ${validFiles.length} files...`);
+    logger.debug(`Starting sequential upload for ${validFiles.length} files...`);
 
     // Sequential upload loop to avoid network saturation on mobile
     for (let i = 0; i < validFiles.length; i++) {
       const file = validFiles[i];
       try {
-        console.log(`Uploading file ${i + 1}/${validFiles.length}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+        logger.debug(`Uploading file ${i + 1}/${validFiles.length}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
 
         const result = await uploadFileToIPFS(file, file.name);
 
@@ -112,16 +120,16 @@ export async function uploadFilesToIPFS(files: File[]): Promise<Array<{ name: st
           mimeType: file.type || 'image/jpeg',
         });
 
-        console.log(`✓ Successfully uploaded ${file.name}`);
+        logger.debug(`✓ Successfully uploaded ${file.name}`);
       } catch (error) {
-        console.error(`❌ Failed to upload ${file.name}:`, error);
+        logger.error(`❌ Failed to upload ${file.name}:`, error);
         throw new Error(`Failed to upload photo "${file.name}". Please try again.`);
       }
     }
 
     return results;
   } catch (error) {
-    console.error('Error uploading files to IPFS:', error);
+    logger.error('Error uploading files to IPFS:', error);
     throw error;
   }
 }
@@ -136,7 +144,7 @@ export async function uploadJSONToIPFS(data: any, fileName: string = 'data.json'
 
     return await uploadFileToIPFS(jsonFile, fileName);
   } catch (error) {
-    console.error('Error uploading JSON to IPFS:', error);
+    logger.error('Error uploading JSON to IPFS:', error);
     throw new Error(`Failed to upload JSON to IPFS: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -157,7 +165,7 @@ export async function testPinataConnection(): Promise<boolean> {
     await uploadFileToIPFS(testFile, 'test.txt');
     return true;
   } catch (error) {
-    console.error('Pinata connection test failed:', error);
+    logger.error('Pinata connection test failed:', error);
     return false;
   }
 }
