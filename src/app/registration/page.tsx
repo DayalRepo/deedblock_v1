@@ -219,8 +219,8 @@ export default function RegistrationPage() {
     // 1. Add "Required Documents" in specific order
     const docKeys = ['saleDeed', 'ec', 'khata', 'taxReceipt'] as const;
     const docLabels: Record<string, string> = {
-      'saleDeed': 'Sale Deed',
-      'ec': 'Encumbrance Certificate',
+      'saleDeed': 'Deed Doc',
+      'ec': 'EC',
       'khata': 'Seller Aadhar',
       'taxReceipt': 'Buyer Aadhar'
     };

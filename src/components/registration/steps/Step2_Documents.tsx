@@ -352,12 +352,12 @@ export const Step2_Documents: React.FC<Step2Props> = ({
     // Document rows: [Row 1: Deed Doc, EC], [Row 2: Seller ID, Buyer ID]
     const documentRows = [
         [
-            { key: 'saleDeed', label: 'Deed Document', accept: '.pdf,.jpg,.jpeg,.png', required: true },
-            { key: 'ec', label: 'EC (Encumbrance Certificate)', accept: '.pdf,.jpg,.jpeg,.png', required: true },
+            { key: 'saleDeed', label: 'Deed Doc', accept: '.pdf,.jpg,.jpeg,.png', required: true },
+            { key: 'ec', label: 'EC', accept: '.pdf,.jpg,.jpeg,.png', required: true },
         ],
         [
-            { key: 'khata', label: 'Seller Aadhar ID', accept: '.pdf,.jpg,.jpeg,.png', required: true },
-            { key: 'taxReceipt', label: 'Buyer Aadhar ID', accept: '.pdf,.jpg,.jpeg,.png', required: true },
+            { key: 'khata', label: 'Seller Aadhar', accept: '.pdf,.jpg,.jpeg,.png', required: true },
+            { key: 'taxReceipt', label: 'Buyer Aadhar', accept: '.pdf,.jpg,.jpeg,.png', required: true },
         ],
     ];
 

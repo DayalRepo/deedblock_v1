@@ -272,7 +272,7 @@ export const Step3_ReviewPayment: React.FC<Step3Props> = ({
                             type="button"
                         >
                             <PreviewIcon className="w-4 h-4 text-gray-400 shrink-0" />
-                            <span className="truncate">Seller ID</span>
+                            <span className="truncate">Seller Aadhar</span>
                         </button>
                     ) : null}
                     {formData.documents?.taxReceipt || formData.draftDocumentUrls?.taxReceipt?.url ? (
@@ -282,7 +282,7 @@ export const Step3_ReviewPayment: React.FC<Step3Props> = ({
                             type="button"
                         >
                             <PreviewIcon className="w-4 h-4 text-gray-400 shrink-0" />
-                            <span className="truncate">Buyer ID</span>
+                            <span className="truncate">Buyer Aadhar</span>
                         </button>
                     ) : null}
                     {(formData.propertyPhotos?.length > 0 || (formData.draftPhotoUrls?.length || 0) > 0) && (

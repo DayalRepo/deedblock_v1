@@ -223,9 +223,16 @@ export default function SearchPage() {
         const hasIPFS = doc?.ipfsHash;
         const hasBase64 = doc?.data;
 
+        // Map keys to specific labels as requested
+        let typeLabel = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim();
+        if (key === 'saleDeed') typeLabel = 'Deed Doc';
+        if (key === 'ec') typeLabel = 'EC';
+        if (key === 'khata') typeLabel = 'Seller Aadhar';
+        if (key === 'taxReceipt') typeLabel = 'Buyer Aadhar';
+
         return {
-          type: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim(),
-          name: doc?.name || `${key}.pdf`,
+          type: typeLabel,
+          name: doc?.name || `${typeLabel}.pdf`,
           ipfsHash: hasIPFS ? doc.ipfsHash : undefined,
           url: hasIPFS ? getIPFSUrl(doc.ipfsHash as string) : undefined,
           data: hasBase64 ? doc.data : undefined, // Keep for backward compatibility
