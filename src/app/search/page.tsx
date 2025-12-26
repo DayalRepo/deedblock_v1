@@ -9,6 +9,7 @@ import { searchRegistrations, savePayment, type RegistrationData } from '@/lib/s
 import { getIPFSUrl } from '@/lib/ipfs/pinata';
 import AuthGate from '@/components/AuthGate';
 import { supabase } from '@/lib/supabase/client';
+import { logger } from '@/utils/logger';
 import dynamic from 'next/dynamic';
 import { PreviewIcon } from '@/components/registration/icons/RegistrationIcons';
 
@@ -200,15 +201,16 @@ export default function SearchPage() {
 
   // Helper function to get all stored registrations from Supabase
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
-  const getAllRegistrations = async (): Promise<any[]> => {
+    const getAllRegistrations = async (): Promise<any[]> => {
     try {
       const { getAllRegistrations } = await import('@/lib/supabase/database');
       return await getAllRegistrations();
     } catch (error) {
-      console.error('Error loading registrations:', error);
+      logger.error('Error loading registrations:', error);
       return [];
     }
   };
+
 
   // Helper function to convert Supabase registration data to search result
   const convertToSearchResult = (registration: RegistrationData): SearchResult => {
@@ -331,7 +333,7 @@ export default function SearchPage() {
         setSearchResults(foundResults);
       }
     } catch (error) {
-      console.error('Search error:', error);
+      logger.error('Search error:', error);
       setSearchError('An error occurred while searching. Please try again.');
     } finally {
       setIsSearching(false);
@@ -352,7 +354,7 @@ export default function SearchPage() {
       setCopiedId(true);
       setTimeout(() => setCopiedId(false), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      logger.error('Failed to copy:', err);
     }
   };
 

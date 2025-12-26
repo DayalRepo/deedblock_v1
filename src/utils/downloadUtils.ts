@@ -1,3 +1,4 @@
+import { logger } from '@/utils/logger';
 import { RegistrationFormSchema } from '@/lib/validations/registrationSchema';
 
 export const downloadSummary = async (formData: RegistrationFormSchema, registrationId: string) => {
@@ -74,7 +75,7 @@ Registration ID: ${registrationId || 'PENDING'}
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     } catch (error) {
-        console.error('Error creating zip:', error);
+        logger.error('Error creating zip:', error);
         const blob = new Blob([summary], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');

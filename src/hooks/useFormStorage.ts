@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import { logger } from '@/utils/logger';
 
 interface UseFormStorageOptions<T> {
     pageName: string;
@@ -41,7 +42,7 @@ export function useFormStorage<T extends Record<string, unknown>>({
                         setFormData((prev) => ({ ...prev, ...parsed }));
                     }
                 } catch (error) {
-                    console.error('Error loading saved form data:', error);
+                    logger.error('Error loading saved form data:', error);
                 }
             }
             setIsLoaded(true);
@@ -63,7 +64,7 @@ export function useFormStorage<T extends Record<string, unknown>>({
                         setFormData((prev) => ({ ...prev, ...parsed }));
                     }
                 } catch (error) {
-                    console.error('Error loading saved form data on reconnect:', error);
+                    logger.error('Error loading saved form data on reconnect:', error);
                 }
             }
         });
@@ -84,7 +85,7 @@ export function useFormStorage<T extends Record<string, unknown>>({
             try {
                 localStorage.setItem(storageKey, JSON.stringify(formData));
             } catch (error) {
-                console.error('Error saving form data:', error);
+                logger.error('Error saving form data:', error);
             }
         }, debounceMs);
 
@@ -111,7 +112,7 @@ export function useFormStorage<T extends Record<string, unknown>>({
             try {
                 localStorage.removeItem(storageKey);
             } catch (error) {
-                console.error('Error clearing form data:', error);
+                logger.error('Error clearing form data:', error);
             }
         }
         setFormData(initialData);

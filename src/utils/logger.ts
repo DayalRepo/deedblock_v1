@@ -15,6 +15,11 @@ export const logger = {
             console.warn(...args);
         }
     },
+    info: (...args: any[]) => {
+        if (isDev) {
+            console.info(...args);
+        }
+    },
     debug: (...args: any[]) => {
         if (isDev) {
             console.debug(...args);
