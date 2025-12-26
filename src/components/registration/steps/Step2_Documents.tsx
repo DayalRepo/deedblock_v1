@@ -372,11 +372,18 @@ export const Step2_Documents: React.FC<Step2Props> = ({
         const getDocumentName = () => {
             if (isValidFile) return file.name;
             if (draftUrl?.path) {
-                // Path format: userId/documents/key_timestamp_filename
-                const pathParts = draftUrl.path.split('_');
-                if (pathParts.length >= 3) {
-                    return pathParts.slice(2).join('_');
+                // Path format: userId/documents/fieldKey_timestamp_filename
+                // We want to skip fieldKey and timestamp
+                const pathParts = draftUrl.path.split('/');
+                const fileName = pathParts[pathParts.length - 1];
+                const fileNameParts = fileName.split('_');
+                
+                // If it follows fieldKey_timestamp_filename format, fileNameParts.length >= 3
+                if (fileNameParts.length >= 3) {
+                    // Rejoin everything after the second underscore to handle filenames with underscores
+                    return fileNameParts.slice(2).join('_');
                 }
+                return fileName;
             }
             return 'Document uploaded';
         };

@@ -269,7 +269,7 @@ export default function RegistrationPage() {
 
       if (url) {
         items.push({
-          type: 'file',
+          type: photos[i] instanceof File ? 'file' : 'url',
           url: url,
           name: name,
           file: file,

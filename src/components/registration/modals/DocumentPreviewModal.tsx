@@ -194,20 +194,22 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
 
                                     if (isPdf) {
                                         const isBlob = url.startsWith('blob:');
+                                        const isSupabase = url.includes('supabase.co');
+                                        
                                         return (
                                             <div className="w-full max-w-4xl h-full bg-white border border-gray-200 rounded-lg overflow-hidden relative shadow-sm">
-                                                {!isBlob ? (
+                                                {isBlob || isSupabase ? (
+                                                    <iframe
+                                                        src={url}
+                                                        className="w-full h-full"
+                                                        title="PDF Preview"
+                                                    />
+                                                ) : (
                                                     <iframe
                                                         src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(url)}`}
                                                         className="w-full h-full"
                                                         title="PDF Preview"
                                                         frameBorder="0"
-                                                    />
-                                                ) : (
-                                                    <iframe
-                                                        src={url}
-                                                        className="w-full h-full"
-                                                        title="PDF Preview"
                                                     />
                                                 )}
                                             </div>
