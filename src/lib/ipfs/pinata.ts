@@ -15,7 +15,7 @@ export async function uploadFileToIPFS(file: File, fileName: string): Promise<{ 
 
     // Create abort controller for timeout (fallback for browsers without AbortSignal.timeout)
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout
 
     let response: Response;
     try {
@@ -91,30 +91,32 @@ export async function uploadFilesToIPFS(files: File[]): Promise<Array<{ name: st
   try {
     const results: Array<{ name: string; hash: string; url: string; mimeType: string }> = [];
 
-    // Upload in parallel for better performance and consistency across devices
-    // Note: Previously had sequential logic for mobile, but it caused issues with some network configurations
-    const uploadPromises = files.map((file, index) =>
-      uploadFileToIPFS(file, file.name)
-        .then(result => {
-          console.log(`✓ Successfully uploaded photo ${index + 1}/${files.length}: ${file.name}`);
-          return {
-            name: file.name,
-            hash: result.hash,
-            url: result.url,
-            mimeType: file.type || 'image/jpeg',
-          };
-        })
-        .catch(error => {
-          console.error(`❌ Failed to upload photo ${index + 1}/${files.length} (${file.name}):`, error);
-          throw new Error(`Failed to upload photo "${file.name}": ${error instanceof Error ? error.message : 'Unknown error'}`);
-        })
-    );
+    // Valid files check
+    const validFiles = files.filter(f => f instanceof File);
+    if (validFiles.length === 0) return [];
 
-    const uploadedResults = await Promise.all(uploadPromises);
-    results.push(...uploadedResults);
+    console.log(`Starting sequential upload for ${validFiles.length} files...`);
 
-    if (results.length !== files.length) {
-      throw new Error(`Only ${results.length} of ${files.length} photos were uploaded successfully`);
+    // Sequential upload loop to avoid network saturation on mobile
+    for (let i = 0; i < validFiles.length; i++) {
+      const file = validFiles[i];
+      try {
+        console.log(`Uploading file ${i + 1}/${validFiles.length}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+
+        const result = await uploadFileToIPFS(file, file.name);
+
+        results.push({
+          name: file.name,
+          hash: result.hash,
+          url: result.url,
+          mimeType: file.type || 'image/jpeg',
+        });
+
+        console.log(`✓ Successfully uploaded ${file.name}`);
+      } catch (error) {
+        console.error(`❌ Failed to upload ${file.name}:`, error);
+        throw new Error(`Failed to upload photo "${file.name}". Please try again.`);
+      }
     }
 
     return results;

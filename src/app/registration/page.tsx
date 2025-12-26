@@ -510,7 +510,7 @@ export default function RegistrationPage() {
       // Helper to upload IPFS
       // ... (Logic from previous file)
       const documentsIPFS: Record<string, { name: string; ipfsHash: string; mimeType: string }> = {};
-      const documentUploadPromises = [];
+
 
       // Helper to process document (upload File OR download draft then upload)
       const processDocument = async (key: string, file: any, draft: any) => {
@@ -541,20 +541,20 @@ export default function RegistrationPage() {
         }
       };
 
-      // Process all required docs
+      // Process all required docs sequentially
       if (data.documents.saleDeed || data.draftDocumentUrls?.saleDeed)
-        documentUploadPromises.push(processDocument('saleDeed', data.documents.saleDeed, data.draftDocumentUrls?.saleDeed));
+        await processDocument('saleDeed', data.documents.saleDeed, data.draftDocumentUrls?.saleDeed);
 
       if (data.documents.ec || data.draftDocumentUrls?.ec)
-        documentUploadPromises.push(processDocument('ec', data.documents.ec, data.draftDocumentUrls?.ec));
+        await processDocument('ec', data.documents.ec, data.draftDocumentUrls?.ec);
 
       if (data.documents.khata || data.draftDocumentUrls?.khata)
-        documentUploadPromises.push(processDocument('khata', data.documents.khata, data.draftDocumentUrls?.khata));
+        await processDocument('khata', data.documents.khata, data.draftDocumentUrls?.khata);
 
       if (data.documents.taxReceipt || data.draftDocumentUrls?.taxReceipt)
-        documentUploadPromises.push(processDocument('taxReceipt', data.documents.taxReceipt, data.draftDocumentUrls?.taxReceipt));
+        await processDocument('taxReceipt', data.documents.taxReceipt, data.draftDocumentUrls?.taxReceipt);
 
-      await Promise.all(documentUploadPromises);
+      // await Promise.all(documentUploadPromises);
 
       let photosIPFS: Array<{ name: string; ipfsHash: string; mimeType: string }> = [];
       const photosToUpload: File[] = [];
