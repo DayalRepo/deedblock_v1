@@ -3,19 +3,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { DM_Sans, DM_Mono } from 'next/font/google';
 import { ChevronRight } from 'lucide-react';
 import localFont from 'next/font/local';
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-});
-
-const dmMono = DM_Mono({
-  subsets: ["latin"],
-  weight: ["300", "400", "500"],
-});
 
 const punktFont = localFont({
   src: './fonts/Punkt-Bold.woff2',
@@ -52,7 +41,7 @@ export default function Home() {
                 <h1 className={`${punktFont.className} text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1] mb-1`}>
                   <span className="text-emerald-600">D</span>eed<span className="text-emerald-600">B</span>lock
                 </h1>
-                <p className={`${dmSans.className} text-sm sm:text-base text-gray-500 font-medium tracking-tighter`}>
+                <p className={`font-sans text-sm sm:text-base text-gray-500 font-medium tracking-tighter`}>
                   Powered by <span className="underline decoration-1 underline-offset-4">Project BlockChain</span>
                 </p>
               </div>
