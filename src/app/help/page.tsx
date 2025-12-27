@@ -234,31 +234,7 @@ export default function HelpPage() {
             </div>
           </div>
 
-          {/* Legal Disclaimer */}
-          <div className="mb-12 sm:mb-16 border-t border-gray-100 pt-10">
-            <h2 className="text-lg sm:text-xl font-light text-black mb-4">Legal Disclaimer</h2>
-            <p className="text-gray-500 text-sm leading-relaxed text-justify">
-              DeedBlock is a technological demonstration platform. Records created on this Beta version are <strong>not legally binding</strong> and do not replace official registration with the Government Sub-Registrar or Revenue Department.
-              Users should continue to follow all standard legal procedures for property registration. DeedBlock assumes no liability for disputes arising from the use of this beta platform.
-            </p>
-          </div>
 
-          {/* Contact & Support */}
-          <div className="mb-16">
-            <div className="bg-black text-white rounded-2xl p-6 sm:p-12 text-center">
-              <h2 className="text-2xl sm:text-3xl font-light mb-4">Have Questions?</h2>
-              <p className="text-gray-400 mb-8 max-w-lg mx-auto text-sm sm:text-base">
-                Whether you're a government official, developer, or beta tester, we'd love to hear your feedback on our new digital infrastructure.
-              </p>
-              <a
-                href="mailto:support@deedblock.com"
-                className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-full font-medium text-sm sm:text-base hover:bg-gray-100 transition-colors"
-              >
-                <span>Contact Support</span>
-                <ArrowUp size={18} className="rotate-45" />
-              </a>
-            </div>
-          </div>
 
         </motion.div>
       </div>
