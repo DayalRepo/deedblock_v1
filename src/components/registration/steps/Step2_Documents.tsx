@@ -352,12 +352,12 @@ export const Step2_Documents: React.FC<Step2Props> = ({
     // Document rows: [Row 1: Deed Doc, EC], [Row 2: Seller ID, Buyer ID]
     const documentRows = [
         [
-            { key: 'saleDeed', label: 'Deed Doc', accept: '.pdf,.jpg,.jpeg,.png', required: true },
-            { key: 'ec', label: 'EC', accept: '.pdf,.jpg,.jpeg,.png', required: true },
+            { key: 'DeedDoc', label: 'Deed Doc', accept: '.pdf,.jpg,.jpeg,.png', required: true },
+            { key: 'EC', label: 'EC', accept: '.pdf,.jpg,.jpeg,.png', required: true },
         ],
         [
-            { key: 'khata', label: 'Seller Aadhar', accept: '.pdf,.jpg,.jpeg,.png', required: true },
-            { key: 'taxReceipt', label: 'Buyer Aadhar', accept: '.pdf,.jpg,.jpeg,.png', required: true },
+            { key: 'SellerAadhar', label: 'Seller Aadhar', accept: '.pdf,.jpg,.jpeg,.png', required: true },
+            { key: 'BuyerAadhar', label: 'Buyer Aadhar', accept: '.pdf,.jpg,.jpeg,.png', required: true },
         ],
     ];
 
@@ -377,7 +377,7 @@ export const Step2_Documents: React.FC<Step2Props> = ({
                 const pathParts = draftUrl.path.split('/');
                 const fileName = pathParts[pathParts.length - 1];
                 const fileNameParts = fileName.split('_');
-                
+
                 // If it follows fieldKey_timestamp_filename format, fileNameParts.length >= 3
                 if (fileNameParts.length >= 3) {
                     // Rejoin everything after the second underscore to handle filenames with underscores

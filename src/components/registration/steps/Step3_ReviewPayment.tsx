@@ -245,9 +245,9 @@ export const Step3_ReviewPayment: React.FC<Step3Props> = ({
                 <div className="border-t border-dashed border-gray-300 mb-4"></div>
 
                 <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
-                    {formData.documents?.saleDeed || formData.draftDocumentUrls?.saleDeed?.url ? (
+                    {formData.documents?.DeedDoc || formData.draftDocumentUrls?.DeedDoc?.url ? (
                         <button
-                            onClick={() => previewDocument?.('saleDeed')}
+                            onClick={() => previewDocument?.('DeedDoc')}
                             className="flex items-center justify-start pl-6 pr-2 sm:px-3 sm:justify-start gap-2 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors"
                             type="button"
                         >
@@ -255,9 +255,9 @@ export const Step3_ReviewPayment: React.FC<Step3Props> = ({
                             <span className="truncate">Deed Doc</span>
                         </button>
                     ) : null}
-                    {formData.documents?.ec || formData.draftDocumentUrls?.ec?.url ? (
+                    {formData.documents?.EC || formData.draftDocumentUrls?.EC?.url ? (
                         <button
-                            onClick={() => previewDocument?.('ec')}
+                            onClick={() => previewDocument?.('EC')}
                             className="flex items-center justify-start pl-6 pr-2 sm:px-3 sm:justify-start gap-2 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors"
                             type="button"
                         >
@@ -265,9 +265,9 @@ export const Step3_ReviewPayment: React.FC<Step3Props> = ({
                             <span className="truncate">EC</span>
                         </button>
                     ) : null}
-                    {formData.documents?.khata || formData.draftDocumentUrls?.khata?.url ? (
+                    {formData.documents?.SellerAadhar || formData.draftDocumentUrls?.SellerAadhar?.url ? (
                         <button
-                            onClick={() => previewDocument?.('khata')}
+                            onClick={() => previewDocument?.('SellerAadhar')}
                             className="flex items-center justify-start pl-6 pr-2 sm:px-3 sm:justify-start gap-2 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors"
                             type="button"
                         >
@@ -275,9 +275,9 @@ export const Step3_ReviewPayment: React.FC<Step3Props> = ({
                             <span className="truncate">Seller Aadhar</span>
                         </button>
                     ) : null}
-                    {formData.documents?.taxReceipt || formData.draftDocumentUrls?.taxReceipt?.url ? (
+                    {formData.documents?.BuyerAadhar || formData.draftDocumentUrls?.BuyerAadhar?.url ? (
                         <button
-                            onClick={() => previewDocument?.('taxReceipt')}
+                            onClick={() => previewDocument?.('BuyerAadhar')}
                             className="flex items-center justify-start pl-6 pr-2 sm:px-3 sm:justify-start gap-2 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors"
                             type="button"
                         >
@@ -297,13 +297,13 @@ export const Step3_ReviewPayment: React.FC<Step3Props> = ({
                             <span className="truncate">{Math.max(formData.propertyPhotos?.length || 0, formData.draftPhotoUrls?.length || 0)} Photo{Math.max(formData.propertyPhotos?.length || 0, formData.draftPhotoUrls?.length || 0) > 1 ? 's' : ''}</span>
                         </button>
                     )}
-                    {!(formData.documents?.saleDeed || formData.draftDocumentUrls?.saleDeed?.url) && 
-                      !(formData.documents?.ec || formData.draftDocumentUrls?.ec?.url) && 
-                      !(formData.documents?.khata || formData.draftDocumentUrls?.khata?.url) && 
-                      !(formData.documents?.taxReceipt || formData.draftDocumentUrls?.taxReceipt?.url) && 
-                      (formData.propertyPhotos?.length === 0 && formData.draftPhotoUrls?.length === 0) && (
-                        <p className="text-sm text-gray-400 col-span-2 sm:col-span-auto">No documents uploaded</p>
-                    )}
+                    {!(formData.documents?.DeedDoc || formData.draftDocumentUrls?.DeedDoc?.url) &&
+                        !(formData.documents?.EC || formData.draftDocumentUrls?.EC?.url) &&
+                        !(formData.documents?.SellerAadhar || formData.draftDocumentUrls?.SellerAadhar?.url) &&
+                        !(formData.documents?.BuyerAadhar || formData.draftDocumentUrls?.BuyerAadhar?.url) &&
+                        (formData.propertyPhotos?.length === 0 && formData.draftPhotoUrls?.length === 0) && (
+                            <p className="text-sm text-gray-400 col-span-2 sm:col-span-auto">No documents uploaded</p>
+                        )}
                 </div>
 
             </div>

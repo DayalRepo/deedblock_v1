@@ -139,7 +139,7 @@ export default function RegistrationPage() {
   const documents = watch('documents');
   useEffect(() => {
     const newDocumentUrls = new Map<string, string>();
-    const docKeys = ['saleDeed', 'ec', 'khata', 'taxReceipt'] as const;
+    const docKeys = ['DeedDoc', 'EC', 'SellerAadhar', 'BuyerAadhar'] as const;
 
     docKeys.forEach(key => {
       const file = documents?.[key];
@@ -217,12 +217,12 @@ export default function RegistrationPage() {
     const values = getValues();
 
     // 1. Add "Required Documents" in specific order
-    const docKeys = ['saleDeed', 'ec', 'khata', 'taxReceipt'] as const;
+    const docKeys = ['Deed Doc', 'EC', 'Seller Aadhar', 'Buyer Aadhar'] as const;
     const docLabels: Record<string, string> = {
-      'saleDeed': 'Deed Doc',
-      'ec': 'EC',
-      'khata': 'Seller Aadhar',
-      'taxReceipt': 'Buyer Aadhar'
+      'Deed Doc': 'Deed Doc',
+      'EC': 'EC',
+      'Seller Aadhar': 'Seller Aadhar',
+      'Buyer Aadhar': 'Buyer Aadhar'
     };
 
     docKeys.forEach((key) => {
@@ -331,7 +331,7 @@ export default function RegistrationPage() {
   // Preview document from URL (for hydrated documents)
   const previewDocumentUrl = (type: string, url: string, name: string) => {
     const items = buildGalleryItems();
-    // For URL-based docs, type is the key (e.g., 'saleDeed')
+    // For URL-based docs, type is the key (e.g., 'DeedDoc')
     let index = items.findIndex(item => item.key === type);
 
     // Fallback for hydrated items
@@ -400,17 +400,17 @@ export default function RegistrationPage() {
     // 1. Clear Form State (Documents & Photos)
     // We explicitly set to null/empty as per schema
     setValue('documents', {
-      saleDeed: null,
-      ec: null,
-      khata: null,
-      taxReceipt: null
+      DeedDoc: null,
+      EC: null,
+      SellerAadhar: null,
+      BuyerAadhar: null
     }, { shouldValidate: true, shouldDirty: true });
 
     setValue('draftDocumentUrls', {
-      saleDeed: null,
-      ec: null,
-      khata: null,
-      taxReceipt: null
+      DeedDoc: null,
+      EC: null,
+      SellerAadhar: null,
+      BuyerAadhar: null
     }, { shouldDirty: true });
 
     setValue('propertyPhotos', [], { shouldValidate: true, shouldDirty: true });
@@ -481,7 +481,7 @@ export default function RegistrationPage() {
       const documents = values.documents;
       const draftUrls = values.draftDocumentUrls;
 
-      const requiredDocs = ['saleDeed', 'ec', 'khata', 'taxReceipt'] as const;
+      const requiredDocs = ['DeedDoc', 'EC', 'SellerAadhar', 'BuyerAadhar'] as const;
       let allDocsValid = true;
 
       for (const key of requiredDocs) {
@@ -584,17 +584,17 @@ export default function RegistrationPage() {
       };
 
       // Process all required docs sequentially
-      if (data.documents.saleDeed || data.draftDocumentUrls?.saleDeed)
-        await processDocument('saleDeed', data.documents.saleDeed, data.draftDocumentUrls?.saleDeed);
+      if (data.documents.DeedDoc || data.draftDocumentUrls?.DeedDoc)
+        await processDocument('DeedDoc', data.documents.DeedDoc, data.draftDocumentUrls?.DeedDoc);
 
-      if (data.documents.ec || data.draftDocumentUrls?.ec)
-        await processDocument('ec', data.documents.ec, data.draftDocumentUrls?.ec);
+      if (data.documents.EC || data.draftDocumentUrls?.EC)
+        await processDocument('EC', data.documents.EC, data.draftDocumentUrls?.EC);
 
-      if (data.documents.khata || data.draftDocumentUrls?.khata)
-        await processDocument('khata', data.documents.khata, data.draftDocumentUrls?.khata);
+      if (data.documents.SellerAadhar || data.draftDocumentUrls?.SellerAadhar)
+        await processDocument('SellerAadhar', data.documents.SellerAadhar, data.draftDocumentUrls?.SellerAadhar);
 
-      if (data.documents.taxReceipt || data.draftDocumentUrls?.taxReceipt)
-        await processDocument('taxReceipt', data.documents.taxReceipt, data.draftDocumentUrls?.taxReceipt);
+      if (data.documents.BuyerAadhar || data.draftDocumentUrls?.BuyerAadhar)
+        await processDocument('BuyerAadhar', data.documents.BuyerAadhar, data.draftDocumentUrls?.BuyerAadhar);
 
       // await Promise.all(documentUploadPromises);
 

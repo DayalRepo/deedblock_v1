@@ -206,10 +206,10 @@ export async function refreshDraftPhotoUrls(
  */
 export async function refreshDraftDocumentUrls(
     draftDocumentUrls: {
-        saleDeed?: { url: string; path: string } | null;
-        ec?: { url: string; path: string } | null;
-        khata?: { url: string; path: string } | null;
-        taxReceipt?: { url: string; path: string } | null;
+        DeedDoc?: { url: string; path: string } | null;
+        EC?: { url: string; path: string } | null;
+        SellerAadhar?: { url: string; path: string } | null;
+        BuyerAadhar?: { url: string; path: string } | null;
     } | null | undefined
 ): Promise<typeof draftDocumentUrls> {
     // Defensive check for null/undefined
@@ -218,7 +218,7 @@ export async function refreshDraftDocumentUrls(
     }
 
     try {
-        const keys = ['saleDeed', 'ec', 'khata', 'taxReceipt'] as const;
+        const keys = ['DeedDoc', 'EC', 'SellerAadhar', 'BuyerAadhar'] as const;
         const refreshed = { ...draftDocumentUrls };
 
         await Promise.all(

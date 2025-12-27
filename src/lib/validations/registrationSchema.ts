@@ -56,10 +56,10 @@ export const registrationSchema = z.object({
 
     // Documents - use permissive schema, validation done in navigation logic
     documents: z.object({
-        saleDeed: documentFieldSchema,
-        ec: documentFieldSchema,
-        khata: documentFieldSchema,
-        taxReceipt: documentFieldSchema,
+        DeedDoc: documentFieldSchema,
+        EC: documentFieldSchema,
+        SellerAadhar: documentFieldSchema,
+        BuyerAadhar: documentFieldSchema,
     }),
 
     propertyPhotos: z.array(z.any()) // Changed to any() to allow hydrated empty objects
@@ -67,10 +67,10 @@ export const registrationSchema = z.object({
 
     // Draft file storage - Supabase Storage URLs and paths for persistence
     draftDocumentUrls: z.object({
-        saleDeed: z.object({ url: z.string(), path: z.string() }).nullable().optional(),
-        ec: z.object({ url: z.string(), path: z.string() }).nullable().optional(),
-        khata: z.object({ url: z.string(), path: z.string() }).nullable().optional(),
-        taxReceipt: z.object({ url: z.string(), path: z.string() }).nullable().optional(),
+        DeedDoc: z.object({ url: z.string(), path: z.string() }).nullable().optional(),
+        EC: z.object({ url: z.string(), path: z.string() }).nullable().optional(),
+        SellerAadhar: z.object({ url: z.string(), path: z.string() }).nullable().optional(),
+        BuyerAadhar: z.object({ url: z.string(), path: z.string() }).nullable().optional(),
     }).optional(),
 
     draftPhotoUrls: z.array(z.object({
