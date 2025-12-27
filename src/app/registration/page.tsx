@@ -286,7 +286,23 @@ export default function RegistrationPage() {
   const previewDocument = (type: string, file?: File | null) => {
     const items = buildGalleryItems();
     // Prioritize searching by key (type) as it's more stable than File reference
-    const index = items.findIndex(item => item.key === type);
+    let index = items.findIndex(item => item.key === type);
+
+    // FLAGGED FIX: Fallback if item is not found in the built gallery (e.g. state sync delay)
+    if (index === -1 && file) {
+      const url = URL.createObjectURL(file);
+      // We push a temporary item
+      items.push({
+        type: 'file',
+        url,
+        name: file.name,
+        file: file,
+        key: type,
+        category: 'Document',
+        mimeType: file.type
+      });
+      index = items.length - 1;
+    }
 
     setGalleryItems(items);
     setGalleryStartIndex(index >= 0 ? index : 0);
@@ -296,7 +312,13 @@ export default function RegistrationPage() {
   const previewPhotos = (startIndex: number = 0) => {
     const items = buildGalleryItems();
     // Find the first photo item
-    const firstPhotoIdx = items.findIndex(item => item.category === 'Photo');
+    let firstPhotoIdx = items.findIndex(item => item.category === 'Photo');
+
+    if (firstPhotoIdx === -1) {
+      // Only if we actually have photos but they weren't in gallery?
+      // Logic for photos is more complex due to multiple files. 
+      // We'll trust buildGalleryItems for photos as they rely on form state which should represent current photos.
+    }
 
     // Calculate index within the whole gallery
     const targetIndex = firstPhotoIdx >= 0 ? firstPhotoIdx + startIndex : 0;
@@ -310,7 +332,19 @@ export default function RegistrationPage() {
   const previewDocumentUrl = (type: string, url: string, name: string) => {
     const items = buildGalleryItems();
     // For URL-based docs, type is the key (e.g., 'saleDeed')
-    const index = items.findIndex(item => item.key === type);
+    let index = items.findIndex(item => item.key === type);
+
+    // Fallback for hydrated items
+    if (index === -1) {
+      items.push({
+        type: 'url',
+        url,
+        name,
+        key: type,
+        category: 'Document'
+      });
+      index = items.length - 1;
+    }
 
     setGalleryItems(items);
     setGalleryStartIndex(index >= 0 ? index : 0);
