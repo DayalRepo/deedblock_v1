@@ -139,7 +139,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                     </div>
 
                     {/* Main Content Area */}
-                    <div className="flex-1 flex items-center justify-center relative overflow-hidden bg-gray-50/30 p-4">
+                    <div className="flex-1 flex items-center justify-center relative overflow-hidden bg-gray-50/30 p-2 sm:p-4">
                         {/* Navigation - Previous */}
                         {totalItems > 1 && (
                             <button
@@ -216,23 +216,59 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                                         const isBlob = url.startsWith('blob:');
                                         const isSupabase = url.includes('supabase.co');
                                         const isIPFS = url.includes('pinata.cloud') || url.includes('ipfs.io') || url.includes('/ipfs/');
-                                        
+                                        // Use Google Docs viewer for remote URLs that aren't explicit binary sources we can access directly
+                                        // But for IPFS/Supabase/Blob, we want direct access
+                                        const useDirectSource = isBlob || isSupabase || isIPFS;
+                                        const displayUrl = useDirectSource ? url : `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(url)}`;
+
                                         return (
-                                            <div className="w-full max-w-4xl h-full bg-white border border-gray-200 rounded-lg overflow-hidden relative shadow-sm">
-                                                {isBlob || isSupabase || isIPFS ? (
-                                                    <iframe
-                                                        src={url}
-                                                        className="w-full h-full"
-                                                        title="PDF Preview"
-                                                    />
+                                            <div className="w-full max-w-5xl h-full bg-white border border-gray-200 rounded-lg overflow-hidden relative shadow-sm group">
+                                                {/* Mobile/Desktop PDF Object */}
+                                                {useDirectSource ? (
+                                                    <object
+                                                        data={url}
+                                                        type="application/pdf"
+                                                        className="w-full h-full block"
+                                                    >
+                                                        {/* Fallback for devices/browsers that can't render inline PDF (often mobile) */}
+                                                        <div className="flex flex-col items-center justify-center w-full h-full bg-gray-50 text-center p-6">
+                                                            <CustomDocumentIcon className="w-16 h-16 text-gray-300 mb-4" />
+                                                            <p className="text-gray-600 font-medium mb-1">Preview not available inline</p>
+                                                            <p className="text-gray-400 text-sm mb-6 max-w-xs">
+                                                                Your browser doesn't support inline PDF viewing.
+                                                            </p>
+                                                            <a
+                                                                href={url}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="px-5 py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors inline-flex items-center gap-2"
+                                                            >
+                                                                <span>Open PDF in New Tab</span>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                                                            </a>
+                                                        </div>
+                                                    </object>
                                                 ) : (
                                                     <iframe
-                                                        src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(url)}`}
+                                                        src={displayUrl}
                                                         className="w-full h-full"
                                                         title="PDF Preview"
                                                         frameBorder="0"
                                                     />
                                                 )}
+
+                                                {/* Overlay Button for easier full-screen access (Visible on hover or always on mobile if needed) */}
+                                                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                    <a
+                                                        href={url}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="flex items-center gap-2 px-3 py-2 bg-black/75 text-white backdrop-blur-sm rounded-lg text-xs font-medium hover:bg-black transition-colors shadow-lg"
+                                                    >
+                                                        <span>Open Original</span>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                                                    </a>
+                                                </div>
                                             </div>
                                         );
                                     }
@@ -280,7 +316,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                                         {(() => {
                                             const urlLower = item.url.toLowerCase();
                                             const nameLower = item.name.toLowerCase();
-                                            const isImage = 
+                                            const isImage =
                                                 urlLower.includes('.png') || urlLower.includes('.jpg') ||
                                                 urlLower.includes('.jpeg') || urlLower.includes('.gif') ||
                                                 urlLower.includes('.webp') ||

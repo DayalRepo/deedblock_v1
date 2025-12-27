@@ -23,164 +23,44 @@ interface FAQItem {
 }
 
 const faqs: FAQItem[] = [
-  // Getting Started
+  // About DeedBlock
   {
     question: "What is DeedBlock?",
-    answer: "DeedBlock is a decentralized land title registration platform currently in **Beta**. We leverage blockchain technology to provide transparency, immutability, and security for Indian real estate transactions. Ideally, it serves as a proof-of-concept for avoiding land disputes through decentralized verification.",
-    category: 'getting-started'
+    answer: "DeedBlock is a digital-first land registry platform designed to modernize property administration. We are currently in **Beta**, testing the core concepts of decentralized storage and instant verification to solve issues like land record tampering and bureaucratic friction.",
+    category: 'about'
   },
   {
-    question: "Is this the final version?",
-    answer: "No, this is a **Beta Version**. We are currently testing the core concepts using the Solana Blockchain. In our upcoming production release, we will migrate to a **Hyperledger Fabric** network. This transition will introduce a permissioned environment suitable for official government integration and enhanced data privacy.",
-    category: 'getting-started'
+    question: "What technology powers DeedBlock?",
+    answer: "Our platform is built on a dual-layer architecture:\n\n1. **Hyperledger Fabric (Production):** For our upcoming official release, we will use this **permissioned blockchain** to store sensitive citizen data and land titles securely. This ensures compliance with government regulations and data privacy laws.\n\n2. **IPFS (Beta/Storage):** Currently, for this Beta version, we use the **InterPlanetary File System (IPFS)** as an off-chain decentralized storage layer. This ensures that documents (deeds, maps) are tamper-proof and improved availability.",
+    category: 'technology'
   },
   {
-    question: "How do I get started with DeedBlock?",
-    answer: "To get started, you need to: 1) Install a Solana-compatible wallet (like Phantom or Solflare), 2) Connect your wallet to the platform, 3) Navigate to the Registration page if you want to register a property, or use the Search page to find existing property records. Make sure you have all required documents ready before starting the registration process.",
-    category: 'getting-started'
-  },
-  {
-    question: "Is DeedBlock legal and compliant with Indian laws?",
-    answer: "DeedBlock is designed to align with the Registration Act, 1908, and Transfer of Property Act, 1882. However, as a Beta platform, the blockchain records currently serve as an **additional layer of verification** and do not purely replace the physical government registration process yet. Always ensure you complete standard government procedures.",
-    category: 'getting-started'
-  },
-  {
-    question: "What are the benefits of using blockchain for land registration?",
-    answer: "Blockchain provides several key benefits: Immutability (records cannot be altered), Transparency (all transactions are verifiable), Security (cryptographically secured), and Permanent Record (no risk of document loss/fire). Our future Hyperledger Fabric upgrade will further enable 'GovTech SaaS' features for seamless state integration.",
-    category: 'getting-started'
+    question: "Why Hyperledger Fabric instead of public crypto blockchains?",
+    answer: "Public blockchains (like Solana or Ethereum) are great for cryptocurrencies, but government records require **privacy, permissioned access, and compliance**. Hyperledger Fabric allows us to build a private, secure network where only authorized government bodies and verified citizens can participate, without the volatility or anonymity of crypto markets.",
+    category: 'technology'
   },
 
-  // Wallet
+  // User Flows & Usage
   {
-    question: "Do I need a cryptocurrency wallet?",
-    answer: "Yes, you need a Solana-compatible cryptocurrency wallet to interact with DeedBlock. Popular options include Phantom, Solflare, Backpack, and other Solana wallet browser extensions. The wallet is required to sign blockchain transactions and pay network fees.",
-    category: 'wallet'
+    question: "How do I Sign In?",
+    answer: "We have simplified access for the Beta:\n• Click **'Sign In'** in the navigation bar.\n• You can use your Google or GitHub account for quick access.\n• In the future Production version, this will integrate with **Government IDs (like Aadhaar)** for secure citizen authentication.",
+    category: 'usage'
   },
   {
-    question: "How do I connect my wallet?",
-    answer: "Click the 'Connect' button in the header, select your wallet provider from the list, and approve the connection request in your wallet extension. Make sure your wallet is unlocked and you grant the necessary permissions. Once connected, your wallet address will be displayed in the header.",
-    category: 'wallet'
+    question: "How does the Registration Process work?",
+    answer: "Registering a property is a streamlined 4-step process:\n1. **Sign In:** Log in to your account.\n2. **Enter Details:** Fill in property information (Survey No, Location) and transaction details (Seller/Buyer info).\n3. **Upload Documents:** Upload your Sale Deed, Maps, and IDs. in the current Beta, these are secured on **IPFS**.\n4. **Submit:** Confirm the data. In the future, this action will write a permanent record to the **Hyperledger Fabric** ledger.",
+    category: 'usage'
   },
   {
-    question: "What if I lose access to my wallet?",
-    answer: "If you lose access to your wallet (lost private keys or recovery phrase), you cannot recover it through DeedBlock. This is a security feature of blockchain technology. Always keep your wallet recovery phrase secure and in multiple safe locations. We recommend using hardware wallets for important accounts and never sharing your private keys with anyone.",
-    category: 'wallet'
-  },
-  {
-    question: "Do I need SOL tokens in my wallet?",
-    answer: "Yes, you need SOL (Solana's native cryptocurrency) in your wallet to pay for blockchain transaction fees. These fees are minimal (typically less than $0.01 per transaction) and are paid directly to the Solana network, not to DeedBlock. Make sure you have a small amount of SOL (recommended: at least 0.1 SOL) in your wallet before starting any transaction.",
-    category: 'wallet'
-  },
-  {
-    question: "Can I use multiple wallets?",
-    answer: "Yes, you can switch between different wallets. However, each wallet address is treated as a separate identity. Properties registered from different wallet addresses will be linked to those respective addresses. Make sure you're using the correct wallet for your property transactions.",
-    category: 'wallet'
+    question: "How do I Search and Verify a property?",
+    answer: "Verification is public and instant:\n1. Go to the **Search** page.\n2. Enter a unique identifier (Registration ID, Survey No, or Owner Name).\n3. The system queries our decentralized storage to fetch the immutable record.\n4. You can view the full history and download verified documents.",
+    category: 'usage'
   },
 
-  // Registration
   {
-    question: "How do I register a property on DeedBlock?",
-    answer: "To register a property: 1) Go to the Registration page and connect your wallet, 2) Fill in property details (survey number, plot number, location, area, etc.), 3) Provide transaction details (type, consideration amount, stamp duty, dates), 4) Enter seller and buyer information with all required details, 5) Upload required documents (all in PDF format), 6) Add witness information if applicable, 7) Review all information carefully, 8) Submit and confirm the blockchain transaction. Once confirmed, your property will be permanently recorded on the blockchain.",
-    category: 'registration'
-  },
-  {
-    question: "What documents are required for registration?",
-    answer: "Required documents include: Sale Deed (mandatory), Khata certificate, Property tax receipts (recent), Encumbrance certificate, Survey sketch/map, Aadhar card (buyer and seller), PAN card (buyer and seller), and Witness identification documents. All documents should be in PDF format, clear, readable, and properly scanned. Ensure documents are not password-protected.",
-    category: 'registration'
-  },
-  {
-    question: "How long does property registration take?",
-    answer: "The blockchain transaction itself is usually completed within seconds to a few minutes, depending on Solana network congestion. However, the complete registration process including data entry, document upload, and verification may take 15-30 minutes. You should receive a confirmation and registration ID once the transaction is recorded on the blockchain.",
-    category: 'registration'
-  },
-  {
-    question: "Can I register multiple properties?",
-    answer: "Yes, you can register multiple properties. Each property requires a separate registration process. Simply start a new registration after completing the previous one. All your registered properties will be linked to your wallet address and can be accessed through your account history.",
-    category: 'registration'
-  },
-  {
-    question: "Can I update property information after registration?",
-    answer: "Property information stored on blockchain is immutable and cannot be altered. To make changes (like ownership transfer, updating details), you'll need to create a new transaction that will be linked to the original record. This maintains a complete, transparent, and verifiable history of all property transactions.",
-    category: 'registration'
-  },
-  {
-    question: "What are the fees for registration?",
-    answer: "DeedBlock charges minimal blockchain transaction fees (paid in SOL, typically $0.01 or less). These fees go directly to the Solana network. Additionally, you are responsible for all government-mandated fees including stamp duty (varies by state), registration fees (as per state regulations), and other charges as per Indian land registration laws.",
-    category: 'registration'
-  },
-  {
-    question: "What happens if my registration transaction fails?",
-    answer: "If a blockchain transaction fails, no data is recorded and you won't be charged. Common causes include insufficient SOL balance, network congestion, or wallet disconnection. Check your SOL balance, ensure stable internet connection, and try again. Your form data is saved locally, so you won't need to re-enter everything.",
-    category: 'registration'
-  },
-  {
-    question: "Can I save my registration progress?",
-    answer: "Currently, registration forms are saved locally in your browser session. If you need to complete registration later, try to finish it in the same browser session. For best results, complete the registration process in one sitting. We recommend having all documents ready before starting.",
-    category: 'registration'
-  },
-
-  // Search
-  {
-    question: "How can I search for a property?",
-    answer: "Use the Search page to find properties by various parameters: Registration ID (exact match), Survey Number (exact match), Plot Number (exact match), Owner Name (partial match), or Location (Village, Taluka, District - partial match). Enter your search criteria and click search. All matching property records from the blockchain will be displayed with detailed information.",
-    category: 'search'
-  },
-  {
-    question: "Can I search without connecting my wallet?",
-    answer: "Yes, you can search for properties without connecting your wallet. Property records are publicly accessible on the blockchain, so anyone can search and view property information. However, wallet connection may be required for certain advanced features, viewing complete transaction history, or accessing additional details.",
-    category: 'search'
-  },
-  {
-    question: "How do I verify property ownership?",
-    answer: "Search for the property using any available parameters. The search results will show the current owner as recorded on the blockchain, along with complete transaction history showing the chain of ownership. Verify the information matches physical documents, cross-reference with government records, and check the transaction timestamps for authenticity.",
-    category: 'search'
-  },
-  {
-    question: "What information is visible in search results?",
-    answer: "Search results show: Property identification (Survey No., Plot No.), Property location (Village, Taluka, District, State, Pincode), Property area and dimensions, Current owner information, Transaction history with dates, Registration dates, Transaction types, and Document references. Personal sensitive information is protected while maintaining transparency of property records.",
-    category: 'search'
-  },
-  {
-    question: "Can I export property search results?",
-    answer: "Yes, the Search page allows you to export search results in various formats. You can download property information, generate reports, and create PDF documents with property details for your records or verification purposes.",
-    category: 'search'
-  },
-  {
-    question: "What if a property doesn't appear in search results?",
-    answer: "If a property doesn't appear, it may not be registered on DeedBlock yet. Verify your search criteria, check spelling, and try different search parameters. If you believe the property should exist, it may need to be registered first through the Registration page.",
-    category: 'search'
-  },
-
-  // Security
-  {
-    question: "How does blockchain ensure security?",
-    answer: "Blockchain technology ensures security through: Immutability (records cannot be altered or deleted once recorded), Cryptographic Security (all transactions are cryptographically signed and verified), Distributed Network (data stored across thousands of nodes, eliminating single points of failure), Consensus Mechanism (transactions verified by network participants), and Permanent Audit Trail (complete history visible and verifiable).",
-    category: 'security'
-  },
-  {
-    question: "Is my personal information secure?",
-    answer: "Yes, we implement multiple security layers including end-to-end encryption, secure wallet connections, privacy-preserving technologies, and secure document storage. While blockchain ensures transaction transparency for property records, we protect sensitive personal information while maintaining the transparency benefits for property verification.",
-    category: 'security'
-  },
-  {
-    question: "Can property records be hacked or altered?",
-    answer: "No, blockchain technology makes it virtually impossible to alter or hack property records once they're recorded. The distributed nature of blockchain means records exist on thousands of computers simultaneously. Cryptographic security ensures records cannot be changed without network consensus, which is computationally infeasible to manipulate. Even if one node is compromised, the network maintains integrity.",
-    category: 'security'
-  },
-  {
-    question: "What if someone makes a fraudulent registration?",
-    answer: "While blockchain records cannot be altered, we have verification processes in place. If you suspect fraud, contact us immediately through the Feedback page. We will investigate and can flag suspicious records. However, blockchain immutability means the original record will remain visible for transparency. Always verify property information through multiple sources including government records.",
-    category: 'security'
-  },
-  {
-    question: "Who can see my property information?",
-    answer: "Property records on blockchain are publicly accessible, meaning anyone can search and view property information. This ensures transparency and prevents fraud. However, we implement privacy measures to protect sensitive personal details while maintaining the transparency benefits of blockchain for property verification and ownership history.",
-    category: 'security'
-  },
-  {
-    question: "How is my wallet protected?",
-    answer: "Your wallet security is your responsibility. We never have access to your private keys or wallet credentials. The platform only requests transaction signatures from your wallet - you must approve each transaction. Always use reputable wallet providers, keep your recovery phrase secure, use hardware wallets for important accounts, and never share your private keys.",
-    category: 'security'
+    question: "Is the data on the Beta version permanent?",
+    answer: "Data on the Beta version is for testing and demonstration purposes. While IPFS links are permanent, the Beta registry may be reset as we upgrade towards the production Hyperledger Fabric network. Please do not use this for official legal registration yet.",
+    category: 'about'
   },
 ];
 
@@ -210,8 +90,8 @@ export default function HelpPage() {
   });
 
   return (
-    <main className={dmSans.className + " min-h-screen bg-white text-black pt-24 sm:pt-32 pb-20"}>
-      <div className="px-3 sm:px-6 lg:px-36 max-w-6xl mx-auto">
+    <main className={dmSans.className + " min-h-screen bg-white text-black pt-20 sm:pt-32 pb-16 sm:pb-20"}>
+      <div className="px-4 sm:px-6 lg:px-36 max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -219,40 +99,39 @@ export default function HelpPage() {
         >
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-black transition-colors mb-8"
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-black transition-colors mb-6 sm:mb-8 text-sm sm:text-base"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
             <span>Back to Home</span>
           </Link>
 
-          <div className="flex items-center gap-3 mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="currentColor" className="text-black">
-              <path d="M424-320q0-81 14.5-116.5T500-514q41-36 62.5-62.5T584-637q0-41-27.5-68T480-732q-51 0-77.5 31T365-638l-103-44q21-64 77-111t141-47q105 0 161.5 58.5T698-641q0 50-21.5 85.5T609-475q-49 47-59.5 71.5T539-320H424Zm56 240q-33 0-56.5-23.5T400-160q0-33 23.5-56.5T480-240q33 0 56.5 23.5T560-160q0 33-23.5 56.5T480-80Z" />
-            </svg>
-            <h1 className="text-4xl sm:text-5xl font-light">Help Center</h1>
+          <div className="flex items-center gap-3 mb-3 sm:mb-4">
+            <HelpCircle className="text-black w-8 h-8 sm:w-10 sm:h-10" />
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-light">Help Center</h1>
           </div>
-          <p className="text-gray-600 mb-12 text-lg">
-            Get answers, guides, and support for using DeedBlock.
+          <p className="text-gray-600 mb-8 sm:mb-12 text-base sm:text-lg max-w-2xl">
+            Learn about DeedBlock's technology, including Hyperledger Fabric and IPFS.
           </p>
 
           {/* Search Bar */}
-          <div className="mb-12">
+          <div className="mb-8 sm:mb-12">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-600" size={20} />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-600 w-5 h-5" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for help topics, questions, or keywords..."
-                className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:border-black transition-colors"
+                placeholder="Search topics (e.g., 'Hyperledger', 'IPFS')..."
+                className="w-full pl-12 pr-4 py-3 sm:py-4 bg-white border border-gray-200 rounded-lg text-black text-base placeholder-gray-500 focus:outline-none focus:border-black transition-colors shadow-sm"
+                aria-label="Search FAQs"
               />
             </div>
           </div>
 
           {/* FAQs */}
-          <div className="mb-16">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-light text-black">
+          <div className="mb-12 sm:mb-16">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
+              <h2 className="text-xl sm:text-2xl font-light text-black">
                 Frequently Asked Questions
               </h2>
               {searchQuery && (
@@ -267,7 +146,7 @@ export default function HelpPage() {
                 <p className="text-gray-500 text-sm">Try adjusting your search query.</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {filteredFAQs.map((faq, index) => {
                   const actualIndex = faqs.findIndex(f => f.question === faq.question);
                   return (
@@ -276,17 +155,18 @@ export default function HelpPage() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.02 }}
-                      className="bg-white border border-gray-200 rounded-lg overflow-hidden"
+                      className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-sm transition-shadow"
                     >
                       <button
                         onClick={() => setOpenFAQ(openFAQ === actualIndex ? null : actualIndex)}
-                        className="w-full text-left p-4 sm:p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                        className="w-full text-left p-4 sm:p-6 flex items-start sm:items-center justify-between hover:bg-gray-50 transition-colors"
+                        aria-expanded={openFAQ === actualIndex}
                       >
-                        <span className="text-black font-light pr-2 sm:pr-4 flex-1 text-sm sm:text-base">{faq.question}</span>
+                        <span className="text-black font-medium pr-2 sm:pr-4 flex-1 text-base leading-snug">{faq.question}</span>
                         {openFAQ === actualIndex ? (
-                          <ChevronUp className="text-gray-600 flex-shrink-0" size={18} />
+                          <ChevronUp className="text-gray-600 flex-shrink-0 mt-1 sm:mt-0" size={18} />
                         ) : (
-                          <ChevronDown className="text-gray-600 flex-shrink-0" size={18} />
+                          <ChevronDown className="text-gray-600 flex-shrink-0 mt-1 sm:mt-0" size={18} />
                         )}
                       </button>
                       {openFAQ === actualIndex && (
@@ -297,8 +177,12 @@ export default function HelpPage() {
                           transition={{ duration: 0.3 }}
                           className="overflow-hidden"
                         >
-                          <div className="px-4 sm:px-6 pb-4 sm:pb-6 text-gray-700 leading-relaxed whitespace-pre-line text-sm sm:text-base">
-                            {faq.answer}
+                          <div className="px-4 sm:px-6 pb-4 sm:pb-6 text-gray-700 leading-relaxed whitespace-pre-line text-sm sm:text-base border-t border-gray-100 mt-2 pt-4">
+                            {faq.answer.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+                              part.match(/^https?:\/\//) ?
+                                <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">{part}</a> :
+                                part
+                            )}
                           </div>
                         </motion.div>
                       )}
@@ -309,116 +193,70 @@ export default function HelpPage() {
             )}
           </div>
 
-          {/* Step-by-Step Guides */}
-          <div className="mb-16">
-            <h2 className="text-2xl font-light text-black mb-6">Step-by-Step Guides</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-8">
-                <h3 className="text-xl font-light text-black mb-6 pb-4 border-b border-gray-200">
-                  Property Registration Guide
+          {/* User Journey Guides */}
+          <div className="mb-12 sm:mb-16">
+            <h2 className="text-xl sm:text-2xl font-light text-black mb-4 sm:mb-6">User Flow Guides</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+              <div className="bg-white border border-gray-200 rounded-lg p-5 sm:p-8 hover:shadow-md transition-shadow">
+                <h3 className="text-lg sm:text-xl font-medium text-black mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-gray-200">
+                  Registration Flow
                 </h3>
-                <ol className="list-decimal list-inside space-y-3 text-gray-700">
-                  <li>Install and set up a Solana-compatible wallet (Phantom, Solflare, etc.)</li>
-                  <li>Connect your wallet to DeedBlock using the Connect button</li>
-                  <li>Navigate to the Registration page</li>
-                  <li>Fill in property details (survey number, plot number, location, area)</li>
-                  <li>Enter transaction details (type, amount, stamp duty, dates)</li>
-                  <li>Provide seller and buyer information (names, addresses, IDs)</li>
-                  <li>Upload all required documents in PDF format</li>
-                  <li>Add witness information if applicable</li>
-                  <li>Review all information carefully for accuracy</li>
-                  <li>Submit and approve the blockchain transaction in your wallet</li>
-                  <li>Wait for confirmation and save your registration ID</li>
+                <ol className="list-decimal list-inside space-y-2 sm:space-y-3 text-gray-700 text-sm sm:text-base">
+                  <li><strong>Sign In</strong> using Email/Social Login.</li>
+                  <li>Click <strong>"Register New Deed"</strong>.</li>
+                  <li>Fill in <strong>Property & Owner Details</strong>.</li>
+                  <li>Upload Documents (Secured on <strong>IPFS</strong>).</li>
+                  <li><strong>Submit</strong> to create an immutable record.</li>
                 </ol>
               </div>
-              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-8">
-                <h3 className="text-xl font-light text-black mb-6 pb-4 border-b border-gray-200">
-                  Property Search & Verification Guide
+              <div className="bg-white border border-gray-200 rounded-lg p-5 sm:p-8 hover:shadow-md transition-shadow">
+                <h3 className="text-lg sm:text-xl font-medium text-black mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-gray-200">
+                  Search & Verification
                 </h3>
-                <ol className="list-decimal list-inside space-y-3 text-gray-700">
-                  <li>Navigate to the Search page (wallet connection optional)</li>
-                  <li>Select your search parameter (Registration ID, Survey No., Plot No., Owner Name, or Location)</li>
-                  <li>Enter your search criteria accurately</li>
-                  <li>Review the search results displayed</li>
-                  <li>Click on any property card for detailed information</li>
-                  <li>Examine the transaction history and ownership chain</li>
-                  <li>Verify information matches physical documents</li>
-                  <li>Cross-reference with government records when necessary</li>
-                  <li>Export or save property information if needed</li>
-                  <li>Contact support if you find discrepancies or need clarification</li>
+                <ol className="list-decimal list-inside space-y-2 sm:space-y-3 text-gray-700 text-sm sm:text-base">
+                  <li>Visit <strong>Search Page</strong> (No login required).</li>
+                  <li>Enter <strong>Document ID</strong> or <strong>Owner Name</strong>.</li>
+                  <li>System retrieves data from <strong>Decentralized Storage</strong>.</li>
+                  <li>View ownership history & download <strong>Verified Copies</strong>.</li>
                 </ol>
               </div>
             </div>
           </div>
 
-          {/* Troubleshooting */}
-          <div className="mb-16">
-            <h2 className="text-2xl font-light text-black mb-6">Troubleshooting Common Issues</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-                <h3 className="text-lg font-light text-black mb-4 pb-2 border-b border-gray-200">Wallet Connection Issues</h3>
-                <ul className="list-disc list-inside space-y-2 text-gray-700">
-                  <li>Ensure your wallet extension is installed and updated to the latest version</li>
-                  <li>Make sure your wallet is unlocked before attempting to connect</li>
-                  <li>Try disconnecting and reconnecting your wallet</li>
-                  <li>Check if your wallet supports Solana network</li>
-                  <li>Try a different browser if issues persist</li>
-                  <li>Clear browser cache and reload the page</li>
-                  <li>Ensure browser extensions aren&apos;t blocking wallet connections</li>
-                </ul>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-                <h3 className="text-lg font-light text-black mb-4 pb-2 border-b border-gray-200">Transaction Failed</h3>
-                <ul className="list-disc list-inside space-y-2 text-gray-700">
-                  <li>Check if you have sufficient SOL in your wallet for transaction fees</li>
-                  <li>Verify your internet connection is stable and strong</li>
-                  <li>Wait for network congestion to clear (check Solana network status)</li>
-                  <li>Try the transaction again after a few minutes</li>
-                  <li>Increase the transaction priority if your wallet supports it</li>
-                  <li>Ensure your wallet hasn&apos;t been disconnected</li>
-                  <li>Check wallet logs for specific error messages</li>
-                </ul>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-                <h3 className="text-lg font-light text-black mb-4 pb-2 border-b border-gray-200">Search Not Finding Results</h3>
-                <ul className="list-disc list-inside space-y-2 text-gray-700">
-                  <li>Double-check spelling and formatting of search terms</li>
-                  <li>Try different search parameters (e.g., use Survey No. instead of Plot No.)</li>
-                  <li>Verify the property is registered on the platform</li>
-                  <li>Use partial matches for owner names or locations</li>
-                  <li>Clear search filters and try again</li>
-                  <li>Check if you&apos;re searching in the correct format</li>
-                  <li>Contact support if you believe the property should exist</li>
-                </ul>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-                <h3 className="text-lg font-light text-black mb-4 pb-2 border-b border-gray-200">Document Upload Issues</h3>
-                <ul className="list-disc list-inside space-y-2 text-gray-700">
-                  <li>Ensure all documents are in PDF format</li>
-                  <li>Check file size (recommended under 4MB per file)</li>
-                  <li>Verify documents are not password-protected</li>
-                  <li>Ensure documents are clear, readable, and properly scanned</li>
-                  <li>Try converting images to PDF if needed</li>
-                  <li>Check your internet connection for stable upload</li>
-                  <li>Try uploading documents one at a time</li>
-                </ul>
-              </div>
+          {/* Beta Banner */}
+          <div className="mb-12 sm:mb-16">
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-5 sm:p-8">
+              <h3 className="text-base sm:text-lg font-medium text-blue-900 mb-2">Technical Note: Beta vs Production</h3>
+              <p className="text-blue-800 text-sm leading-relaxed">
+                We are currently in <strong>Beta</strong>. This version demonstrates our "Off-Chain Decentralized Storage" using <strong>IPFS</strong>.
+                Our team is actively building the Native <strong>Hyperledger Fabric</strong> blockchain network for the Production release, which will bring full government-grade compliance and security.
+              </p>
             </div>
           </div>
 
-          {/* Additional Resources */}
+          {/* Legal Disclaimer */}
+          <div className="mb-12 sm:mb-16 border-t border-gray-100 pt-10">
+            <h2 className="text-lg sm:text-xl font-light text-black mb-4">Legal Disclaimer</h2>
+            <p className="text-gray-500 text-sm leading-relaxed text-justify">
+              DeedBlock is a technological demonstration platform. Records created on this Beta version are <strong>not legally binding</strong> and do not replace official registration with the Government Sub-Registrar or Revenue Department.
+              Users should continue to follow all standard legal procedures for property registration. DeedBlock assumes no liability for disputes arising from the use of this beta platform.
+            </p>
+          </div>
+
+          {/* Contact & Support */}
           <div className="mb-16">
-            <h2 className="text-2xl font-light text-black mb-6">Additional Resources</h2>
-            <div className="grid grid-cols-1 gap-6">
-              <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-                <h3 className="text-lg font-light text-black mb-3">Document Requirements</h3>
-                <p className="text-gray-700 text-sm mb-4 leading-relaxed">
-                  Learn about all required documents for property registration, their formats, and verification standards.
-                </p>
-                <Link href="/registration" className="text-black underline text-sm hover:text-gray-700">
-                  View Registration Page →
-                </Link>
-              </div>
+            <div className="bg-black text-white rounded-2xl p-6 sm:p-12 text-center">
+              <h2 className="text-2xl sm:text-3xl font-light mb-4">Have Questions?</h2>
+              <p className="text-gray-400 mb-8 max-w-lg mx-auto text-sm sm:text-base">
+                Whether you're a government official, developer, or beta tester, we'd love to hear your feedback on our new blockchain infrastructure.
+              </p>
+              <a
+                href="mailto:support@deedblock.com"
+                className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-full font-medium text-sm sm:text-base hover:bg-gray-100 transition-colors"
+              >
+                <span>Contact Support</span>
+                <ArrowUp size={18} className="rotate-45" />
+              </a>
             </div>
           </div>
 
@@ -432,10 +270,10 @@ export default function HelpPage() {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 bg-black text-white p-3 rounded-full shadow-lg hover:bg-gray-800 transition-colors z-50"
+          className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 bg-black text-white p-3 rounded-full shadow-lg hover:bg-gray-800 transition-colors z-50"
           aria-label="Back to top"
         >
-          <ArrowUp size={24} />
+          <ArrowUp size={20} className="sm:w-6 sm:h-6" />
         </motion.button>
       )}
     </main>

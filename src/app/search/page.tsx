@@ -147,27 +147,27 @@ export default function SearchPage() {
   const [previewInitialIndex, setPreviewInitialIndex] = useState(0);
 
   // Prepare preview items
-    const previewItems = React.useMemo(() => {
-      if (!selectedResult) return [];
-  
-      const docs = (selectedResult.documents || []).map(doc => ({
-        type: 'url' as const,
-        url: doc.url || (doc.ipfsHash ? getIPFSUrl(doc.ipfsHash) : ''),
-        name: doc.name || doc.type || 'Document',
-        category: 'Document',
-        mimeType: doc.mimeType
-      }));
-  
-      const photos = (selectedResult.propertyPhotos || []).map((photo, idx) => ({
-        type: 'url' as const,
-        url: photo.url || (photo.ipfsHash ? getIPFSUrl(photo.ipfsHash) : ''),
-        name: `Photo ${idx + 1}`,
-        category: 'Photo',
-        mimeType: photo.mimeType
-      }));
-  
-      return [...docs, ...photos];
-    }, [selectedResult]);
+  const previewItems = React.useMemo(() => {
+    if (!selectedResult) return [];
+
+    const docs = (selectedResult.documents || []).map(doc => ({
+      type: 'url' as const,
+      url: doc.url || (doc.ipfsHash ? getIPFSUrl(doc.ipfsHash) : ''),
+      name: doc.name || doc.type || 'Document',
+      category: 'Document',
+      mimeType: doc.mimeType
+    }));
+
+    const photos = (selectedResult.propertyPhotos || []).map((photo, idx) => ({
+      type: 'url' as const,
+      url: photo.url || (photo.ipfsHash ? getIPFSUrl(photo.ipfsHash) : ''),
+      name: `Photo ${idx + 1}`,
+      category: 'Photo',
+      mimeType: photo.mimeType
+    }));
+
+    return [...docs, ...photos];
+  }, [selectedResult]);
 
   const handlePreviewDocument = (index: number) => {
     setPreviewInitialIndex(index);
@@ -201,7 +201,7 @@ export default function SearchPage() {
 
   // Helper function to get all stored registrations from Supabase
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
-    const getAllRegistrations = async (): Promise<any[]> => {
+  const getAllRegistrations = async (): Promise<any[]> => {
     try {
       const { getAllRegistrations } = await import('@/lib/supabase/database');
       return await getAllRegistrations();
@@ -1195,25 +1195,54 @@ Generated on: ${new Date().toLocaleString()}
 
                           <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
                             {selectedResult.documents && selectedResult.documents.map((doc, index) => (
-                              <button
-                                key={index}
-                                onClick={() => handlePreviewDocument(index)}
-                                className="flex items-center justify-start pl-4 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors gap-2"
-                              >
-                                <PreviewIcon className="w-4 h-4 text-gray-400 shrink-0" />
-                                <span className="truncate max-w-[100px] sm:max-w-[150px] capitalize">{doc.name || doc.type}</span>
-                              </button>
+                              <div key={index} className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 pr-2 hover:border-black transition-colors group">
+                                <button
+                                  onClick={() => handlePreviewDocument(index)}
+                                  className="flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors flex-1 text-left"
+                                  title="Preview Document"
+                                >
+                                  <PreviewIcon className="w-4 h-4 text-gray-400 shrink-0 group-hover:text-black transition-colors" />
+                                  <span className="truncate max-w-[120px] sm:max-w-[180px] capitalize">{doc.name || doc.type}</span>
+                                </button>
+                                <div className="h-4 w-px bg-gray-200"></div>
+                                <a
+                                  href={doc.url || (doc.ipfsHash ? getIPFSUrl(doc.ipfsHash) : '#')}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  download={doc.name || `${doc.type}.pdf`}
+                                  className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded-md transition-colors"
+                                  title="Download Document"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Download className="w-4 h-4" />
+                                </a>
+                              </div>
                             ))}
 
-                            {selectedResult.propertyPhotos && selectedResult.propertyPhotos.length > 0 && (
-                              <button
-                                onClick={() => handlePreviewDocument((selectedResult.documents?.length || 0))}
-                                className="col-span-2 justify-self-center sm:col-span-auto sm:justify-self-auto flex items-center justify-center sm:justify-start gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-black transition-colors"
-                              >
-                                <PreviewIcon className="w-4 h-4 text-gray-400 shrink-0" />
-                                <span className="truncate">{selectedResult.propertyPhotos.length} Photo{selectedResult.propertyPhotos.length > 1 ? 's' : ''}</span>
-                              </button>
-                            )}
+                            {selectedResult.propertyPhotos && selectedResult.propertyPhotos.map((photo, pIndex) => (
+                              <div key={`photo-${pIndex}`} className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 pr-2 hover:border-black transition-colors group">
+                                <button
+                                  onClick={() => handlePreviewDocument((selectedResult.documents?.length || 0) + pIndex)}
+                                  className="flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors flex-1 text-left"
+                                  title="Preview Photo"
+                                >
+                                  <ImageIcon className="w-4 h-4 text-gray-400 shrink-0 group-hover:text-black transition-colors" />
+                                  <span className="truncate max-w-[120px] sm:max-w-[180px] capitalize">{photo.name || `Photo ${pIndex + 1}`}</span>
+                                </button>
+                                <div className="h-4 w-px bg-gray-200"></div>
+                                <a
+                                  href={photo.url || (photo.ipfsHash ? getIPFSUrl(photo.ipfsHash) : '#')}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  download={photo.name || `Photo_${pIndex + 1}.jpg`}
+                                  className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded-md transition-colors"
+                                  title="Download Photo"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Download className="w-4 h-4" />
+                                </a>
+                              </div>
+                            ))}
 
                             {(!selectedResult.documents?.length && !selectedResult.propertyPhotos?.length) && (
                               <p className="text-sm text-gray-400 col-span-2 sm:col-span-auto">No documents available</p>
