@@ -31,12 +31,12 @@ const faqs: FAQItem[] = [
   },
   {
     question: "What technology powers DeedBlock?",
-    answer: "Our platform is built on a dual-layer architecture:\n\n1. **Hyperledger Fabric (Production):** For our upcoming official release, we will use this **permissioned blockchain** to store sensitive citizen data and land titles securely. This ensures compliance with government regulations and data privacy laws.\n\n2. **IPFS (Beta/Storage):** Currently, for this Beta version, we use the **InterPlanetary File System (IPFS)** as an off-chain decentralized storage layer. This ensures that documents (deeds, maps) are tamper-proof and improved availability.",
+    answer: "Our platform is built on a dual-layer architecture:\n\n1. **Secure Ledger (Production):** For our upcoming official release, we will use a **permissioned network** to store sensitive citizen data and land titles securely. This ensures compliance with government regulations and data privacy laws.\n\n2. **IPFS (Beta/Storage):** Currently, for this Beta version, we use the **InterPlanetary File System (IPFS)** as an off-chain decentralized storage layer. This ensures that documents (deeds, maps) are tamper-proof and improved availability.",
     category: 'technology'
   },
   {
-    question: "Why Hyperledger Fabric instead of public crypto blockchains?",
-    answer: "Public blockchains (like Solana or Ethereum) are great for cryptocurrencies, but government records require **privacy, permissioned access, and compliance**. Hyperledger Fabric allows us to build a private, secure network where only authorized government bodies and verified citizens can participate, without the volatility or anonymity of crypto markets.",
+    question: "Why private network instead of public databases?",
+    answer: "Public systems are great for accessibility, but government records require **privacy, permissioned access, and compliance**. Our architecture allows us to build a private, secure network where only authorized government bodies and verified citizens can participate, without the risks of public exposure.",
     category: 'technology'
   },
 
@@ -48,7 +48,7 @@ const faqs: FAQItem[] = [
   },
   {
     question: "How does the Registration Process work?",
-    answer: "Registering a property is a streamlined 4-step process:\n1. **Sign In:** Log in to your account.\n2. **Enter Details:** Fill in property information (Survey No, Location) and transaction details (Seller/Buyer info).\n3. **Upload Documents:** Upload your Sale Deed, Maps, and IDs. in the current Beta, these are secured on **IPFS**.\n4. **Submit:** Confirm the data. In the future, this action will write a permanent record to the **Hyperledger Fabric** ledger.",
+    answer: "Registering a property is a streamlined 4-step process:\n1. **Sign In:** Log in to your account.\n2. **Enter Details:** Fill in property information (Survey No, Location) and transaction details (Seller/Buyer info).\n3. **Upload Documents:** Upload your Sale Deed, Maps, and IDs. in the current Beta, these are secured on **IPFS**.\n4. **Submit:** Confirm the data. In the future, this action will write a permanent record to the **secure ledger**.",
     category: 'usage'
   },
   {
@@ -59,7 +59,7 @@ const faqs: FAQItem[] = [
 
   {
     question: "Is the data on the Beta version permanent?",
-    answer: "Data on the Beta version is for testing and demonstration purposes. While IPFS links are permanent, the Beta registry may be reset as we upgrade towards the production Hyperledger Fabric network. Please do not use this for official legal registration yet.",
+    answer: "Data on the Beta version is for testing and demonstration purposes. While IPFS links are permanent, the Beta registry may be reset as we upgrade towards the production network. Please do not use this for official legal registration yet.",
     category: 'about'
   },
 ];
@@ -110,7 +110,7 @@ export default function HelpPage() {
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-light">Help Center</h1>
           </div>
           <p className="text-gray-600 mb-8 sm:mb-12 text-base sm:text-lg max-w-2xl">
-            Learn about DeedBlock's technology, including Hyperledger Fabric and IPFS.
+            Learn about DeedBlock's technology, including secure ledgers and IPFS.
           </p>
 
           {/* Search Bar */}
@@ -121,7 +121,7 @@ export default function HelpPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search topics (e.g., 'Hyperledger', 'IPFS')..."
+                placeholder="Search topics (e.g., 'Ledger', 'IPFS')..."
                 className="w-full pl-12 pr-4 py-3 sm:py-4 bg-white border border-gray-200 rounded-lg text-black text-base placeholder-gray-500 focus:outline-none focus:border-black transition-colors shadow-sm"
                 aria-label="Search FAQs"
               />
@@ -229,7 +229,7 @@ export default function HelpPage() {
               <h3 className="text-base sm:text-lg font-medium text-blue-900 mb-2">Technical Note: Beta vs Production</h3>
               <p className="text-blue-800 text-sm leading-relaxed">
                 We are currently in <strong>Beta</strong>. This version demonstrates our "Off-Chain Decentralized Storage" using <strong>IPFS</strong>.
-                Our team is actively building the Native <strong>Hyperledger Fabric</strong> blockchain network for the Production release, which will bring full government-grade compliance and security.
+                Our team is actively building the Native <strong>Secure Ledger</strong> network for the Production release, which will bring full government-grade compliance and security.
               </p>
             </div>
           </div>
@@ -248,7 +248,7 @@ export default function HelpPage() {
             <div className="bg-black text-white rounded-2xl p-6 sm:p-12 text-center">
               <h2 className="text-2xl sm:text-3xl font-light mb-4">Have Questions?</h2>
               <p className="text-gray-400 mb-8 max-w-lg mx-auto text-sm sm:text-base">
-                Whether you're a government official, developer, or beta tester, we'd love to hear your feedback on our new blockchain infrastructure.
+                Whether you're a government official, developer, or beta tester, we'd love to hear your feedback on our new digital infrastructure.
               </p>
               <a
                 href="mailto:support@deedblock.com"
